@@ -103,6 +103,10 @@ test("dismissing an opportunity needs a reason and survives a recompute", async 
     mimeType: "text/csv",
     buffer: Buffer.from(CSV, "utf8"),
   });
+  // Импорт асинхронный: без ожидания «Run now» иногда жмётся раньше, чем
+  // вопросы доехали, сервер отказывает «добавьте хотя бы один вопрос», и
+  // строки со статусом прогона не появляется вовсе.
+  await expect(page.getByTestId("import-summary")).toContainText("4 prompts");
   await page.getByRole("button", { name: "Run now" }).click();
   await expect(page.getByTestId("run-status")).toContainText("done", { timeout: 30_000 });
 
