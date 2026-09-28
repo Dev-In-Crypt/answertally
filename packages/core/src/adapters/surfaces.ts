@@ -22,12 +22,6 @@ export type SurfaceRequirement =
    * Нужен внешний поставщик результатов поиска, который умеет их снимать.
    */
   | "serp-provider"
-  /**
-   * API есть и работает, но условия поставщика запрещают то, ради чего
-   * продукт существует: анализировать ответы и хранить их, чтобы цифру
-   * можно было перепроверить. Ключ здесь ничего не решает.
-   */
-  | "terms-forbid"
   /** Уже измеряется. */
   | "none";
 
@@ -42,21 +36,6 @@ export interface SurfaceCapability extends Assistant {
 const NOTES: Record<string, { requirement: SurfaceRequirement; note: string; ready: boolean }> = {
   chatgpt: { requirement: "none", note: "Measured through the platform API.", ready: true },
   perplexity: { requirement: "none", note: "Measured through the platform API.", ready: true },
-  gemini: {
-    requirement: "terms-forbid",
-    /**
-     * Прочитано 2026-09-24 в условиях Google. Запрещено анализировать
-     * результаты, собирать из них ссылки программными средствами и строить
-     * индекс; хранить разрешено до двух лет и только чтобы улучшить их
-     * отображение. Корпоративный вариант этих ограничений не снимает — он
-     * убирает логирование на стороне Google, а не наши обязательства.
-     *
-     * Что менять, если условия изменятся: `measurable: true` здесь и в
-     * каталоге, вернуть регистрацию в adapters/live. Сам адаптер цел.
-     */
-    note: "Google's terms for grounded search do not allow the results to be analysed or kept the way this product keeps every answer so a figure can be rechecked. The adapter works; the terms are the blocker.",
-    ready: true,
-  },
   "ai-overviews": {
     requirement: "serp-provider",
     /**
@@ -70,6 +49,7 @@ const NOTES: Record<string, { requirement: SurfaceRequirement; note: string; rea
      * Что нужно поменять при появлении провайдера: Platform в adapters/types
      * (контракт C1), enum platform в схеме БД + миграция, файл адаптера,
      * ветку в adapters/live, `measurable: true` здесь и в каталоге.
+     * Разбор поставщиков, цен и условий — docs/open-questions/serp-provider.md.
      */
     note: "Google does not return AI Overviews through an API. Measuring it needs a search-results provider that captures the block for a query and region.",
     ready: true,

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ASSISTANTS, MEASUREMENT_COPY } from "@repo/core";
+import { ASSISTANTS, MEASUREMENT_COPY, platformLabel } from "@repo/core";
 import { api } from "@/trpc/react";
 import { FileInput } from "@/components/ui/file-input";
 
@@ -93,7 +93,9 @@ export function TrafficCard({
           <ul data-testid="traffic-list" className="flex flex-col gap-1 text-sm">
             {data.byAssistant.map((entry) => (
               <li key={entry.assistant} className="flex justify-between gap-3">
-                <span>{LABELS.get(entry.assistant) ?? entry.assistant}</span>
+                {/* Каталог знает только измеряемых, а переход может прийти
+                    и от того, кого мы не измеряем, — имя берётся шире. */}
+                <span>{LABELS.get(entry.assistant) ?? platformLabel(entry.assistant)}</span>
                 <span className="metric text-muted-foreground">
                   {entry.sessions.toLocaleString("en-US")} · {entry.sharePct}%
                 </span>

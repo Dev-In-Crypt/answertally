@@ -178,7 +178,6 @@ export default function MethodPage() {
                 <span className="a-chip off">Copilot</span>
                 <span className="a-chip off">AI Overviews</span>
                 <span className="a-chip off">AI Mode</span>
-                <span className="a-chip off">Gemini</span>
               </div>
               <div className="basis" style={{ marginTop: 16 }}>
                 {MARKETING_COPY.notMeasuredSurfaces}

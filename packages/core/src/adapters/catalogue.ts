@@ -8,6 +8,12 @@ import type { Platform } from "./types";
  * перечисляет их целиком и честно помечает, какие мы действительно
  * спрашиваем: у Copilot и AI Overviews публичного API нет вовсе.
  *
+ * Gemini здесь нет совсем — ни измеряемым, ни выключенным. Условия Google
+ * не дают его измерять (docs/open-questions/gemini-grounding.md), а
+ * поверхность, которую продукт не измеряет и не собирается, не должна
+ * занимать столбец в матрице клиента и строку на витрине: это обещание
+ * «когда-нибудь», которого мы не давали.
+ *
  * `measurable` значит «адаптер написан», а не «ключ задан»: без ключа
  * платформа просто не попадает в расписание, и по ней в матрице стоит
  * «0 из 3 нужных ответов» — это правда, а не выдуманный ноль.
@@ -31,17 +37,6 @@ export interface Assistant {
 export const ASSISTANTS: readonly Assistant[] = [
   { id: "chatgpt", label: "ChatGPT", short: "GPT", measurable: true },
   { id: "perplexity", label: "Perplexity", short: "Pplx", measurable: true },
-  /**
-   * Назван, но не измеряется — и мешает этому не техника.
-   *
-   * Адаптер написан, покрыт тестами и работает. Условия Google на
-   * grounded-поиск прямо запрещают анализировать результаты, собирать из
-   * них ссылки программно и строить индекс, а хранить разрешают до двух
-   * лет и только чтобы улучшить их отображение. Продукт делает ровно
-   * перечисленное и хранит постоянно — иначе цифру нельзя перепроверить.
-   * Подробности и что проверялось — docs/open-questions/gemini-grounding.md.
-   */
-  { id: "gemini", label: "Gemini", short: "Gemini", measurable: false },
   { id: "claude", label: "Claude", short: "Claude", measurable: true },
   { id: "copilot", label: "Copilot", short: "Copilot", measurable: false },
   { id: "ai-overviews", label: "AI Overviews", short: "AIO", measurable: false },

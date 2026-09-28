@@ -158,6 +158,14 @@ export const REPORT_COPY = {
     "Retainer and effort are the agency's own estimates for the scope below, shown so the numbers behind the proposal are visible.",
 } as const;
 
+/**
+ * Имена платформ для подписей.
+ *
+ * Шире каталога ассистентов намеренно. Каталог отвечает на вопрос «что мы
+ * измеряем», а подпись нужна и тому, что мы не измеряем: в записанных
+ * ответах и в переходах с сайта ассистента встречаются платформы, которых
+ * в каталоге нет. Без имени они показываются как `gemini` строчными.
+ */
 const PLATFORM_LABELS: Record<string, string> = {
   chatgpt: "ChatGPT",
   perplexity: "Perplexity",
@@ -165,6 +173,11 @@ const PLATFORM_LABELS: Record<string, string> = {
   claude: "Claude",
   grok: "Grok",
 };
+
+/** Имя платформы; неизвестная возвращается как есть, а не пустой строкой. */
+export function platformLabel(id: string): string {
+  return PLATFORM_LABELS[id] ?? id;
+}
 
 /**
  * Оговорка о природе измерения, собранная по факту.
@@ -392,17 +405,8 @@ export const MARKETING_COPY = {
   experimentWithoutControl:
     "Without untouched topics there is nothing to compare against, and the report says so instead of showing a difference.",
   /** Кого не измеряем и почему. */
-  /**
-   * Две разные причины не измерять, и обе названы.
-   *
-   * У Copilot и поверхностей Google нет программного доступа к ответу. У
-   * Gemini он есть, и адаптер написан, — но условия Google на
-   * grounded-поиск не дают ни анализировать результаты, ни хранить их так,
-   * чтобы цифру можно было перепроверить. Писать «нет API» было бы
-   * неправдой, а молчать — хуже: Gemini спросят первым.
-   */
   notMeasuredSurfaces:
-    "Microsoft Copilot and Google AI Overviews / AI Mode offer no public API. Gemini has one, but Google's terms for grounded search do not allow its answers to be analysed or kept the way every figure here is kept so it can be rechecked. None of them is measured, and no report estimates them.",
+    "Microsoft Copilot and Google AI Overviews / AI Mode offer no public API, so they are not measured, and no report estimates them.",
   /** Пределы, названные вслух на главной. */
   limits: {
     quarter:

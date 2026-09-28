@@ -1,4 +1,5 @@
 import { ASSISTANTS } from "./catalogue";
+import { platformLabel } from "../copy";
 import { answersCostUsd } from "./pricing";
 import { PLATFORM_IDS, type Platform } from "./types";
 import { ESTIMATED_COST_PER_ANSWER_USD } from "../billing/period";
@@ -63,8 +64,16 @@ export interface ScheduleRequest {
   promptCount?: number;
 }
 
+/**
+ * Имя ассистента для текста отказа.
+ *
+ * Каталог знает только тех, кого продукт показывает. В отказе же может
+ * оказаться и тот, кого там нет: расписание переживает решение перестать
+ * измерять платформу, и запрос на её сохранение надо отклонить по-человечески,
+ * а не строчным идентификатором.
+ */
 function assistantLabel(id: string): string {
-  return ASSISTANTS.find((assistant) => assistant.id === id)?.label ?? id;
+  return ASSISTANTS.find((assistant) => assistant.id === id)?.label ?? platformLabel(id);
 }
 
 function listed(items: readonly string[]): string {
