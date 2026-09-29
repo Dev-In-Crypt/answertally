@@ -264,6 +264,27 @@ services:
         limits:
           memory: ${WORKER_MEMORY_LIMIT:-1g}
 
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    logging: *logging
+    # Единственная служба, смотрящая наружу. Остальные портов не публикуют.
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Здесь лежит сертификат и ключ от него. Том обязателен: без него
+      # каждый перезапуск просил бы новый сертификат, и через неделю
+      # упёрлись бы в недельный лимит Let's Encrypt на домен.
+      - caddy-data:/data
+      - caddy-config:/config
+    environment:
+      SITE_DOMAIN: ${SITE_DOMAIN:?set SITE_DOMAIN}
+    depends_on:
+      web:
+        condition: service_healthy
+
 volumes:
   postgres-data:
   redis-data:
@@ -272,3 +293,5 @@ volumes:
   # Резервная копия этого тома так же обязательна, как копия базы: без него
   # измерения нельзя переразобрать, а отчёты теряют доказательную часть.
   storage-data:
+  caddy-data:
+  caddy-config:
