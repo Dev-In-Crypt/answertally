@@ -12,8 +12,8 @@ import Link from "next/link";
  */
 
 export const metadata: Metadata = {
-  title: "Acceptable use · Citeworthy",
-  description: "What Citeworthy may not be used for, and what happens if it is.",
+  title: "Acceptable use · Answertally",
+  description: "What Answertally may not be used for, and what happens if it is.",
 };
 
 export default function AcceptableUsePage() {
@@ -28,7 +28,7 @@ export default function AcceptableUsePage() {
 
       <h2>Measure companies, not people</h2>
       <p>
-        Citeworthy is for measuring how brands appear in assistant answers. Do not use it to track,
+        Answertally is for measuring how brands appear in assistant answers. Do not use it to track,
         profile or build a picture of a private individual — by making a person the subject of the
         tracked questions, or by using the stored answers to find things out about someone.
       </p>

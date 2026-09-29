@@ -29,8 +29,8 @@ test("on the agency's domain nothing but the report exists", async ({ request })
     const body = await response.text();
     // Именно «нет такой страницы», а не переадресация к нам: редирект
     // показал бы клиенту, куда он попал, и это тот же след поставщика.
-    expect(body).not.toContain("Citeworthy");
-    expect(body).not.toContain("citeworthy");
+    expect(body).not.toContain("Answertally");
+    expect(body).not.toContain("answertally");
   }
 });
 
@@ -50,7 +50,7 @@ test("a report link opens on the agency's domain", async ({ request }) => {
   expect(response.status()).toBe(200);
   const body = await response.text();
   expect(body).toContain("no longer valid");
-  expect(body).not.toContain("Citeworthy");
+  expect(body).not.toContain("Answertally");
 });
 
 test("static assets the report needs are served on the agency's domain", async ({ request }) => {

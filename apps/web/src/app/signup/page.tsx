@@ -19,7 +19,7 @@ import { MarketingShell } from "@/components/marketing/chrome";
  */
 
 export const metadata: Metadata = {
-  title: "Create your workspace · Citeworthy",
+  title: "Create your workspace · Answertally",
   description: `Run the free audit on one brand: ${FREE_CHECK_ALLOWANCE} AI checks, no card.`,
 };
 

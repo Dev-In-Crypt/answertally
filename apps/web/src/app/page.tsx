@@ -31,7 +31,7 @@ import { ReportPreview } from "@/components/marketing/report-preview";
  */
 
 export const metadata: Metadata = {
-  title: "Citeworthy · AI visibility for agencies, with the evidence shown",
+  title: "Answertally · AI visibility for agencies, with the evidence shown",
   description:
     "Answer your clients’ “are we in ChatGPT?” with sampled AI answers, ranges and confidence levels, ranked work with a reason on every item, and a white-label report the client approves by link.",
 };
@@ -55,7 +55,7 @@ export default async function HomePage() {
               Answer “Are we in ChatGPT?” <em>with numbers that show their work.</em>
             </h1>
             <p className="lead">
-              Citeworthy asks ChatGPT, Perplexity and Grok the questions your client’s buyers ask,
+              Answertally asks ChatGPT, Perplexity and Grok the questions your client’s buyers ask,
               several times each. {MARKETING_COPY.evidencePromise} Your client gets it as a report in
               your brand.
             </p>
@@ -97,7 +97,7 @@ export default async function HomePage() {
           <SecHead n={1} title="A new service for clients you already have">
             Your clients already ask what ChatGPT says about them. You have the relationship, the SEO
             team and the reporting habit. What is missing is a way to measure it and something to
-            hand over, and that is the part Citeworthy does, so the service does not start with a
+            hand over, and that is the part Answertally does, so the service does not start with a
             new hire.
           </SecHead>
           <figure className="market-note">
@@ -120,7 +120,7 @@ export default async function HomePage() {
             <div className="card pad money">
               <h3 className="h4">Your team does the work, not the spreadsheet</h3>
               <p className="small">
-                Citeworthy does the asking, reading and counting. Each piece of work opens as a brief
+                Answertally does the asking, reading and counting. Each piece of work opens as a brief
                 with its objective, the numbers behind it, steps and acceptance criteria, and one view
                 across every client shows which ones need attention this week.
               </p>

@@ -27,9 +27,9 @@ import { ReportPreview } from "@/components/marketing/report-preview";
  */
 
 export const metadata: Metadata = {
-  title: "Product · Citeworthy",
+  title: "Product · Answertally",
   description:
-    "Measure, diagnose, act, run experiments and report: how Citeworthy turns sampled AI answers into ranked agency work and white-label reports.",
+    "Measure, diagnose, act, run experiments and report: how Answertally turns sampled AI answers into ranked agency work and white-label reports.",
 };
 
 const WL = MARKETING_COPY.whiteLabel;
@@ -629,10 +629,10 @@ export default function ProductPage() {
             </div>
             <pre className="code" aria-label="Example request and abridged response">
               <span className="c"># window: 7–90 days, default 28</span>
-              {"\ncurl https://app.citeworthy.example/api/v1/clients/"}
+              {"\ncurl https://app.answertally.example/api/v1/clients/"}
               <span className="n">cl_8f2a</span>
               {"/visibility?windowDays=28 \\\n  -H "}
-              <span className="s">&quot;Authorization: Bearer $CITEWORTHY_KEY&quot;</span>
+              <span className="s">&quot;Authorization: Bearer $ANSWERTALLY_KEY&quot;</span>
               {"\n\n"}
               <span className="c">{"// abridged, illustrative response"}</span>
               {"\n{\n  "}

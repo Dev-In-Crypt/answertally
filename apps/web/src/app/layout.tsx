@@ -3,7 +3,7 @@ import { TrpcProvider } from "@/trpc/react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Citeworthy",
+  title: "Answertally",
   description: "AI visibility measurement and delivery for agencies.",
 };
 

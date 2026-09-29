@@ -137,7 +137,7 @@ describe("reports.generate", () => {
       expect(message?.text).toContain(`/r/${result.token}`);
       // White-label: письмо подписано агентством, названия продукта в нём нет.
       expect(message?.text).toContain("Report Agency");
-      expect(message?.text).not.toMatch(/citeworthy/i);
+      expect(message?.text).not.toMatch(/answertally/i);
       expect(message?.text).toContain("Numbers for the quarter.");
 
       const activity = await listActivity(db, clientId, 10);

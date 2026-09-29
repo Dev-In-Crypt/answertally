@@ -20,18 +20,18 @@ import { LEGAL_ENTITY } from "@/config/legal";
  */
 
 export const metadata: Metadata = {
-  title: "Terms of service · Citeworthy",
-  description: "The agreement between your agency and Citeworthy, in plain language.",
+  title: "Terms of service · Answertally",
+  description: "The agreement between your agency and Answertally, in plain language.",
 };
 
 export default function TermsPage() {
-  const us = LEGAL_ENTITY?.name ?? "the operator of Citeworthy";
+  const us = LEGAL_ENTITY?.name ?? "the operator of Answertally";
 
   return (
     <>
       <h1>Terms of service</h1>
       <p className="lede">
-        These terms cover your use of Citeworthy. They are written to be read, not to be survived.
+        These terms cover your use of Answertally. They are written to be read, not to be survived.
         Where something limits what you can expect from us, it says so in the same plain words as
         the rest.
       </p>
@@ -49,7 +49,7 @@ export default function TermsPage() {
 
       <h2>2. What the service does</h2>
       <p>
-        Citeworthy asks AI assistants the questions you set, records their answers, counts how often
+        Answertally asks AI assistants the questions you set, records their answers, counts how often
         the brands you track are named, groups the sources those answers cite, and turns that into
         ranked work and reports you can share.
       </p>
@@ -86,7 +86,7 @@ export default function TermsPage() {
       <h2>4. What we are not selling</h2>
       <p>
         We license the analysis and the reports. We do not resell model access, and this agreement
-        gives you no right to use Citeworthy as a way to reach an assistant provider&rsquo;s API for
+        gives you no right to use Answertally as a way to reach an assistant provider&rsquo;s API for
         other purposes.
       </p>
       <p>

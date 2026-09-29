@@ -40,8 +40,8 @@ vi.mock("./[token]/approve-form", () => ({ ApproveForm: () => null }));
  * которой больше нет, и пройдёт на любой разметке.
  */
 const VENDOR_TRACES = [
-  "Citeworthy",
-  "citeworthy",
+  "Answertally",
+  "answertally",
   // Знак продукта из apps/web/src/app/icon.svg: индиговая плитка.
   "#4F39F6",
   "#4f39f6",

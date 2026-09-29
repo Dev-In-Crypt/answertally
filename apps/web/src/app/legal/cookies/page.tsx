@@ -19,8 +19,8 @@ import Link from "next/link";
  */
 
 export const metadata: Metadata = {
-  title: "Cookies · Citeworthy",
-  description: "What Citeworthy stores in your browser. It is less than you expect.",
+  title: "Cookies · Answertally",
+  description: "What Answertally stores in your browser. It is less than you expect.",
 };
 
 export default function CookiesPage() {

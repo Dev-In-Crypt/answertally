@@ -25,7 +25,7 @@ import { ResaleCalculator } from "@/components/marketing/resale-calculator";
  */
 
 export const metadata: Metadata = {
-  title: "Pricing · Citeworthy",
+  title: "Pricing · Answertally",
   description: `Three plans, billed per client account with your whole team included: ${PLANS.map((p) => `${p.name} ${usd(p.priceUsd)}`).join(", ")} a month, about ${usd(PER_CLIENT_MIN)}–${usd(PER_CLIENT_MAX)} per client.`,
 };
 

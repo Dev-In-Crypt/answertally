@@ -16,9 +16,9 @@ import { SUBPROCESSOR_NOTICE_DAYS } from "@/config/legal";
  */
 
 export const metadata: Metadata = {
-  title: "Sub-processors · Citeworthy",
+  title: "Sub-processors · Answertally",
   description:
-    "Every third party that can receive data when you use Citeworthy, what it receives, and why.",
+    "Every third party that can receive data when you use Answertally, what it receives, and why.",
 };
 
 interface Row {
@@ -109,7 +109,7 @@ export default function SubprocessorsPage() {
     <>
       <h1>Sub-processors</h1>
       <p className="lede">
-        Everyone outside our own systems who can receive data when you use Citeworthy. Nobody else
+        Everyone outside our own systems who can receive data when you use Answertally. Nobody else
         does.
       </p>
 

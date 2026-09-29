@@ -10,7 +10,7 @@ import { SampleFrame } from "./sample-frame";
  * индексация здесь нужна — это витрина, а не чужой документ.
  */
 export const metadata: Metadata = {
-  title: "Example client report — Citeworthy",
+  title: "Example client report — Answertally",
   description:
     "A sample of the report an agency hands its client: visibility over the period, the work behind it and what the numbers do not mean.",
 };

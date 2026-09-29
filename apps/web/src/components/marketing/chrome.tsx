@@ -37,7 +37,7 @@ export function MarketingHeader({ active }: { active?: MarketingSection }) {
   return (
     <header data-surface="marketing" className="mk site-head" data-testid="marketing-header">
       <div className="wrap">
-        <Link className="brand" href="/" aria-label="Citeworthy home">
+        <Link className="brand" href="/" aria-label="Answertally home">
           <Wordmark />
         </Link>
         <nav className="nav" aria-label="Main">
@@ -137,7 +137,7 @@ export function MarketingFooter() {
             <Link href="/legal/subprocessors">Sub-processors</Link>
             <Link href="/legal/cookies">Cookies</Link>
           </span>
-          <span>© 2026 Citeworthy</span>
+          <span>© 2026 Answertally</span>
         </div>
       </div>
     </footer>

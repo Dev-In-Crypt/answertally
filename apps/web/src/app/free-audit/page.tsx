@@ -31,7 +31,7 @@ import { ReportPreview } from "@/components/marketing/report-preview";
 const FREE_TRIO = defaultAssistantSentence("starter");
 
 export const metadata: Metadata = {
-  title: "Free audit · Citeworthy",
+  title: "Free audit · Answertally",
   description:
     `Audit a brand you work on for free: what ${FREE_TRIO} say about it, which sources they cite, ranked work with reasons, and an opportunity report in your brand.`,
 };

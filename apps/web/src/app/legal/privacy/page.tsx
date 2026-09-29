@@ -15,12 +15,12 @@ import { LEGAL_ENTITY } from "@/config/legal";
  */
 
 export const metadata: Metadata = {
-  title: "Privacy policy · Citeworthy",
-  description: "What data Citeworthy holds, why, for how long, and who else can see it.",
+  title: "Privacy policy · Answertally",
+  description: "What data Answertally holds, why, for how long, and who else can see it.",
 };
 
 export default function PrivacyPage() {
-  const us = LEGAL_ENTITY?.name ?? "the operator of Citeworthy";
+  const us = LEGAL_ENTITY?.name ?? "the operator of Answertally";
 
   return (
     <>
@@ -32,7 +32,7 @@ export default function PrivacyPage() {
 
       <h2>Two roles, not one</h2>
       <p>
-        Citeworthy sits between an agency and its clients, so our responsibilities split in two, and
+        Answertally sits between an agency and its clients, so our responsibilities split in two, and
         it matters which one applies.
       </p>
       <p>

@@ -1,4 +1,4 @@
-# Citeworthy
+# Answertally
 
 The operating system for AI Search retainers. Agencies measure how ChatGPT, Perplexity and Grok
 answer about their clients, find where the client is losing and why, turn that into work, measure
@@ -111,7 +111,7 @@ Read-only, keyed per agency, created in Settings → API. The key is shown once;
 stored.
 
 ```bash
-curl -H "Authorization: Bearer $CITEWORTHY_KEY" https://your-host/api/v1/clients
+curl -H "Authorization: Bearer $ANSWERTALLY_KEY" https://your-host/api/v1/clients
 ```
 
 | Endpoint | Returns |

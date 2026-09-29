@@ -12,8 +12,8 @@ import { MarketingShell } from "@/components/marketing/chrome";
  */
 
 export const metadata: Metadata = {
-  title: "Sign in · Citeworthy",
-  description: "Sign in to your Citeworthy workspace.",
+  title: "Sign in · Answertally",
+  description: "Sign in to your Answertally workspace.",
 };
 
 export default function LoginPage() {

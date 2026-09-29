@@ -315,7 +315,7 @@ describe("ResendEmailSender", () => {
 
     const sender = new ResendEmailSender({
       apiKey: "test-key",
-      from: "Citeworthy <noreply@test>",
+      from: "Answertally <noreply@test>",
       fetchImpl: fetchImpl as unknown as typeof fetch,
     });
 
@@ -325,7 +325,7 @@ describe("ResendEmailSender", () => {
     expect(fetchImpl).toHaveBeenCalledTimes(1);
 
     const payload = payloadOf(fetchImpl);
-    expect(payload["from"]).toBe("Citeworthy <noreply@test>");
+    expect(payload["from"]).toBe("Answertally <noreply@test>");
     expect(payload["to"]).toEqual(["x@test"]);
   });
 
@@ -334,7 +334,7 @@ describe("ResendEmailSender", () => {
     const fetchImpl = vi.fn(async () => okResponse("msg_2"));
     const sender = new ResendEmailSender({
       apiKey: "test-key",
-      from: "Citeworthy <noreply@test>",
+      from: "Answertally <noreply@test>",
       fetchImpl: fetchImpl as unknown as typeof fetch,
     });
 
@@ -342,7 +342,7 @@ describe("ResendEmailSender", () => {
 
     const payload = payloadOf(fetchImpl);
     expect(payload["from"]).toBe('"Northwind Studio" <noreply@test>');
-    expect(payload["from"]).not.toContain("Citeworthy");
+    expect(payload["from"]).not.toContain("Answertally");
     // Ответ клиента приходит агентству, а не в технический ящик.
     expect(payload["reply_to"]).toEqual(["hello@northwind.test"]);
   });
@@ -350,8 +350,8 @@ describe("ResendEmailSender", () => {
   it("адрес без имени дополняется именем продукта", () => {
     // EMAIL_FROM=noreply@agency.com — законная настройка, но голый адрес в
     // поле «От» читается как машинная рассылка.
-    expect(composeFrom("noreply@citeworthy.app")).toBe('"Citeworthy" <noreply@citeworthy.app>');
-    expect(composeFrom("Citeworthy <noreply@test>")).toBe("Citeworthy <noreply@test>");
+    expect(composeFrom("noreply@answertally.com")).toBe('"Answertally" <noreply@answertally.com>');
+    expect(composeFrom("Answertally <noreply@test>")).toBe("Answertally <noreply@test>");
   });
 
   it("адрес для ответа не может дописать письму лишний заголовок", async () => {
@@ -388,7 +388,7 @@ describe("ResendEmailSender", () => {
     expect(withDisplayName("noreply@test", 'Evil "Co" <x>\r\nBcc: a@b')).toBe(
       '"Evil Co xBcc: a@b" <noreply@test>',
     );
-    expect(withDisplayName("Citeworthy <noreply@test>", '""')).toBe("Citeworthy <noreply@test>");
+    expect(withDisplayName("Answertally <noreply@test>", '""')).toBe("Answertally <noreply@test>");
   });
 
   it("повторяет попытку на 500 и добивается ответа", async () => {

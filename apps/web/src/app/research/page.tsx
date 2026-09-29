@@ -19,7 +19,7 @@ import { HAS_SALES_CONTACT, SalesCta } from "../partners/sales-cta";
  */
 
 export const metadata: Metadata = {
-  title: "Research · Citeworthy",
+  title: "Research · Answertally",
   description:
     "Our first study of how AI assistants answer buyer questions is being run. This page describes the method and what we will publish. No findings yet, and none invented in the meantime.",
 };

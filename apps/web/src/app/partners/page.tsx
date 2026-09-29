@@ -33,7 +33,7 @@ import { SalesCta } from "./sales-cta";
  */
 
 export const metadata: Metadata = {
-  title: "For agencies · Citeworthy",
+  title: "For agencies · Answertally",
   description:
     "Run AI-visibility measurement as your own service: a workspace per client, reports in your brand, priced per client account. You set your own price and keep the client relationship.",
 };

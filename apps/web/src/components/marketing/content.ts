@@ -89,7 +89,7 @@ export const PRICING_NOTES = {
   checkoutLeadDirect:
     "Start with the free audit on a brand you work on. Plans and billing are then set up with us directly; there is no “Buy now” button to pretend with.",
   seoSuite:
-    "Keep your SEO suite. Semrush or Ahrefs stay where your keyword and backlink work lives; Citeworthy is the client-facing AI-visibility layer next to them and does not try to replace them.",
+    "Keep your SEO suite. Semrush or Ahrefs stay where your keyword and backlink work lives; Answertally is the client-facing AI-visibility layer next to them and does not try to replace them.",
 };
 
 /**

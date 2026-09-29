@@ -156,7 +156,7 @@ export function AppShell({
           className="mb-6 flex items-center gap-2 px-2 py-1 text-sm font-semibold tracking-tight"
         >
           <Mark className="size-5" />
-          Citeworthy
+          Answertally
         </Link>
 
         <nav className="flex flex-col">

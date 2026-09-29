@@ -15,9 +15,9 @@ import { SUBPROCESSOR_NOTICE_DAYS } from "@/config/legal";
  */
 
 export const metadata: Metadata = {
-  title: "Data processing terms · Citeworthy",
+  title: "Data processing terms · Answertally",
   description:
-    "How responsibility for your clients' data splits between your agency and Citeworthy.",
+    "How responsibility for your clients' data splits between your agency and Answertally.",
 };
 
 export default function DpaPage() {

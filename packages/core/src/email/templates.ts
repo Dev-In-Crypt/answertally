@@ -13,9 +13,9 @@ import type { EmailMessage } from "./types";
  */
 
 export const EMAIL_COPY = {
-  productName: "Citeworthy",
+  productName: "Answertally",
   /** Отправитель по умолчанию. Домен переопределяется через EMAIL_FROM. */
-  defaultFrom: "Citeworthy <noreply@citeworthy.app>",
+  defaultFrom: "Answertally <noreply@answertally.com>",
 } as const;
 
 export interface InviteEmailInput {

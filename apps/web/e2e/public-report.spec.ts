@@ -17,8 +17,8 @@ const CSV = [
  * иначе проверка инварианта 3 продолжит искать строку, которой больше нет.
  */
 const PRODUCT_BRANDING = [
-  "Citeworthy",
-  "citeworthy",
+  "Answertally",
+  "answertally",
   "northwind-agency.test",
 ] as const;
 

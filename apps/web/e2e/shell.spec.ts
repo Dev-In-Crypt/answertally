@@ -82,7 +82,7 @@ test("the product has an icon and a name on the tab", async ({ page }) => {
    */
   const response = await page.goto("/");
   expect(response?.ok()).toBe(true);
-  await expect(page).toHaveTitle(/Citeworthy/);
+  await expect(page).toHaveTitle(/Answertally/);
 
   const href = await page.locator('link[rel~="icon"]').first().getAttribute("href");
   expect(href, "no favicon is declared").toBeTruthy();

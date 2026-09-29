@@ -25,9 +25,9 @@ import { LIMITS, SPARKTORO_STUDY } from "@/components/marketing/content";
  */
 
 export const metadata: Metadata = {
-  title: "Method · Citeworthy",
+  title: "Method · Answertally",
   description:
-    "How Citeworthy measures AI visibility: repeated samples per question and assistant, ranges and confidence levels, no rank and no single score, and what we never claim.",
+    "How Answertally measures AI visibility: repeated samples per question and assistant, ranges and confidence levels, no rank and no single score, and what we never claim.",
 };
 
 const MEDIUM = SAMPLE_CONFIDENCE_THRESHOLDS.medium;

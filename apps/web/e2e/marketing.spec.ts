@@ -19,11 +19,11 @@ import { collectConsoleErrors } from "./console";
  */
 
 const PAGES = [
-  { path: "/", h1: /Are we in ChatGPT/, title: /Citeworthy/ },
-  { path: "/product", h1: /From the answers assistants give/, title: /Product · Citeworthy/ },
-  { path: "/method", h1: /How we measure/, title: /Method · Citeworthy/ },
-  { path: "/pricing", h1: /Priced per client/, title: /Pricing · Citeworthy/ },
-  { path: "/free-audit", h1: /Audit one of your own clients/, title: /Free audit · Citeworthy/ },
+  { path: "/", h1: /Are we in ChatGPT/, title: /Answertally/ },
+  { path: "/product", h1: /From the answers assistants give/, title: /Product · Answertally/ },
+  { path: "/method", h1: /How we measure/, title: /Method · Answertally/ },
+  { path: "/pricing", h1: /Priced per client/, title: /Pricing · Answertally/ },
+  { path: "/free-audit", h1: /Audit one of your own clients/, title: /Free audit · Answertally/ },
 ] as const;
 
 const usd = (value: number) => `$${value.toLocaleString("en-US")}`;
@@ -94,7 +94,7 @@ test("the header takes a visitor to each marketing page", async ({ page }) => {
     "/method",
   );
 
-  await header.getByRole("link", { name: "Citeworthy home" }).click();
+  await header.getByRole("link", { name: "Answertally home" }).click();
   await expect(page).toHaveURL(/\/$/);
 });
 
@@ -233,7 +233,7 @@ test("the white-label card switches agency and carries nothing of ours", async (
     const cards = page.locator('article[data-testid$="-report"]');
     await expect(cards).toHaveCount(1);
     const inner = await cards.first().evaluate((el) => el.innerHTML.toLowerCase());
-    expect(inner).not.toContain("citeworthy");
+    expect(inner).not.toContain("answertally");
     expect(inner).not.toContain("#4f39f6");
     expect(inner).not.toContain("79, 57, 246");
     // Сокращённый отчёт, а не выдуманный: у настоящего раздел оговорок есть всегда.

@@ -8,7 +8,7 @@ import { SampleFrame } from "../sample-frame";
  * плюс предложение, и подкрашивать его выдуманной работой нельзя.
  */
 export const metadata: Metadata = {
-  title: "Example audit report — Citeworthy",
+  title: "Example audit report — Answertally",
   description:
     "A sample of the free audit: where the client stands in AI answers today, the ranked work behind the gap and the scope proposed for it.",
 };

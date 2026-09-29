@@ -16,7 +16,7 @@ import { FREE_CHECK_ALLOWANCE } from "@repo/core";
  */
 
 export const metadata: Metadata = {
-  title: "Billing and refunds · Citeworthy",
+  title: "Billing and refunds · Answertally",
   description: "How billing works, how to cancel, and when money comes back.",
 };
 

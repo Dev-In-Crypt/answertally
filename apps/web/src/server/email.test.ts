@@ -58,18 +58,18 @@ describe("getEmailSender", () => {
 
 describe("appUrl", () => {
   it("отдаёт абсолютный адрес без хвостовой косой черты", () => {
-    process.env["NEXT_PUBLIC_APP_URL"] = "https://app.citeworthy.test/";
-    expect(appUrl()).toBe("https://app.citeworthy.test");
+    process.env["NEXT_PUBLIC_APP_URL"] = "https://app.answertally.test/";
+    expect(appUrl()).toBe("https://app.answertally.test");
   });
 
   it("берёт адрес авторизации, если своего нет", () => {
     delete process.env["NEXT_PUBLIC_APP_URL"];
-    process.env["BETTER_AUTH_URL"] = "https://auth.citeworthy.test";
-    expect(appUrl()).toBe("https://auth.citeworthy.test");
+    process.env["BETTER_AUTH_URL"] = "https://auth.answertally.test";
+    expect(appUrl()).toBe("https://auth.answertally.test");
   });
 
   it("адрес без схемы отвергается: такая ссылка в письме мертва", () => {
-    process.env["NEXT_PUBLIC_APP_URL"] = "app.citeworthy.test";
+    process.env["NEXT_PUBLIC_APP_URL"] = "app.answertally.test";
     expect(() => appUrl()).toThrow(/NEXT_PUBLIC_APP_URL/);
   });
 });
