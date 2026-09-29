@@ -4,6 +4,7 @@ import {
   extractText,
   openAiCostUsd,
   OpenAiAdapter,
+  DEFAULT_OPENAI_MODEL,
   OPENAI_PRICING,
 } from "./openai";
 
@@ -81,6 +82,15 @@ function adapter(fetchImpl: typeof fetch, overrides: Record<string, unknown> = {
     apiKey: "test-key",
     fetchImpl,
     sleep: () => Promise.resolve(),
+    /**
+     * Модель названа явно, а не взята из умолчания.
+     *
+     * Ответ ниже — запись живого вызова именно gpt-5.6-luna, и стоимость
+     * проверяется по её прайсу. С умолчанием тест пересчитывал бы старую
+     * запись по цене новой модели и падал бы каждый раз, когда умолчание
+     * меняется, — хотя проверяет он не умолчание, а арифметику.
+     */
+    model: "gpt-5.6-luna",
     ...overrides,
   });
 }
@@ -150,6 +160,18 @@ describe("разбор ответа", () => {
 
     expect(extractCitations(payload)).toEqual([]);
     expect(extractText(payload)).toBe("No sources for this one.");
+  });
+});
+
+describe("модель по умолчанию", () => {
+  it("имеет прайс: без него адаптер не стартует вовсе", () => {
+    /**
+     * Стоимость ответа обязана записываться к каждому ответу, поэтому
+     * адаптер отказывается работать с моделью, цены которой не знает.
+     * Поднять умолчание на новую модель и забыть прайс — значит уронить
+     * измерения в бою, а не в тесте.
+     */
+    expect(OPENAI_PRICING[DEFAULT_OPENAI_MODEL]).toBeDefined();
   });
 });
 

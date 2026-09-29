@@ -256,7 +256,14 @@ describe("что предлагается в форме", () => {
 });
 
 describe("оценка расхода", () => {
-  const TRIO: Platform[] = ["chatgpt", "perplexity", "gemini"];
+  /**
+   * Та самая тройка, которой продукт меряет по умолчанию, а не выдуманная.
+   *
+   * Здесь стоял набор с Gemini — он пережил решение перестать его измерять,
+   * и «запускная тройка» в тесте перестала быть запускной тройкой. Берём
+   * набор оттуда же, откуда его берёт продукт.
+   */
+  const TRIO: Platform[] = [...DEFAULT_PLATFORMS];
   const setting = { prompts: 24, assistants: TRIO, samplesPerPrompt: 3 };
 
   it("ответов в месяц — ровно столько, сколько считает конфиг", () => {
@@ -293,14 +300,17 @@ describe("оценка расхода", () => {
       plan: "growth",
       cadence: "weekly",
       prompts: 24,
-      assistants: ["perplexity", "grok"],
+      assistants: ["perplexity", "chatgpt"],
       samplesPerPrompt: 3,
     });
     const dear = estimateSchedule({
       plan: "growth",
       cadence: "weekly",
       prompts: 24,
-      assistants: ["gemini", "claude"],
+      // Grok, а не Gemini: живая проверка 2026-09-29 показала, что дороже
+      // всех именно он. Пара подобрана по сегодняшним ценам, иначе тест
+      // утверждал бы обратное тому, что есть.
+      assistants: ["grok", "claude"],
       samplesPerPrompt: 3,
     });
 

@@ -13,8 +13,19 @@ import { adapterResultSchema } from "./types";
 
 const ENDPOINT = "https://api.openai.com/v1/responses";
 
-/** Модель по умолчанию — самая дешёвая из линейки: нам нужен не стиль, а факт. */
-export const DEFAULT_OPENAI_MODEL = "gpt-5.6-luna";
+/**
+ * Модель по умолчанию — самая дешёвая из линейки: нам нужен не стиль, а факт.
+ *
+ * `gpt-6.1-luna` не существует: в линейке 6.1 вышел только Sol, а Astra
+ * отменили. Самая новая Luna — эта, и она вдвое дешевле прежней
+ * `gpt-5.6-luna` на входе и в 2,4 раза на выходе.
+ *
+ * Смена модели меняет и сами измерения. Она сделана в момент, когда в базе
+ * нет ни одного ответа, — сравнивать не с чем, и разрыва в ряду не возникает.
+ * Дальше версия модели пишется к каждому ответу, поэтому следующая такая
+ * смена будет видна, а не спрятана (инвариант 6).
+ */
+export const DEFAULT_OPENAI_MODEL = "gpt-6-luna";
 
 export type ReasoningEffort = "none" | "low" | "medium" | "high" | "xhigh" | "max";
 
@@ -52,6 +63,13 @@ export interface OpenAiPricing {
 }
 
 export const OPENAI_PRICING: Record<string, OpenAiPricing> = {
+  // Сверено по developers.openai.com/api/docs/pricing, 2026-09-29.
+  "gpt-6-luna": {
+    inputPerMillion: 0.1,
+    cachedInputPerMillion: 0.01,
+    outputPerMillion: 0.5,
+    webSearchPerThousandCalls: 10,
+  },
   "gpt-5.6-luna": {
     inputPerMillion: 0.2,
     cachedInputPerMillion: 0.02,
