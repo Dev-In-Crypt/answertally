@@ -3,6 +3,10 @@ import { ANSWER_PRICES } from "../adapters/pricing";
 import { PLAN_LIMITS } from "../billing/period";
 import type { PlanId } from "../billing/entitlements";
 import { FREE_AUDIT_ASSISTANTS, capabilitiesFor, capabilitiesForAgency } from "./measurement";
+import {
+  defaultAssistantSentence,
+  freeAuditAssistantSentence,
+} from "../adapters/capacity";
 
 /**
  * Что продукт спрашивает до первой оплаты.
@@ -88,5 +92,22 @@ describe("почему набор именно такой", () => {
     const free = cost(FREE_AUDIT_ASSISTANTS);
 
     expect(free * 3).toBeLessThan(full);
+  });
+});
+
+describe("как набор называется на витрине", () => {
+  it("перечисляет по-английски, а не через запятую", () => {
+    /**
+     * «what ChatGPT, Perplexity say about it» — это уже не английский.
+     * На трёх ассистентах запятая сходила с рук, на двух перестала.
+     */
+    expect(freeAuditAssistantSentence()).toBe("ChatGPT and Perplexity");
+    expect(defaultAssistantSentence("starter")).toContain(" and ");
+  });
+
+  it("называет именно бесплатный набор, а не тройку тарифа", () => {
+    // Иначе страница обещает ассистента, которого человек не получит.
+    expect(freeAuditAssistantSentence()).not.toContain("Grok");
+    expect(defaultAssistantSentence("starter")).toContain("Grok");
   });
 });

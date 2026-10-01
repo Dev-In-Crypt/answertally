@@ -77,8 +77,17 @@ function assistantLabel(id: string): string {
   return ASSISTANTS.find((assistant) => assistant.id === id)?.label ?? platformLabel(id);
 }
 
+/**
+ * Перечисление для предложения: «A», «A and B», «A, B and C».
+ *
+ * Простое соединение запятой читалось терпимо, пока наборов было три, и
+ * сломалось на двух: «what ChatGPT, Perplexity say about it» — это уже не
+ * английский. Строки отсюда попадают и на витрину, и в отказ формы.
+ */
 function listed(items: readonly string[]): string {
-  return items.length > 0 ? items.join(", ") : "none";
+  if (items.length === 0) return "none";
+  if (items.length === 1) return items[0]!;
+  return `${items.slice(0, -1).join(", ")} and ${items.at(-1)!}`;
 }
 
 /**
