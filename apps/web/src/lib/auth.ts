@@ -26,6 +26,28 @@ export function deriveAgencyName(email: string): string {
   return words.length > 0 ? words.join(" ") : "My Agency";
 }
 
+/**
+ * Сколько аккаунтов можно завести с одного адреса.
+ *
+ * Своё умолчание у Better Auth — 3 регистрации за 10 секунд. Это защита от
+ * случайного двойного клика, а не от злоупотребления: получается больше
+ * тысячи аккаунтов в час с одного адреса.
+ *
+ * А каждый аккаунт стоит денег. Бесплатный аудит даёт 250 живых проверок,
+ * подтверждения почты нет, и аккаунт заводится на любой адрес — то есть это
+ * единственный наш расход без верхней границы. Час на окно превращает
+ * тысячу аккаунтов в три.
+ *
+ * Не непроходимая стена: адрес меняется. Но она переводит злоупотребление
+ * из «скрипт на минуту» в «нужен список прокси», а вместе с удалением Grok
+ * из бесплатного аудита снижает цену одной попытки с $8.55 до $0.94.
+ *
+ * Счётчики живут в памяти процесса — этого хватает, пока веб один. Второму
+ * инстансу понадобится общее хранилище (`rateLimit.customStorage`), и
+ * Redis для этого в приложении уже есть (`server/redis.ts`).
+ */
+export const SIGNUP_RATE_LIMIT = { window: 3600, max: 3 } as const;
+
 export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET,
   baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
@@ -65,7 +87,10 @@ export const auth = betterAuth({
   },
   // В проде лимит нужен, но e2e делает несколько регистраций подряд с одного адреса
   // и упирается в него — там он отключается явным флагом окружения.
-  rateLimit: { enabled: process.env.DISABLE_RATE_LIMIT !== "true" },
+  rateLimit: {
+    enabled: process.env.DISABLE_RATE_LIMIT !== "true",
+    customRules: { "/sign-up/*": SIGNUP_RATE_LIMIT },
+  },
   databaseHooks: {
     user: {
       create: {
