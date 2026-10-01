@@ -9,10 +9,12 @@ import {
   upsertSubscription,
 } from "@repo/db";
 import { promptClusters, prompts, runSchedules } from "@repo/db/schema/measurement";
+import { subscriptions } from "@repo/db/schema/billing";
 import { eq } from "drizzle-orm";
 import { DEFAULT_PLAN } from "@repo/core";
 import { capabilitiesFor } from "@repo/core/config/measurement";
 import { orchestrateRun, planRunJobs } from "./run-orchestration";
+import { makePaying } from "./test-support";
 
 /** Verify T17: 2 промпта × 3 платформы × 3 сэмпла = ровно 18 ответов, run.status=done. */
 
@@ -52,6 +54,7 @@ describe("orchestrateRun (mock-режим)", () => {
 
   beforeEach(async () => {
     const agency = await createAgency(db, { name: "Run Agency", clientLimit: 10 });
+    await makePaying(db, agency.id);
     agencyId = agency.id;
     const client = await createClient(db, {
       agencyId,
@@ -184,6 +187,32 @@ describe("orchestrateRun (mock-режим)", () => {
 
     expect(outcome.status).toBe("done");
     expect([...new Set(written.map((r) => r.platform))]).toEqual(["chatgpt"]);
+  });
+
+  it("до первой оплаты Grok не спрашивается, даже если стоит в расписании", async () => {
+    /**
+     * Бесплатный аудит — единственное место, где мы платим за ответы, не
+     * получив ничего, и единственное без верхней границы: аккаунт заводится
+     * на любой адрес. Grok стоит $0.1058 за ответ — дороже всех, и это 89%
+     * цены круга по тройке. Один аудит с ним обходится в $8.55, без него в
+     * $0.94.
+     *
+     * Проверяется именно прогон, а не форма: форму можно обойти, а деньги
+     * тратятся здесь.
+     */
+    await db.delete(subscriptions).where(eq(subscriptions.agencyId, agencyId));
+    await db
+      .update(runSchedules)
+      .set({ platforms: ["chatgpt", "perplexity", "grok"] })
+      .where(eq(runSchedules.id, scheduleId));
+
+    const outcome = await orchestrateRun(db, runId, "mock");
+    const written = await listResponsesByRun(db, runId);
+
+    expect(outcome.status).toBe("done");
+    expect([...new Set(written.map((r) => r.platform))].sort()).toEqual(["chatgpt", "perplexity"]);
+    // Что заплатившему Grok достаётся — проверяет соседний тест ниже;
+    // повторять это здесь значило бы завести вторую точку правды.
   });
 
   it("платформа, которую перестали измерять, из старого расписания выпадает", async () => {

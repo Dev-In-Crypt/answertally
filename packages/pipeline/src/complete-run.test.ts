@@ -11,6 +11,7 @@ import {
 import { promptClusters, prompts } from "@repo/db/schema/measurement";
 import { sources } from "@repo/db/schema/sources";
 import { completeRun } from "./complete-run";
+import { makePaying } from "./test-support";
 
 /**
  * Verify T61: одна цепочка доводит прогон до готовой диагностики.
@@ -34,6 +35,7 @@ describe("completeRun", () => {
     await db.delete(sources);
 
     const agency = await createAgency(db, { name: "Audit Agency", clientLimit: 10 });
+    await makePaying(db, agency.id);
     agencyId = agency.id;
 
     const client = await createClient(db, {

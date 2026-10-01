@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { FREE_CHECK_ALLOWANCE, MARKETING_COPY } from "@repo/core";
-import { defaultAssistantSentence } from "@repo/core/adapters/capacity";
+import { freeAuditAssistantSentence } from "@repo/core/adapters/capacity";
 import { AuthForm } from "@/components/auth-form";
 import { MarketingShell } from "@/components/marketing/chrome";
 
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
  * Ассистенты, которых получит новый аккаунт. Регистрация заводит агентство
  * на starter, и называть здесь общую тройку значило бы пообещать лишнее.
  */
-const DEFAULT_ASSISTANTS = defaultAssistantSentence("starter");
+const DEFAULT_ASSISTANTS = freeAuditAssistantSentence();
 
 const INCLUDED = [
   `${FREE_CHECK_ALLOWANCE} free AI checks — one full audit on one brand`,

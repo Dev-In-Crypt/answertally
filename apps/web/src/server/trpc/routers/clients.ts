@@ -19,7 +19,7 @@ import {
   updateClient,
 } from "@repo/db";
 import { assertTenant, protectedProcedure, roleProcedure, router } from "../trpc";
-import { capabilitiesFor } from "@repo/core/config/measurement";
+import { capabilitiesForAgency } from "@repo/core/config/measurement";
 import { entitlementsForAgency } from "../../subscription";
 import { buildWeeklyBrief } from "../../weekly-brief";
 import { droppedAssistants, needsFor } from "../../needs";
@@ -80,7 +80,7 @@ export const clientsRouter = router({
       listPortfolioRows(ctx.db, ctx.user.agencyId, new Date(), PRIORITY_THRESHOLDS.high),
       entitlementsForAgency(ctx.db, ctx.user.agencyId),
     ]);
-    const allowedAssistants = capabilitiesFor(entitlements.plan).assistants;
+    const allowedAssistants = capabilitiesForAgency(entitlements).assistants;
 
     const mapped = rows.map((row) => {
       const gapPp =
@@ -172,7 +172,7 @@ export const clientsRouter = router({
       listPortfolioRows(ctx.db, ctx.user.agencyId, new Date(), PRIORITY_THRESHOLDS.high),
       entitlementsForAgency(ctx.db, ctx.user.agencyId),
     ]);
-    const allowedAssistants = capabilitiesFor(entitlements.plan).assistants;
+    const allowedAssistants = capabilitiesForAgency(entitlements).assistants;
 
     return buildWeeklyBrief(
       rows.map((row) => ({

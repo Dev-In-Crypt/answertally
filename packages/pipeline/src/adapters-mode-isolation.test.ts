@@ -16,6 +16,7 @@ import { completeRun } from "./complete-run";
 import { parseStoredResponse, storeCitations } from "./parse-job";
 import { classifyRunSources } from "./classify-sources";
 import { aggregateClient } from "./aggregate-job";
+import { makePaying } from "./test-support";
 
 /**
  * Фикстуры не должны попадать в метрики клиента, которого меряли по-настоящему.
@@ -40,6 +41,7 @@ describe("изоляция режимов адаптеров", () => {
     await db.delete(sources);
 
     agencyId = (await createAgency(db, { name: "Mode Agency", clientLimit: 10 })).id;
+    await makePaying(db, agencyId);
     const client = await createClient(db, {
       agencyId,
       name: "Pisto",

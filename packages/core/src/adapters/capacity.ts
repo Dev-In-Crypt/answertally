@@ -10,6 +10,7 @@ import {
   monthlyAnswers,
   monthlyCheckAllowance,
   type Cadence,
+  FREE_AUDIT_ASSISTANTS,
   type MeasurementCapabilities,
 } from "../config/measurement";
 
@@ -201,10 +202,18 @@ export interface CapacityOption<T extends string> {
 }
 
 export interface AssistantOption extends CapacityOption<Platform> {
-  /** Разрешён ли он текущим тарифом. */
+  /** Разрешён ли он агентству прямо сейчас. */
   allowed: boolean;
   /** Самый дешёвый тариф, на котором он включается. Есть только у запертых. */
   unlocksOn?: PlanId;
+  /**
+   * Тариф его даёт, но агентство ещё не платило.
+   *
+   * Отдельно от `unlocksOn`, потому что ответ «что делать» другой. Назвать
+   * здесь тариф значило бы написать «starter and up» тому, у кого в шапке
+   * формы и так starter: до первой оплаты план записан, но не оплачен.
+   */
+  needsPlan?: true;
 }
 
 export interface CapacityOptions {
@@ -244,8 +253,17 @@ export type CapabilitiesLookup = (plan: PlanId) => MeasurementCapabilities;
 export function capacityOptions(
   plan: PlanId,
   capabilitiesOf: CapabilitiesLookup = capabilitiesFor,
+  /**
+   * Чем агентство располагает на самом деле. По умолчанию — всё, что даёт
+   * тариф; до первой оплаты набор уже (бесплатный аудит без Grok).
+   *
+   * Отдельно от `capabilitiesOf`, потому что у них разные задачи: этот
+   * говорит, что показать включённым сейчас, а тот ищет, на каком тарифе
+   * недоступное включается. Сложи их в один — и ассистент, выключенный до
+   * оплаты, остался бы без ответа «что сделать, чтобы появился».
+   */
+  capabilities: MeasurementCapabilities = capabilitiesOf(plan),
 ): CapacityOptions {
-  const capabilities = capabilitiesOf(plan);
 
   return {
     plan,
@@ -267,13 +285,17 @@ export function capacityOptions(
       ASSISTANTS.some((assistant) => assistant.id === id && assistant.measurable),
     ).map((id) => {
       const allowed = capabilities.assistants.includes(id);
-      const unlocksOn = allowed ? null : cheapestPlanWith(id, capabilitiesOf);
+      // Тариф его даёт — значит заперт он не тарифом, а тем, что за тариф
+      // ещё не заплатили. Это разные отказы и разные подсказки.
+      const needsPlan = !allowed && capabilitiesOf(plan).assistants.includes(id);
+      const unlocksOn = allowed || needsPlan ? null : cheapestPlanWith(id, capabilitiesOf);
 
       return {
         id,
         label: assistantLabel(id),
         allowed,
         ...(unlocksOn ? { unlocksOn } : {}),
+        ...(needsPlan ? { needsPlan: true as const } : {}),
       };
     }),
     defaultAssistants: capabilities.defaultAssistants,
@@ -293,6 +315,18 @@ export function capacityOptions(
  */
 export function defaultAssistantLabels(plan: PlanId): string[] {
   return capabilitiesFor(plan).defaultAssistants.map(assistantLabel);
+}
+
+/**
+ * Подписи ассистентов бесплатного аудита — через запятую и «and».
+ *
+ * Отдельно от `defaultAssistantSentence`, потому что до первой оплаты набор
+ * другой: Grok туда не входит по цене. Витрина обещает именно бесплатный
+ * аудит, и назвать там тройку тарифа значило бы пообещать ассистента,
+ * которого человек не получит.
+ */
+export function freeAuditAssistantSentence(): string {
+  return listed(FREE_AUDIT_ASSISTANTS.map(assistantLabel));
 }
 
 /** Те же подписи через запятую и «and» перед последней — для предложения. */

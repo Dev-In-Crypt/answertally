@@ -11,6 +11,7 @@ import { promptClusters, prompts, runSchedules } from "@repo/db/schema/measureme
 import { orchestrateRun } from "./run-orchestration";
 import { parseRun } from "./parse-job";
 import { aggregateClient } from "./aggregate-job";
+import { makePaying } from "./test-support";
 
 /** Verify T19 на стороне БД: пересчёт идемпотентен и совпадает с ручным счётом. */
 
@@ -23,6 +24,7 @@ describe("aggregateClient", () => {
 
   beforeEach(async () => {
     const agency = await createAgency(db, { name: "Agg Agency", clientLimit: 10 });
+    await makePaying(db, agency.id);
     agencyId = agency.id;
 
     const client = await createClient(db, {

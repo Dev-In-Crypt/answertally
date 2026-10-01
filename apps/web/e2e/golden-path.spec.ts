@@ -79,7 +79,9 @@ test("golden path: from signup to a verifiable visibility number", async ({ page
 
     const answers = page.getByTestId("responses-list").locator("> li");
     // toHaveCount ждёт загрузки, в отличие от count() — иначе счёт снимается с пустой страницы.
-    await expect(answers).toHaveCount(9); // 3 платформы × 3 сэмпла
+    // 2 платформы × 3 сэмпла: агентство ещё не платило, а бесплатный
+    // аудит меряет ChatGPT и Perplexity — Grok в него не входит по цене.
+    await expect(answers).toHaveCount(6);
     const count = await answers.count();
     total += count;
 
@@ -90,7 +92,8 @@ test("golden path: from signup to a verifiable visibility number", async ({ page
     }
   }
 
-  expect(total).toBe(18);
+  // 2 вопроса × 2 платформы × 3 сэмпла: бесплатный аудит без Grok.
+  expect(total).toBe(12);
   // Доля должна быть дробной: иначе совпадение с обзором ничего не доказывает.
   expect(withClient).toBeGreaterThan(0);
   expect(withClient).toBeLessThan(total);

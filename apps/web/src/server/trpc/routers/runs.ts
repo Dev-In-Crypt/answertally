@@ -11,10 +11,10 @@ import {
 import {
   capacityOptions,
   isCadence,
-  refuseScheduleForPlan,
+  refuseSchedule,
   type Cadence,
 } from "@repo/core/adapters/capacity";
-import { capabilitiesFor } from "@repo/core/config/measurement";
+import { capabilitiesFor, capabilitiesForAgency } from "@repo/core/config/measurement";
 import { completeRun } from "@repo/pipeline";
 import {
   createRun,
@@ -84,7 +84,7 @@ async function assertMeasurementAllowed(
   const decision = canStartMeasurement(
     entitlements,
     counter?.aiChecksUsed ?? 0,
-    run ? plannedChecks(entitlements.plan, run) : 0,
+    run ? plannedChecks(entitlements, run) : 0,
   );
 
   if (!decision.allowed) {
@@ -104,8 +104,12 @@ interface RunSize {
  * на младшем тарифе уже, чем на старших, и считать всем по широкому значило
  * бы отказывать в прогоне, который на самом деле помещается в остаток.
  */
-function plannedChecks(plan: PlanId, { promptCount, schedule }: RunSize): number {
-  const platforms = schedule?.platforms.length || capabilitiesFor(plan).defaultAssistants.length;
+function plannedChecks(
+  entitlements: { plan: PlanId; paying: boolean },
+  { promptCount, schedule }: RunSize,
+): number {
+  const platforms =
+    schedule?.platforms.length || capabilitiesForAgency(entitlements).defaultAssistants.length;
   const samples = schedule?.samplesPerPrompt ?? MIN_SAMPLES_PER_CELL;
   return promptCount * platforms * samples;
 }
@@ -138,7 +142,7 @@ export const runsRouter = router({
       ]);
 
       return {
-        ...capacityOptions(entitlements.plan),
+        ...capacityOptions(entitlements.plan, capabilitiesFor, capabilitiesForAgency(entitlements)),
         /** Активные вопросы клиента — множитель, на который считается оценка. */
         promptCount: prompts.length,
       };
@@ -167,7 +171,7 @@ export const runsRouter = router({
       const entitlements = await entitlementsForAgency(ctx.db, ctx.user.agencyId);
       const prompts = await listActivePromptsForClient(ctx.db, input.clientId);
 
-      const refusal = refuseScheduleForPlan(entitlements.plan, {
+      const refusal = refuseSchedule(capabilitiesForAgency(entitlements), {
         cadence: input.cadence,
         assistants: input.platforms,
         promptCount: prompts.length,

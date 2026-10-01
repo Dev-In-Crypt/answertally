@@ -11,30 +11,32 @@ import {
 } from "@repo/db";
 import type { Database } from "@repo/db";
 import type * as CapacityModule from "@repo/core/adapters/capacity";
+import { capabilitiesForAgency } from "@repo/core/config/measurement";
+import type { PlanId } from "@repo/core";
 import type { SessionUser, TrpcContext } from "./context";
 
 /**
  * Проводка роутера к политике тарифа.
  *
- * Сегодняшний конфиг разрешает всё, и настоящий `refuseScheduleForPlan` не
+ * Сегодняшний конфиг разрешает всё, и настоящий `refuseSchedule` не
  * может отказать: из-за этого проверку в `saveSchedule` можно было вырезать
  * целиком, и ни один тест бы не упал. Менять умолчания нельзя, поэтому здесь
  * подменяется только сама функция отказа — проверяется не политика (её
  * закрепляет `capacity.test.ts` в @repo/core), а то, что роутер её зовёт с
- * тарифом и составом из входа и доносит её ответ до человека.
+ * правами агентства и составом из входа и доносит её ответ до человека.
  *
  * Требует поднятой БД (docker compose up -d && pnpm db:migrate).
  */
 
-const refuseScheduleForPlan = vi.hoisted(() =>
-  vi.fn<(plan: string, request: unknown) => { code: string; message: string } | null>(),
+const refuseSchedule = vi.hoisted(() =>
+  vi.fn<(capabilities: unknown, request: unknown) => { code: string; message: string } | null>(),
 );
 
 vi.mock("@repo/core/adapters/capacity", async (importOriginal) => {
   const actual = await importOriginal<typeof CapacityModule>();
   // Подменяется ровно одна функция: список частот, оценка и ёмкость формы
   // остаются настоящими, иначе тест перестал бы говорить о живом экране.
-  return { ...actual, refuseScheduleForPlan };
+  return { ...actual, refuseSchedule };
 });
 
 const { appRouter } = await import("./root");
@@ -56,7 +58,7 @@ function caller(agencyId: string) {
 describe("роутер расписания и отказ тарифа", () => {
   let agencyId = "";
   let clientId = "";
-  let plan = "";
+  let plan: PlanId = "starter";
 
   beforeAll(async () => {
     const agency = await createAgency(db, { name: "Refusal Agency", clientLimit: 10 });
@@ -88,8 +90,8 @@ describe("роутер расписания и отказ тарифа", () => {
   });
 
   beforeEach(() => {
-    refuseScheduleForPlan.mockReset();
-    refuseScheduleForPlan.mockReturnValue(null);
+    refuseSchedule.mockReset();
+    refuseSchedule.mockReturnValue(null);
   });
 
   it("спрашивает политику о тарифе агентства и о составе из входа", async () => {
@@ -101,8 +103,8 @@ describe("роутер расписания и отказ тарифа", () => {
       active: true,
     });
 
-    expect(refuseScheduleForPlan).toHaveBeenCalledTimes(1);
-    expect(refuseScheduleForPlan).toHaveBeenCalledWith(plan, {
+    expect(refuseSchedule).toHaveBeenCalledTimes(1);
+    expect(refuseSchedule).toHaveBeenCalledWith(capabilitiesForAgency({ plan, paying: false }), {
       cadence: "biweekly",
       assistants: ["chatgpt", "perplexity"],
       // Количество вопросов роутер считает сам — форма его не присылает.
@@ -112,7 +114,7 @@ describe("роутер расписания и отказ тарифа", () => {
 
   it("непустой отказ становится BAD_REQUEST с тем же текстом", async () => {
     const message = "Daily checks are not part of this plan. It runs every two weeks.";
-    refuseScheduleForPlan.mockReturnValue({ code: "cadence", message });
+    refuseSchedule.mockReturnValue({ code: "cadence", message });
 
     const error = await caller(agencyId)
       .runs.saveSchedule({
@@ -142,7 +144,7 @@ describe("роутер расписания и отказ тарифа", () => {
     const before = await getScheduleForClient(db, clientId);
     expect(before).toBeDefined();
 
-    refuseScheduleForPlan.mockReturnValue({ code: "assistant", message: "Gemini is not in plan." });
+    refuseSchedule.mockReturnValue({ code: "assistant", message: "Gemini is not in plan." });
 
     await expect(
       caller(agencyId).runs.saveSchedule({

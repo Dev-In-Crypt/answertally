@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { TRPCError } from "@trpc/server";
 import {
   createAgency,
+  upsertSubscription,
   createClient,
   createDb,
   createPrompt,
@@ -46,6 +47,20 @@ describe("ёмкость расписания", () => {
 
   beforeAll(async () => {
     const agency = await createAgency(db, { name: "Capacity Agency", clientLimit: 10 });
+    /**
+     * Подписка нужна, потому что тест говорит про тариф Starter, а до первой
+     * оплаты набор другой: бесплатный аудит не включает Grok. Без неё тест
+     * проверял бы бесплатный аудит под именем тарифа.
+     */
+    await upsertSubscription(db, {
+      agencyId: agency.id,
+      customerId: `cus_${agency.id.slice(0, 8)}`,
+      subscriptionId: `sub_${agency.id.slice(0, 8)}`,
+      plan: "starter",
+      status: "active",
+      currentPeriodEnd: new Date("2099-01-01T00:00:00.000Z"),
+      cancelAtPeriodEnd: false,
+    });
     agencyId = agency.id;
 
     const client = await createClient(db, {

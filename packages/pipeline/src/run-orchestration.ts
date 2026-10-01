@@ -5,7 +5,7 @@ import {
   type Platform,
 } from "@repo/core";
 import { isMeasurableAssistant } from "@repo/core";
-import { capabilitiesFor } from "@repo/core/config/measurement";
+import { capabilitiesForAgency } from "@repo/core/config/measurement";
 import {
   createResponse,
   countResponsesByRun,
@@ -153,7 +153,17 @@ export async function orchestrateRun(
    * показать это как «видимость» — хуже, чем потратить больше, потому что
    * агентство не узнало бы, что охват неполный.
    */
-  const plan = agencyId ? (await entitlementsForAgency(db, agencyId)).plan : "starter";
+  /**
+   * Не только тариф, но и платит ли агентство.
+   *
+   * До первой оплаты набор уже: Grok стоит дороже всех и в бесплатный
+   * аудит не входит. Брать отсюда один `plan` значило бы платить за него
+   * любому, кто завёл аккаунт на выдуманный адрес.
+   */
+  const entitlements = agencyId
+    ? await entitlementsForAgency(db, agencyId)
+    : { plan: "starter" as const, paying: false };
+  const capabilities = capabilitiesForAgency(entitlements);
   /**
    * Из сохранённого расписания отсеиваются те, кого продукт больше не
    * измеряет.
@@ -174,11 +184,11 @@ export async function orchestrateRun(
    * сделать. Раньше он выглядел там обычной галочкой — и тогда отсекать
    * его здесь было бы тихой подменой.
    */
-  const allowed = new Set<string>(capabilitiesFor(plan).assistants);
+  const allowed = new Set<string>(capabilities.assistants);
   const platforms = (
     schedule
       ? schedule.platforms.filter((id) => isMeasurableAssistant(id) && allowed.has(id))
-      : [...capabilitiesFor(plan).defaultAssistants]
+      : [...capabilities.defaultAssistants]
   ) as Platform[];
   const samples = schedule?.samplesPerPrompt ?? 3;
 

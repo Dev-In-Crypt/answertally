@@ -11,6 +11,7 @@ import {
 } from "@repo/db";
 import { promptClusters, prompts, runSchedules } from "@repo/db/schema/measurement";
 import { orchestrateRun } from "./run-orchestration";
+import { makePaying } from "./test-support";
 
 /** Verify T20: прогон из T17 (18 ответов) увеличивает счётчик ровно на 18. */
 
@@ -32,6 +33,7 @@ describe("usage counters", () => {
 
   beforeEach(async () => {
     const agency = await createAgency(db, { name: "Usage Agency", clientLimit: 10 });
+    await makePaying(db, agency.id);
     agencyId = agency.id;
 
     const client = await createClient(db, {

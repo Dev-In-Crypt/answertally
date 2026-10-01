@@ -150,7 +150,13 @@ export function SchedulePanel({ clientId }: { clientId: string }) {
     ...(options?.assistants ?? []),
     ...platforms
       .filter((id) => !(options?.assistants ?? []).some((option) => option.id === id))
-      .map((id) => ({ id, label: id, allowed: options === undefined, unlocksOn: undefined })),
+      .map((id) => ({
+        id,
+        label: id,
+        allowed: options === undefined,
+        unlocksOn: undefined,
+        needsPlan: undefined,
+      })),
   ];
 
   /**
@@ -219,7 +225,7 @@ export function SchedulePanel({ clientId }: { clientId: string }) {
         <fieldset className="flex flex-col gap-1.5">
           <legend className="text-sm font-medium">Platforms</legend>
           <div className="flex flex-wrap gap-x-4 gap-y-1.5">
-            {assistantOptions.map(({ id, label, allowed, unlocksOn }) => {
+            {assistantOptions.map(({ id, label, allowed, unlocksOn, needsPlan }) => {
               const selected = platforms.includes(id);
               const locked = !allowed && !selected;
               /** Стоит в расписании, но тариф его больше не даёт. */
@@ -242,13 +248,13 @@ export function SchedulePanel({ clientId }: { clientId: string }) {
                     onChange={() => togglePlatform(id)}
                   />
                   {label}
-                  {locked && unlocksOn && (
+                  {locked && (unlocksOn || needsPlan) && (
                     /* Отказ с ответом «что делать», а не серая галочка. */
                     <span
                       data-testid={`assistant-locked-${id}`}
                       className="metric rounded-full bg-muted px-1.5 py-0.5 text-[11px]"
                     >
-                      {unlocksOn} and up
+                      {unlocksOn ? `${unlocksOn} and up` : "any plan"}
                     </span>
                   )}
                   {outsidePlan && (

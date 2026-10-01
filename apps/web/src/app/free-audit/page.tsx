@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { MARKETING_COPY, REPORT_COPY, SAMPLE_AUDIT_REPORT } from "@repo/core";
-import { defaultAssistantSentence } from "@repo/core/adapters/capacity";
+import { freeAuditAssistantSentence } from "@repo/core/adapters/capacity";
 import { Faq, MethodLink, SecHead, TalkOrAudit } from "@/components/marketing/bits";
 import { MarketingShell } from "@/components/marketing/chrome";
 import { AUDIT_STEPS, checkoutCopy, SALES_CONTACT } from "@/components/marketing/content";
@@ -28,7 +28,7 @@ import { ReportPreview } from "@/components/marketing/report-preview";
  * тройка, а не общая: назвать её литералом
  * значило бы пообещать ассистента, которого на этом тарифе нет.
  */
-const FREE_TRIO = defaultAssistantSentence("starter");
+const FREE_TRIO = freeAuditAssistantSentence();
 
 export const metadata: Metadata = {
   title: "Free audit · Answertally",
@@ -44,7 +44,7 @@ function faqItems(paymentsOn: boolean) {
   },
   {
     q: "Which assistants does the audit use?",
-    a: `${FREE_TRIO}, each with its own cited sources. Claude comes with Growth and can be switched on per client. ${MARKETING_COPY.notMeasuredSurfaces}`,
+    a: `${FREE_TRIO}, each with its own cited sources. Grok comes with any paid plan, Claude with Growth, and both can be switched on per client. ${MARKETING_COPY.notMeasuredSurfaces}`,
   },
   {
     q: "What happens right after the audit?",
