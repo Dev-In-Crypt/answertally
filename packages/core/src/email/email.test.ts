@@ -4,6 +4,7 @@ import {
   EMAIL_COPY,
   inviteEmail,
   passwordResetEmail,
+  verifyEmailEmail,
   reportReadyEmail,
   type InviteEmailInput,
   type PasswordResetEmailInput,
@@ -52,8 +53,14 @@ const REPORT: ReportReadyEmailInput = {
  * руками его вести нельзя — четвёртое письмо просто не попало бы в общие
  * проверки, и никто бы этого не заметил.
  */
+const VERIFY = {
+  to: "owner@northwind.test",
+  verifyUrl: "https://app.test/verify-email?token=abc",
+};
+
 const SAMPLES: Record<string, EmailMessage> = {
   inviteEmail: inviteEmail(INVITE),
+  verifyEmailEmail: verifyEmailEmail(VERIFY),
   passwordResetEmail: passwordResetEmail(RESET),
   reportReadyEmail: reportReadyEmail(REPORT),
 };
@@ -93,6 +100,17 @@ describe("email templates", () => {
     expect(message.text).toMatch(/ignore this email/i);
     expect(message.html).toMatch(/ignore this email/i);
     // Ящика для ответа здесь нет намеренно — на такое письмо не отвечают.
+    expect(message.replyTo).toBeUndefined();
+  });
+
+  it("письмо с подтверждением адреса говорит, чем кончится бездействие", () => {
+    const message = verifyEmailEmail(VERIFY);
+
+    expect(message.text).toContain("https://app.test/verify-email?token=abc");
+    // Тот, кто не регистрировался, должен понять, что делать: ничего.
+    expect(message.text).toMatch(/ignore this email/i);
+    expect(message.html).toMatch(/ignore this email/i);
+    // Ящика для ответа нет: рядом со ссылкой он приманка для самозванца.
     expect(message.replyTo).toBeUndefined();
   });
 
@@ -142,6 +160,7 @@ describe("email templates", () => {
       /absolute/i,
     );
     expect(() => reportReadyEmail({ ...REPORT, reportUrl: "" })).toThrow(/reportUrl/);
+    expect(() => verifyEmailEmail({ ...VERIFY, verifyUrl: "/verify" })).toThrow(/absolute/i);
   });
 
   it("имя агентства в HTML экранируется", () => {

@@ -16,6 +16,8 @@ export function AuthForm({ mode, lockedEmail }: { mode: Mode; lockedEmail?: stri
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  /** Адрес, на который ушло письмо с подтверждением. Null — подтверждать не нужно. */
+  const [awaitingEmail, setAwaitingEmail] = useState<string | null>(null);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -34,8 +36,34 @@ export function AuthForm({ mode, lockedEmail }: { mode: Mode; lockedEmail?: stri
       return;
     }
 
+    /**
+     * Пустая сессия после регистрации означает, что адрес ждёт подтверждения:
+     * сервер завёл аккаунт, но входить не дал. Уводить такого человека на
+     * панель нельзя — она отправит его обратно на вход, и он решит, что
+     * регистрация не прошла.
+     */
+    if (mode === "signup" && !result.data?.token) {
+      setAwaitingEmail(email);
+      return;
+    }
+
     router.push("/dashboard");
     router.refresh();
+  }
+
+  if (awaitingEmail) {
+    return (
+      <div data-testid="verify-email-sent" className="flex flex-col gap-3">
+        <h2 className="text-lg font-medium">Confirm your email</h2>
+        <p className="text-sm text-muted-foreground">
+          We sent a link to <span className="font-medium">{awaitingEmail}</span>. Open it to finish
+          setting up the account — you will not be able to sign in until you do.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          Nothing arrived? Check the spam folder, then try signing up again.
+        </p>
+      </div>
+    );
   }
 
   return (

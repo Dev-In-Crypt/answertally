@@ -90,6 +90,44 @@ export function passwordResetEmail(input: PasswordResetEmailInput): EmailMessage
   };
 }
 
+export interface VerifyEmailInput {
+  to: string;
+  verifyUrl: string;
+}
+
+/**
+ * Письмо с подтверждением адреса при регистрации.
+ *
+ * Нужно не из вежливости: до подтверждения аккаунт не входит, а бесплатный
+ * аудит стоит нам живых вызовов. Адрес, который невозможно открыть, —
+ * главный признак того, что аккаунт заводят пачками.
+ *
+ * Адреса для ответа нет по той же причине, что и у смены пароля: живой ящик
+ * рядом со ссылкой — приманка для того, кто выдаст себя за поддержку.
+ */
+export function verifyEmailEmail(input: VerifyEmailInput): EmailMessage {
+  const verifyUrl = requireAbsoluteUrl(input.verifyUrl, "verifyUrl");
+
+  const text = [
+    `Confirm this address to finish setting up your ${EMAIL_COPY.productName} account.`,
+    "",
+    `Confirm your email: ${verifyUrl}`,
+    "",
+    "If you did not sign up, ignore this email — the account stays unusable until the link is opened.",
+  ].join("\n");
+
+  return {
+    to: input.to,
+    subject: `Confirm your email for ${EMAIL_COPY.productName}`,
+    text,
+    html: paragraphs([
+      `Confirm this address to finish setting up your ${EMAIL_COPY.productName} account.`,
+      `<a href="${escapeHtml(verifyUrl)}">Confirm your email</a>`,
+      "If you did not sign up, ignore this email — the account stays unusable until the link is opened.",
+    ]),
+  };
+}
+
 export interface ReportReadyEmailInput {
   to: string;
   agencyName: string;

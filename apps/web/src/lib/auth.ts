@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { passwordResetEmail } from "@repo/core";
+import { passwordResetEmail, verifyEmailEmail } from "@repo/core";
+import { requiresEmailVerification } from "@/lib/email-verification";
 import {
   accounts,
   agencies,
@@ -59,8 +60,16 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
-    // Верификация почты не входит в MVP: агентство заводит аккаунт и сразу работает.
-    requireEmailVerification: false,
+    /**
+     * До подтверждения адреса аккаунт не входит.
+     *
+     * Это единственное место, где мы платим за человека, ничего о нём не
+     * зная: бесплатный аудит — живые вызовы, а аккаунт заводится на любую
+     * строку с собакой. Непроходимой стеной подтверждение не будет —
+     * одноразовые ящики существуют, — но превращает «скрипт на минуту» в
+     * ручную работу.
+     */
+    requireEmailVerification: requiresEmailVerification(),
     /**
      * Сброс пароля обязателен даже без почтового транспорта: без него человек,
      * забывший пароль, теряет доступ к агентству навсегда. В режиме без ключа
@@ -68,6 +77,17 @@ export const auth = betterAuth({
      */
     sendResetPassword: async ({ user, url }) => {
       await getEmailSender().send(passwordResetEmail({ to: user.email, resetUrl: url }));
+    },
+  },
+  emailVerification: {
+    /**
+     * Письмо уходит при регистрации само. Отдельного выключателя нет: по
+     * умолчанию Better Auth шлёт его ровно тогда, когда подтверждение
+     * требуется, и разводить эти два решения значило бы завести состояние
+     * «требуем, но не отправляем».
+     */
+    sendVerificationEmail: async ({ user, url }) => {
+      await getEmailSender().send(verifyEmailEmail({ to: user.email, verifyUrl: url }));
     },
   },
   user: {
