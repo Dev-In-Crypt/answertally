@@ -143,3 +143,19 @@ test("an unknown or expired link says so instead of failing", async ({ browser }
 
   await anonymous.close();
 });
+
+test("a revoked link stops opening the report", async ({ page, browser }) => {
+  // Пересланная ссылка открывала отчёт клиента навсегда; теперь агентство
+  // может её отозвать — так обещано в политике конфиденциальности.
+  const { token } = await setUpAgencyWithReport(page);
+
+  await page.getByRole("button", { name: "Revoke link" }).click();
+  await expect(page.getByTestId("share-link")).toHaveCount(0);
+
+  const anonymous = await browser.newContext();
+  const anonPage = await anonymous.newPage();
+  await anonPage.goto(`/r/${token}`);
+  await expect(anonPage.getByText("This link is no longer valid")).toBeVisible();
+
+  await anonymous.close();
+});

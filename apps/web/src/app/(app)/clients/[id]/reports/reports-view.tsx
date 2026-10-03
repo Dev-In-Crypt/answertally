@@ -147,17 +147,20 @@ export function ReportsView({ clientId }: { clientId: string }) {
                 )}
 
                 {token && (
-                  <p data-testid="share-link" className="break-all text-sm text-muted-foreground">
-                    {/* Ссылка показывается целиком: агентство отправит её само,
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p data-testid="share-link" className="break-all text-sm text-muted-foreground">
+                      {/* Ссылка показывается целиком: агентство отправит её само,
                         автоматической рассылки в продукте нет. */}
-                    <a
-                      href={reportUrl(token, { origin })}
-                      target="_blank"
-                      rel="noreferrer noopener"
-                      className="text-primary underline-offset-4 hover:underline"
-                    >
-                      {reportUrl(token, { origin })}
-                    </a>{" "}
+                      <a
+                        href={reportUrl(token, { origin })}
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        className="text-primary underline-offset-4 hover:underline"
+                      >
+                        {reportUrl(token, { origin })}
+                      </a>
+                    </p>
+                    {/* Кнопка вне строки ссылки: строку копируют целиком. */}
                     <button
                       type="button"
                       data-testid={`revoke-${report.id}`}
@@ -167,7 +170,7 @@ export function ReportsView({ clientId }: { clientId: string }) {
                     >
                       Revoke link
                     </button>
-                  </p>
+                  </div>
                 )}
               </li>
             );
