@@ -1,6 +1,6 @@
 import type { AdapterOptions, AdapterResult, PlatformAdapter } from "./types";
 import { adapterResultSchema } from "./types";
-import { defaultSleep, postJson } from "./http";
+import { defaultSleep, MAX_ANSWER_OUTPUT_TOKENS, MAX_SEARCHES_PER_ANSWER, postJson } from "./http";
 import { extractCitations, extractText } from "./openai";
 
 /**
@@ -62,11 +62,7 @@ export interface GrokUsage {
  * или в фантомную прибыль. Поэтому считаем сами, а сверка со счётом —
  * ручная.
  */
-export function grokCostUsd(
-  usage: GrokUsage,
-  searchCalls: number,
-  pricing: GrokPricing,
-): number {
+export function grokCostUsd(usage: GrokUsage, searchCalls: number, pricing: GrokPricing): number {
   const total =
     ((usage.input_tokens ?? 0) / 1_000_000) * pricing.inputPerMillion +
     ((usage.output_tokens ?? 0) / 1_000_000) * pricing.outputPerMillion +
@@ -166,6 +162,10 @@ export class GrokAdapter implements PlatformAdapter {
       model: this.model,
       input: prompt,
       tools: [{ type: "web_search" }],
+      max_output_tokens: MAX_ANSWER_OUTPUT_TOKENS,
+      // У xAI потолок — на ходы агента, а не на отдельные поиски: за ход
+      // модель может искать параллельно. Ближайший доступный рычаг.
+      max_turns: MAX_SEARCHES_PER_ANSWER,
       ...(instructions ? { instructions } : {}),
     });
 

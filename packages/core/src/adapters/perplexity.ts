@@ -1,6 +1,6 @@
 import type { AdapterOptions, AdapterResult, Citation, PlatformAdapter } from "./types";
 import { adapterResultSchema } from "./types";
-import { defaultSleep, postJson } from "./http";
+import { defaultSleep, MAX_ANSWER_OUTPUT_TOKENS, postJson } from "./http";
 
 /**
  * Живой адаптер Perplexity: Agent API (`POST /v1/agent`) с пресетом.
@@ -254,6 +254,8 @@ export class PerplexityAdapter implements PlatformAdapter {
       body: JSON.stringify({
         preset: this.preset,
         input: prompt,
+        // Число шагов задаёт пресет; здесь — потолок длины ответа.
+        max_output_tokens: MAX_ANSWER_OUTPUT_TOKENS,
         ...(instructions ? { instructions } : {}),
       }),
       fetchImpl: this.fetchImpl,

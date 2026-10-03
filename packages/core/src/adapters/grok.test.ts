@@ -99,12 +99,20 @@ describe("GrokAdapter", () => {
     await adapter(fetchImpl as unknown as typeof fetch).execute("best CRM for startups");
 
     const [url, init] = fetchImpl.mock.calls[0] as [string, RequestInit];
-    const body = JSON.parse(init.body as string) as { tools: unknown[]; input: string };
+    const body = JSON.parse(init.body as string) as {
+      tools: unknown[];
+      input: string;
+      max_output_tokens: number;
+      max_turns: number;
+    };
 
     expect(url).toBe("https://api.x.ai/v1/responses");
     expect((init.headers as Record<string, string>)["Authorization"]).toBe("Bearer test-key");
     expect(body.tools).toEqual([{ type: "web_search" }]);
     expect(body.input).toBe("best CRM for startups");
+    // Вопрос задаёт агентство — длина ответа и число ходов ограничены.
+    expect(body.max_output_tokens).toBe(8000);
+    expect(body.max_turns).toBe(5);
   });
 
   it("повторяет попытку на 429", async () => {

@@ -230,10 +230,15 @@ describe("OpenAiAdapter", () => {
     const body = JSON.parse((fetchImpl.mock.calls[0]?.[1] as RequestInit).body as string) as {
       tools: { type: string }[];
       model: string;
+      max_output_tokens: number;
+      max_tool_calls: number;
     };
 
     expect(body.tools).toEqual([{ type: "web_search" }]);
     expect(body.model).toBe("gpt-5.6-luna");
+    // Вопрос задаёт агентство: «сделай тридцать поисков» не должно проходить.
+    expect(body.max_output_tokens).toBe(8000);
+    expect(body.max_tool_calls).toBe(5);
   });
 
   it("повторяет попытку на 429 и отдаёт результат", async () => {
