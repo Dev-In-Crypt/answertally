@@ -98,10 +98,7 @@ export class StripePaymentProvider implements PaymentProvider {
       ...(input.customerId ? { customer: input.customerId } : { customer_email: input.email }),
     };
 
-    const session = await this.post<{ id: string; url: string | null }>(
-      "/checkout/sessions",
-      form,
-    );
+    const session = await this.post<{ id: string; url: string | null }>("/checkout/sessions", form);
     if (!session.url) {
       throw new Error("Stripe created a checkout session without a URL.");
     }
@@ -150,9 +147,11 @@ export class StripePaymentProvider implements PaymentProvider {
       "items[0][price]": price,
       "items[0][quantity]": "1",
       proration_behavior: "always_invoice",
-      // Неудачное списание не должно молча оставить агентство на старом
-      // тарифе: подписка уходит в past_due, и это видно по вебхуку.
-      payment_behavior: "allow_incomplete",
+      // Новый тариф — только после оплаты разницы. С allow_incomplete Stripe
+      // применял цену сразу и уводил подписку в past_due при отказе карты:
+      // повышение до Scale с заведомо пустой картой давало Scale на весь
+      // период и отсрочку сверху.
+      payment_behavior: "pending_if_incomplete",
     });
   }
 
@@ -265,11 +264,43 @@ export class StripePaymentProvider implements PaymentProvider {
         };
       }
 
+      /**
+       * Полный возврат денег закрывает доступ.
+       *
+       * Иначе «оплатить и сразу вернуть деньги» оставляло платный тариф до
+       * конца периода — а с ним и наши расходы на ответы. Частичный возврат
+       * доступ не трогает: это скидка, а не отказ.
+       *
+       * Спор по карте (`charge.dispute.created`) сюда не входит: у объекта
+       * спора нет плательщика, только списание, и связать его с агентством
+       * без второго запроса нельзя. Stripe в продукте доживает; у его
+       * замены спор приходит с плательщиком — см. `PaymentProvider`.
+       */
+      case "charge.refunded": {
+        const object = event.data.object as StripeCharge;
+        const fullRefund =
+          (object.amount_refunded ?? 0) >= (object.amount ?? Number.POSITIVE_INFINITY);
+        if (!fullRefund || !object.customer) {
+          return { kind: "ignored", type: event.type, reason: "A partial refund keeps the plan." };
+        }
+        return {
+          kind: "subscription",
+          agencyId: null,
+          customerId: asId(object.customer),
+          subscriptionId: null,
+          plan: null,
+          status: "canceled",
+          currentPeriodEnd: null,
+          cancelAtPeriodEnd: false,
+          unknownFields: UNKNOWN_EXCEPT_STATUS,
+        };
+      }
+
       default:
         return {
           kind: "ignored",
           type: event.type,
-          reason: "The product only reacts to checkout, subscription and invoice events.",
+          reason: "The product only reacts to checkout, subscription, invoice and refund events.",
         };
     }
   }
@@ -352,6 +383,13 @@ interface StripeSubscriptionItem {
  * `subscription`, после — в `parent.subscription_details`. Читаются оба:
  * версия API задаётся в кабинете Stripe, а не в этом коде.
  */
+/** Списание — для `charge.refunded`. */
+interface StripeCharge {
+  customer?: string | { id: string } | null;
+  amount?: number;
+  amount_refunded?: number;
+}
+
 interface StripeInvoice {
   id?: string;
   customer: string | { id: string };

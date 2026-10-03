@@ -198,6 +198,22 @@ describe("parseEvent", () => {
     });
   });
 
+  it("полный возврат денег закрывает подписку, частичный — нет", async () => {
+    const full = await parse({
+      id: "evt_r1",
+      type: "charge.refunded",
+      data: { object: { customer: "cus_9", amount: 49900, amount_refunded: 49900 } },
+    });
+    expect(full).toMatchObject({ kind: "subscription", customerId: "cus_9", status: "canceled" });
+
+    const partial = await parse({
+      id: "evt_r2",
+      type: "charge.refunded",
+      data: { object: { customer: "cus_9", amount: 49900, amount_refunded: 1000 } },
+    });
+    expect(partial).toMatchObject({ kind: "ignored" });
+  });
+
   it("остальные события пропускаются осознанно", async () => {
     const result = await parse({ id: "evt_5", type: "invoice.paid", data: { object: {} } });
 
@@ -257,7 +273,11 @@ describe("parseEvent", () => {
       },
     });
 
-    expect(result).toMatchObject({ kind: "subscription", status: "active", subscriptionId: "sub_4" });
+    expect(result).toMatchObject({
+      kind: "subscription",
+      status: "active",
+      subscriptionId: "sub_4",
+    });
   });
 
   it("счёт старого формата тоже находит подписку", async () => {
@@ -385,6 +405,8 @@ describe("changePlan", () => {
     expect(form.get("items[0][id]")).toBe("si_Na6dzxczY5fwHx");
     expect(form.get("items[0][price]")).toBe("price_scale");
     expect(form.get("proration_behavior")).toBe("always_invoice");
+    // Новый тариф — только после оплаты разницы, а не сразу с просрочкой.
+    expect(form.get("payment_behavior")).toBe("pending_if_incomplete");
     // Ни одного запроса на создание новой подписки или нового checkout.
     expect(fetchImpl.mock.calls).toHaveLength(2);
   });

@@ -13,12 +13,7 @@ import { PLAN_LIMITS, type PlanLimits } from "./period";
 
 export type PlanId = keyof typeof PLAN_LIMITS;
 
-export type SubscriptionStatus =
-  | "trialing"
-  | "active"
-  | "past_due"
-  | "canceled"
-  | "incomplete";
+export type SubscriptionStatus = "trialing" | "active" | "past_due" | "canceled" | "incomplete";
 
 export interface SubscriptionSnapshot {
   plan: PlanId;
@@ -34,6 +29,11 @@ export interface SubscriptionSnapshot {
    * Условия — `billing/partner.ts`.
    */
   extraClientAccounts?: number;
+  /**
+   * Когда подписка ушла в просрочку — от этого считается отсрочка. Пусто у
+   * записей, сделанных до появления поля: для них остаётся конец периода.
+   */
+  pastDueSince?: Date | null;
 }
 
 export interface Entitlements extends PlanLimits {
@@ -114,8 +114,12 @@ export function entitlementsFor(
       // бесконечная отсрочка: отсчитывать её не от чего. Трактовать пустоту
       // в пользу доступа значит выдать бессрочную бесплатную работу тому, у
       // кого платёж не прошёл, а оплаченного периода в базе нет.
-      const deadline = subscription.currentPeriodEnd
-        ? new Date(subscription.currentPeriodEnd.getTime() + PAST_DUE_GRACE_DAYS * 86_400_000)
+      // От начала просрочки, а не от конца периода: при продлении провайдер
+      // сдвигает конец периода вперёд ещё до списания, и неудачное
+      // продление давало месяц сверху к отсрочке.
+      const graceFrom = subscription.pastDueSince ?? subscription.currentPeriodEnd;
+      const deadline = graceFrom
+        ? new Date(graceFrom.getTime() + PAST_DUE_GRACE_DAYS * 86_400_000)
         : null;
       const withinGrace = deadline !== null && now.getTime() <= deadline.getTime();
 
@@ -300,7 +304,8 @@ export function canStartMeasurement(
   if ((context.runsInFlight ?? 0) > 0) {
     return {
       allowed: false,
-      message: "Your audit is still running. It covers one brand — once it finishes, you can read it in full.",
+      message:
+        "Your audit is still running. It covers one brand — once it finishes, you can read it in full.",
     };
   }
 

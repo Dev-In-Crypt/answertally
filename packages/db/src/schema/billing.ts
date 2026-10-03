@@ -99,6 +99,14 @@ export const subscriptions = pgTable(
      * события вовсе); такое состояние перезаписывается любым событием.
      */
     lastEventAt: timestamp("last_event_at", { withTimezone: true }),
+    /**
+     * Когда подписка ушла в просрочку. Отсрочка считается от этого момента.
+     *
+     * Раньше — от конца оплаченного периода, а при продлении провайдер
+     * сдвигает его вперёд до списания: неудачное продление давало около
+     * сорока четырёх дней работы вместо четырнадцати. Пусто вне просрочки.
+     */
+    pastDueSince: timestamp("past_due_since", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },

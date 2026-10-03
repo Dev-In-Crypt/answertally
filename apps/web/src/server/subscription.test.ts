@@ -112,6 +112,79 @@ describe("applySubscriptionChange", () => {
     const entitlements = await entitlementsForAgency(db, agencyId);
     expect(entitlements.active).toBe(false);
   });
+
+  it("поздний checkout или счёт не воскрешает отменённую подписку", async () => {
+    // «Оплатить и сразу отменить» при поздней доставке давало вечный active.
+    const customerId = "cus_revive";
+    await applySubscriptionChange(db, change({ agencyId, customerId, plan: "scale" }));
+    await applySubscriptionChange(
+      db,
+      change({ agencyId, customerId, plan: "scale", status: "canceled" }),
+    );
+
+    const outcome = await applySubscriptionChange(
+      db,
+      change({ agencyId, customerId, plan: null, status: "active", unknownFields: ["plan"] }),
+    );
+
+    expect(outcome.applied).toBe(false);
+    expect((await getSubscriptionByAgency(db, agencyId))?.status).toBe("canceled");
+  });
+
+  it("новая подписка после отмены принимается", async () => {
+    const customerId = "cus_again";
+    await applySubscriptionChange(db, change({ agencyId, customerId, status: "canceled" }));
+
+    const outcome = await applySubscriptionChange(
+      db,
+      change({ agencyId, customerId, subscriptionId: "sub_2", plan: "growth" }),
+    );
+
+    expect(outcome).toMatchObject({ applied: true, status: "active" });
+  });
+
+  it("событие чужой подписки того же плательщика не трогает действующую", async () => {
+    const customerId = "cus_two";
+    await applySubscriptionChange(db, change({ agencyId, customerId, plan: "scale" }));
+
+    const outcome = await applySubscriptionChange(
+      db,
+      change({
+        agencyId,
+        customerId,
+        subscriptionId: "sub_old",
+        plan: "starter",
+        status: "canceled",
+      }),
+    );
+
+    expect(outcome.applied).toBe(false);
+    expect((await getSubscriptionByAgency(db, agencyId))?.plan).toBe("scale");
+  });
+
+  it("отсрочка считается от сбоя оплаты, а не от сдвинутого конца периода", async () => {
+    // При продлении конец периода уезжает на месяц вперёд до списания —
+    // от него отсрочка была бы сорок четыре дня вместо четырнадцати.
+    const customerId = "cus_grace";
+    const failedAt = new Date(Date.now() - 20 * 86_400_000);
+    await applySubscriptionChange(db, change({ agencyId, customerId, plan: "scale" }));
+    await applySubscriptionChange(
+      db,
+      change({
+        agencyId,
+        customerId,
+        plan: "scale",
+        status: "past_due",
+        currentPeriodEnd: new Date(Date.now() + 10 * 86_400_000),
+      }),
+      failedAt,
+    );
+
+    expect((await getSubscriptionByAgency(db, agencyId))?.pastDueSince?.getTime()).toBe(
+      failedAt.getTime(),
+    );
+    expect((await entitlementsForAgency(db, agencyId)).active).toBe(false);
+  });
 });
 
 describe("clients.create against the plan", () => {

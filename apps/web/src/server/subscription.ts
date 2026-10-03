@@ -70,6 +70,31 @@ export async function applySubscriptionChange(
   // «записано до того, как мы это отслеживали», и запись не блокирует.
   const carriesPlan = change.plan !== null;
 
+  // Событие другой подписки того же плательщика (старой или второй) не
+  // переписывает действующую. Новая подписка после отмены — законна.
+  const otherSubscription =
+    known?.subscriptionId &&
+    change.subscriptionId &&
+    known.subscriptionId !== change.subscriptionId &&
+    known.status !== "canceled";
+  if (otherSubscription) {
+    return { applied: false, reason: "The event belongs to another subscription." };
+  }
+
+  // Отменённую подписку не воскрешает событие без тарифа (завершённый
+  // checkout, оплаченный счёт), пришедшее после отмены: иначе «оплатить и
+  // сразу отменить» при поздней доставке давало вечный «active».
+  const sameSubscription =
+    !change.subscriptionId || change.subscriptionId === known?.subscriptionId;
+  if (
+    known?.status === "canceled" &&
+    change.status !== "canceled" &&
+    !carriesPlan &&
+    sameSubscription
+  ) {
+    return { applied: false, reason: "A cancelled subscription is not revived by this event." };
+  }
+
   if (
     carriesPlan &&
     occurredAt &&
@@ -95,6 +120,13 @@ export async function applySubscriptionChange(
     // её тем же значением — `upsertSubscription` обновляет это поле наравне
     // с прочими, и не передать его значило бы стереть.
     lastEventAt: carriesPlan ? occurredAt : (known?.lastEventAt ?? null),
+    // Начало просрочки — первое событие о ней; повторные его не сдвигают.
+    pastDueSince:
+      change.status === "past_due"
+        ? known?.status === "past_due"
+          ? (known.pastDueSince ?? occurredAt ?? new Date())
+          : (occurredAt ?? new Date())
+        : null,
   });
 
   // Поля агентства — производные от подписки, и они должны следовать за ней:
@@ -107,6 +139,7 @@ export async function applySubscriptionChange(
     // Докупленные аккаунты — из сохранённой записи: событие провайдера их не
     // несёт, и потерять их здесь значит отрезать агентству клиентов.
     extraClientAccounts: saved.extraClientAccounts,
+    pastDueSince: saved.pastDueSince,
   });
 
   await applyPlanToAgency(db, agencyId, entitlements.plan, entitlements.clientLimit);
