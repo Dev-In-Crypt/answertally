@@ -183,6 +183,13 @@
       "when": 1791059515309,
       "tag": "0025_fluffy_typhoid_mary",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1791059893839,
+      "tag": "0026_brainy_vulcan",
+      "breakpoints": true
     }
   ]
 }

@@ -2,7 +2,7 @@ import { and, desc, eq, gt, gte, inArray, isNotNull, isNull, lte, sql, type AnyC
 import type { Database } from "./client";
 import { agencies, clients, users } from "./schema/tenancy";
 import type { Agency, Client, NewClient, User } from "./schema/tenancy";
-import { apiKeys, invitations } from "./schema/auth";
+import { apiKeys, invitations, sessions } from "./schema/auth";
 import type { ApiKey, NewApiKey } from "./schema/auth";
 import { assistantTraffic } from "./schema/analytics";
 import type { AssistantTraffic, NewAssistantTraffic } from "./schema/analytics";
@@ -2004,7 +2004,50 @@ export async function deletePrompt(db: Database, promptId: string): Promise<void
 }
 
 export async function listUsersByAgency(db: Database, agencyId: string): Promise<User[]> {
-  return db.select().from(users).where(eq(users.agencyId, agencyId));
+  return db
+    .select()
+    .from(users)
+    .where(and(eq(users.agencyId, agencyId), isNull(users.deactivatedAt)));
+}
+
+export async function getUserById(db: Database, userId: string): Promise<User | undefined> {
+  const rows = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+  return rows[0];
+}
+
+/**
+ * Убрать участника из агентства: отметка вместо удаления и отзыв всех его
+ * входов. Без этого ушедший сотрудник сохранял доступ ко всем клиентам
+ * агентства — сессия продлевалась сама, пока ею пользовались.
+ */
+export async function deactivateUser(db: Database, userId: string, agencyId: string): Promise<void> {
+  await db
+    .update(users)
+    .set({ deactivatedAt: new Date() })
+    .where(and(eq(users.id, userId), eq(users.agencyId, agencyId)));
+  await db.delete(sessions).where(eq(sessions.userId, userId));
+}
+
+export async function setUserRole(
+  db: Database,
+  userId: string,
+  agencyId: string,
+  role: "admin" | "member",
+): Promise<void> {
+  await db
+    .update(users)
+    .set({ role })
+    .where(and(eq(users.id, userId), eq(users.agencyId, agencyId)));
+}
+
+/** Отозвать приглашение — срок истекает сейчас, ссылка перестаёт работать. */
+export async function revokeInvitation(db: Database, id: string, agencyId: string): Promise<void> {
+  await db
+    .update(invitations)
+    // На секунду в прошлом: проверки сравнивают «раньше, чем сейчас», и
+    // отзыв в ту же миллисекунду не должен оставить ссылку живой.
+    .set({ expiresAt: new Date(Date.now() - 1000) })
+    .where(and(eq(invitations.id, id), eq(invitations.agencyId, agencyId)));
 }
 
 /**

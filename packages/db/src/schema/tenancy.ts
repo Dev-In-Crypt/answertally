@@ -38,6 +38,11 @@ export const users = pgTable(
     // Поля ниже требует Better Auth (таблица users выступает его user-моделью).
     emailVerified: boolean("email_verified").notNull().default(false),
     image: text("image"),
+    /**
+     * Когда участника убрали из агентства. Строка не удаляется — по ней
+     * живут авторство действий и журнал, — но войти он больше не может.
+     */
+    deactivatedAt: timestamp("deactivated_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },

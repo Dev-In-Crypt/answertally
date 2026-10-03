@@ -13,6 +13,7 @@ import {
   agencies,
   claimInvitation,
   findUserByCanonicalEmail,
+  getUserById,
   sessions,
   users,
   verifications,
@@ -165,6 +166,20 @@ export const auth = betterAuth({
     },
   },
   databaseHooks: {
+    session: {
+      create: {
+        // Убранный из агентства участник больше не входит: его сессии
+        // отозваны при удалении, а новую он не получит.
+        before: async (session) => {
+          const user = await getUserById(db, session.userId);
+          if (user?.deactivatedAt) {
+            throw new APIError("FORBIDDEN", {
+              message: "This account was removed from its workspace. Ask the owner to invite you again.",
+            });
+          }
+        },
+      },
+    },
     user: {
       create: {
         /**

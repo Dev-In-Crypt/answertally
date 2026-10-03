@@ -149,6 +149,18 @@ function TeamSection() {
       void invites.refetch();
     },
   });
+  // Ушедший сотрудник не должен сохранять доступ к клиентам агентства.
+  const removeMember = api.agency.removeMember.useMutation({
+    onSuccess: () => void members.refetch(),
+  });
+  const changeRole = api.agency.changeRole.useMutation({
+    onSuccess: () => void members.refetch(),
+  });
+  const revokeInvite = api.agency.revokeInvite.useMutation({
+    onSuccess: () => void invites.refetch(),
+  });
+  const myRole = members.data?.find((member) => member.isYou)?.role;
+  const teamError = removeMember.error ?? changeRole.error ?? revokeInvite.error;
 
   return (
     <section className="flex flex-col gap-4">
@@ -156,12 +168,51 @@ function TeamSection() {
 
       <ul className="flex flex-col gap-1 text-sm">
         {members.data?.map((member) => (
-          <li key={member.id} className="flex justify-between rounded-md border px-3 py-2">
+          <li
+            key={member.id}
+            data-testid="team-member"
+            className="flex items-center justify-between gap-3 rounded-md border px-3 py-2"
+          >
             <span>{member.email}</span>
-            <span className="text-muted-foreground">{member.role}</span>
+            <span className="flex items-center gap-2">
+              {myRole === "owner" && !member.isYou && member.role !== "owner" ? (
+                <select
+                  aria-label={`Role of ${member.email}`}
+                  value={member.role}
+                  onChange={(e) =>
+                    changeRole.mutate({
+                      userId: member.id,
+                      role: e.target.value as "admin" | "member",
+                    })
+                  }
+                  className={cn(controlClass, "h-8 px-2")}
+                >
+                  <option value="admin">admin</option>
+                  <option value="member">member</option>
+                </select>
+              ) : (
+                <span className="text-muted-foreground">{member.role}</span>
+              )}
+              {myRole !== "member" && !member.isYou && member.role !== "owner" && (
+                <button
+                  type="button"
+                  onClick={() => removeMember.mutate({ userId: member.id })}
+                  disabled={removeMember.isPending}
+                  className={buttonClass("outline", "sm")}
+                >
+                  Remove
+                </button>
+              )}
+            </span>
           </li>
         ))}
       </ul>
+
+      {teamError && (
+        <p data-testid="team-error" className="text-sm text-destructive">
+          {teamError.message}
+        </p>
+      )}
 
       <div className="flex items-end gap-2">
         <label className="flex flex-1 flex-col gap-1.5">
@@ -200,9 +251,23 @@ function TeamSection() {
       )}
 
       {invites.data && invites.data.length > 0 && (
-        <p className="text-sm text-muted-foreground">
-          {invites.data.length} pending invitation{invites.data.length === 1 ? "" : "s"}.
-        </p>
+        <ul className="flex flex-col gap-1 text-sm text-muted-foreground">
+          {invites.data.map((pending) => (
+            <li key={pending.id} className="flex items-center justify-between gap-3">
+              <span>Invited: {pending.email}</span>
+              {myRole !== "member" && (
+                <button
+                  type="button"
+                  onClick={() => revokeInvite.mutate({ id: pending.id })}
+                  disabled={revokeInvite.isPending}
+                  className={buttonClass("ghost", "sm")}
+                >
+                  Revoke
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
       )}
     </section>
   );

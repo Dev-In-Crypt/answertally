@@ -4,6 +4,10 @@ import { assertMayInvite } from "../../email-quota";
 import { TRPCError } from "@trpc/server";
 import {
   createInvitation,
+  deactivateUser,
+  getUserById,
+  revokeInvitation,
+  setUserRole,
   getAgencyById,
   getInvitationByToken,
   listInvitationsByAgency,
@@ -41,19 +45,75 @@ export const agencyRouter = router({
 
   members: protectedProcedure.query(async ({ ctx }) => {
     const members = await listUsersByAgency(ctx.db, ctx.user.agencyId);
-    return members.map((m) => ({ id: m.id, email: m.email, name: m.name, role: m.role }));
+    return members.map((m) => ({
+      id: m.id,
+      email: m.email,
+      name: m.name,
+      role: m.role,
+      isYou: m.id === ctx.user.id,
+    }));
   }),
 
   // Без токенов: по токену входят в агентство, и видеть его рядовому
   // участнику незачем — ссылку показывают тому, кто приглашал, один раз.
   invites: protectedProcedure.query(async ({ ctx }) =>
-    (await listInvitationsByAgency(ctx.db, ctx.user.agencyId)).map((invite) => ({
-      id: invite.id,
-      email: invite.email,
-      role: invite.role,
-      expiresAt: invite.expiresAt,
-    })),
+    (await listInvitationsByAgency(ctx.db, ctx.user.agencyId))
+      .filter((invite) => invite.expiresAt.getTime() > Date.now())
+      .map((invite) => ({
+        id: invite.id,
+        email: invite.email,
+        role: invite.role,
+        expiresAt: invite.expiresAt,
+      })),
   ),
+
+  /**
+   * Убрать участника: войти он больше не может, его входы отозваны. Строка
+   * остаётся — по ней живут авторство действий и журнал.
+   *
+   * Себя и владельца убрать нельзя; администратора убирает только владелец.
+   */
+  removeMember: roleProcedure("admin")
+    .input(z.object({ userId: z.uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const target = await getUserById(ctx.db, input.userId);
+      if (!target || target.agencyId !== ctx.user.agencyId || target.deactivatedAt) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
+      if (target.id === ctx.user.id || target.role === "owner") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "The owner and you yourself stay in the workspace.",
+        });
+      }
+      if (target.role === "admin" && ctx.user.role !== "owner") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Only the owner can remove an admin." });
+      }
+      await deactivateUser(ctx.db, target.id, ctx.user.agencyId);
+      return { id: target.id };
+    }),
+
+  /** Сменить роль участника — только владелец и не себе. */
+  changeRole: roleProcedure("owner")
+    .input(z.object({ userId: z.uuid(), role: z.enum(["admin", "member"]) }))
+    .mutation(async ({ ctx, input }) => {
+      const target = await getUserById(ctx.db, input.userId);
+      if (!target || target.agencyId !== ctx.user.agencyId || target.deactivatedAt) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
+      if (target.id === ctx.user.id || target.role === "owner") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "The owner's role does not change." });
+      }
+      await setUserRole(ctx.db, target.id, ctx.user.agencyId, input.role);
+      return { id: target.id, role: input.role };
+    }),
+
+  revokeInvite: roleProcedure("admin")
+    .input(z.object({ id: z.uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      await revokeInvitation(ctx.db, input.id, ctx.user.agencyId);
+      return { id: input.id };
+    }),
 
   invite: roleProcedure("admin")
     .input(z.object({ email: z.email(), role: z.enum(["admin", "member"]).default("member") }))
