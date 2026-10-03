@@ -21,6 +21,13 @@ describe("requiresEmailVerification", () => {
     expect(requiresEmailVerification({ EMAIL_MODE: "  " })).toBe(false);
   });
 
+  it("требует всегда, когда адаптеры живые — даже с почтой в логе", () => {
+    // Живые адаптеры — наши деньги на каждый бесплатный аудит. Забытый
+    // EMAIL_MODE на боевом сервере не должен тихо выключать подтверждение.
+    expect(requiresEmailVerification({ EMAIL_MODE: "log", ADAPTERS_MODE: "live" })).toBe(true);
+    expect(requiresEmailVerification({ ADAPTERS_MODE: "mock" })).toBe(false);
+  });
+
   it("на бессмысленном значении падает, а не выбирает за человека", () => {
     // Молча истолковать «maybe» как «нет» значит оставить регистрацию
     // открытой у того, кто думал, что закрыл её.

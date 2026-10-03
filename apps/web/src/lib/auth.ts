@@ -12,6 +12,7 @@ import {
   verifications,
 } from "@repo/db";
 import { getEmailSender } from "@/server/email";
+import { hit } from "@/server/rate-limit";
 
 const { db } = createDb();
 
@@ -39,20 +40,31 @@ export function deriveAgencyName(email: string): string {
  * случайного двойного клика, а не от злоупотребления: получается больше
  * тысячи аккаунтов в час с одного адреса.
  *
- * А каждый аккаунт стоит денег. Бесплатный аудит даёт 250 живых проверок,
- * подтверждения почты нет, и аккаунт заводится на любой адрес — то есть это
- * единственный наш расход без верхней границы. Час на окно превращает
- * тысячу аккаунтов в три.
+ * А каждый аккаунт стоит денег: бесплатный аудит — живые проверки. Час на
+ * окно превращает тысячу аккаунтов в три.
  *
  * Не непроходимая стена: адрес меняется. Но она переводит злоупотребление
  * из «скрипт на минуту» в «нужен список прокси», а вместе с удалением Grok
  * из бесплатного аудита снижает цену одной попытки с $8.55 до $0.94.
  *
- * Счётчики живут в памяти процесса — этого хватает, пока веб один. Второму
- * инстансу понадобится общее хранилище (`rateLimit.customStorage`), и
- * Redis для этого в приложении уже есть (`server/redis.ts`).
+ * Счётчики — в Redis (`rateLimit.customStorage` ниже), а не в памяти: та
+ * обнулялась каждым деплоем.
  */
 export const SIGNUP_RATE_LIMIT = { window: 3600, max: 3 } as const;
+
+/**
+ * Писем подтверждения и сброса — не больше пяти в сутки на один адрес.
+ *
+ * Лимит по IP их не держит: зарегистрировав чужой адрес и меняя адреса,
+ * можно было слать жертве письма от нашего домена без конца — и жечь его
+ * репутацию. Сверх лимита письмо молча не уходит: ответ тот же, чтобы не
+ * подсказывать, сработал ли лимит.
+ */
+export const AUTH_EMAILS_PER_ADDRESS_PER_DAY = 5;
+
+async function mayMailAddress(email: string): Promise<boolean> {
+  return hit(`auth-mail:${email.toLowerCase()}`, AUTH_EMAILS_PER_ADDRESS_PER_DAY, 24 * 60 * 60);
+}
 
 export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET,
@@ -81,8 +93,12 @@ export const auth = betterAuth({
      * ссылка уходит в лог — восстановить доступ всё равно можно.
      */
     sendResetPassword: async ({ user, url }) => {
+      if (!(await mayMailAddress(user.email))) return;
       await getEmailSender().send(passwordResetEmail({ to: user.email, resetUrl: url }));
     },
+    // Сброс пароля выкидывает все остальные входы: иначе укравший сессию
+    // оставался внутри и после того, как владелец сменил пароль.
+    revokeSessionsOnPasswordReset: true,
   },
   emailVerification: {
     /**
@@ -103,6 +119,7 @@ export const auth = betterAuth({
      * «требуем, но не отправляем».
      */
     sendVerificationEmail: async ({ user, url }) => {
+      if (!(await mayMailAddress(user.email))) return;
       await getEmailSender().send(verifyEmailEmail({ to: user.email, verifyUrl: url }));
     },
   },
@@ -126,6 +143,20 @@ export const auth = betterAuth({
   rateLimit: {
     enabled: process.env.DISABLE_RATE_LIMIT !== "true",
     customRules: { "/sign-up/*": SIGNUP_RATE_LIMIT },
+    /**
+     * Счёт — в Redis через общий счётчик, а не в памяти процесса: память
+     * обнулялась каждым деплоем, и лимит регистраций сбрасывался вместе с
+     * ним. Без Redis счётчик сам уходит в память.
+     */
+    customStorage: {
+      consume: async (key, rule) => {
+        const allowed = await hit(`auth:${key}`, rule.max, rule.window);
+        return { allowed, retryAfter: allowed ? null : rule.window };
+      },
+      // При `consume` Better Auth старым путём get/set не ходит.
+      get: async () => null,
+      set: async () => {},
+    },
   },
   databaseHooks: {
     user: {

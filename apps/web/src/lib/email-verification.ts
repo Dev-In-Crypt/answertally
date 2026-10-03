@@ -1,4 +1,4 @@
-import { parseEmailMode } from "@repo/core";
+import { parseAdaptersMode, parseEmailMode } from "@repo/core";
 
 /**
  * Требовать ли подтверждение адреса при регистрации.
@@ -18,5 +18,12 @@ import { parseEmailMode } from "@repo/core";
 export function requiresEmailVerification(
   env: Record<string, string | undefined> = process.env,
 ): boolean {
-  return parseEmailMode(env["EMAIL_MODE"]?.trim()) === "live";
+  // Живые адаптеры — это наши деньги на каждый бесплатный аудит. Без почты
+  // подтверждение закрыло бы регистрацию, но это меньшее зло, чем аккаунты
+  // на любую строку с собакой за наш счёт: забытый EMAIL_MODE на боевом
+  // сервере не должен тихо выключать подтверждение.
+  return (
+    parseEmailMode(env["EMAIL_MODE"]?.trim()) === "live" ||
+    parseAdaptersMode(env["ADAPTERS_MODE"]?.trim()) === "live"
+  );
 }
