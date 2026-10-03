@@ -975,6 +975,49 @@ export async function getUsageCounter(
 }
 
 /**
+ * Сколько проверок агентство израсходовало за всё время.
+ *
+ * Счётчик ведётся по месяцам ради счёта плательщику, а бесплатный аудит —
+ * один на аккаунт. Брать для него месячную строку значило бы выдавать новый
+ * аудит первого числа каждого месяца, бессрочно.
+ */
+export async function getLifetimeAiChecks(db: Database, agencyId: string): Promise<number> {
+  const rows = await db
+    .select({ total: sql<number>`coalesce(sum(${usageCounters.aiChecksUsed}), 0)::int` })
+    .from(usageCounters)
+    .where(eq(usageCounters.agencyId, agencyId));
+  return rows[0]?.total ?? 0;
+}
+
+/**
+ * Сколько прогонов агентства ещё идёт.
+ *
+ * Только за последние сутки: прогон, застрявший в «running» после падения
+ * воркера, иначе навсегда закрыл бы бесплатному аккаунту его единственный
+ * аудит.
+ */
+export async function countRunsInFlight(
+  db: Database,
+  agencyId: string,
+  now: Date = new Date(),
+): Promise<number> {
+  const since = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const rows = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(runs)
+    .innerJoin(clients, eq(runs.clientId, clients.id))
+    .where(
+      and(
+        eq(clients.agencyId, agencyId),
+        inArray(runs.status, ["pending", "running"]),
+        // started_at ставится при вставке, так что у ожидающего это время создания.
+        gte(runs.startedAt, since),
+      ),
+    );
+  return rows[0]?.n ?? 0;
+}
+
+/**
  * Подписка агентства. Права доступа считаются от неё (контракт entitlements
  * в @repo/core), а `agencies.plan` и `agencies.client_limit` — производные.
  */

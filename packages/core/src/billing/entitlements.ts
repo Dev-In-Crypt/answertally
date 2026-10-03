@@ -239,10 +239,33 @@ export const FREE_CHECK_ALLOWANCE = 150;
  * Отказ получает только тот, кто ещё ни разу не платил и уже израсходовал
  * бесплатные проверки. Отказ называет остаток и что делать дальше.
  */
+export interface MeasurementContext {
+  /**
+   * Сколько прогонов агентства ещё идёт.
+   *
+   * Проверки списываются, когда ответ уже записан, а решение принимается
+   * при старте. Без этого бесплатный аккаунт заводил трёх клиентов и жал
+   * «Run now» трижды подряд: каждый раз видно «использовано 0», и уходили
+   * три аудита вместо одного.
+   */
+  runsInFlight?: number;
+  /** Кто запускает: человек кнопкой или воркер по расписанию. */
+  trigger?: "manual" | "scheduled";
+}
+
+/**
+ * `checksUsed` для неплательщика — расход **за всё время**, а не за месяц.
+ *
+ * Бесплатный аудит — один на аккаунт. Считай его по календарному месяцу, и
+ * каждый аккаунт получал бы новый аудит первого числа, бессрочно; а с
+ * сохранённым расписанием воркер прогонял бы его сам, даже у того, кто
+ * давно ушёл.
+ */
 export function canStartMeasurement(
   entitlements: Entitlements,
   checksUsed: number,
   checksPlanned = 0,
+  context: MeasurementContext = {},
 ): LimitDecision {
   if (!entitlements.active) {
     return { allowed: false, message: entitlements.reason };
@@ -250,6 +273,22 @@ export function canStartMeasurement(
 
   if (entitlements.paying) {
     return { allowed: true, message: "" };
+  }
+
+  // Измерение по расписанию — платная часть продукта. Бесплатный аудит
+  // запускается руками и один раз; брошенный аккаунт не должен тратить ничего.
+  if (context.trigger === "scheduled") {
+    return {
+      allowed: false,
+      message: "Scheduled checks start with a plan. The free audit runs once, when you start it.",
+    };
+  }
+
+  if ((context.runsInFlight ?? 0) > 0) {
+    return {
+      allowed: false,
+      message: "Your audit is still running. It covers one brand — once it finishes, you can read it in full.",
+    };
   }
 
   const remaining = FREE_CHECK_ALLOWANCE - checksUsed;

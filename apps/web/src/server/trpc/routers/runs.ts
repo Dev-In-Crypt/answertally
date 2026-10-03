@@ -1,8 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import {
-  billingPeriod,
-  canStartMeasurement,
   MIN_SAMPLES_PER_CELL,
   parseAdaptersMode,
   PLATFORM_IDS,
@@ -19,7 +17,7 @@ import {
   capabilitiesForAgency,
   platformsForRun,
 } from "@repo/core/config/measurement";
-import { completeRun } from "@repo/pipeline";
+import { completeRun, measurementAllowedForAgency } from "@repo/pipeline";
 import {
   createRun,
   getClientById,
@@ -27,7 +25,6 @@ import {
   getPromptById,
   getPromptClusterById,
   getScheduleForClient,
-  getUsageCounter,
   listActivePromptsForClient,
   listResponsesForPrompt,
   listRecentRuns,
@@ -71,27 +68,16 @@ async function assertMeasurementAllowed(
 ): Promise<void> {
   const entitlements = await entitlementsForAgency(db, agencyId);
 
-  if (!entitlements.active) {
-    // Причина отдаётся как есть: человек должен понять, что делать дальше,
-    // а не гадать над кодом ошибки.
-    throw new TRPCError({ code: "FORBIDDEN", message: entitlements.reason });
-  }
-
-  /**
-   * Бесплатный аккаунт ограничен по числу проверок, платящий — нет.
-   *
-   * До этой проверки месячный лимит нигде не проверялся: он только
-   * показывался на экране. Незаплативший мог гонять аудиты бесконечно, и
-   * каждый стоил нам живых денег у пяти провайдеров.
-   */
-  const counter = await getUsageCounter(db, agencyId, billingPeriod());
-  const decision = canStartMeasurement(
-    entitlements,
-    counter?.aiChecksUsed ?? 0,
-    run ? plannedChecks(entitlements, run) : 0,
-  );
+  // Та же проверка, что у воркера: две копии одного правила уже расходились,
+  // и каждый раз это стоило живых денег.
+  const decision = await measurementAllowedForAgency(db, agencyId, {
+    trigger: "manual",
+    checksPlanned: run ? plannedChecks(entitlements, run) : 0,
+  });
 
   if (!decision.allowed) {
+    // Причина отдаётся как есть: человек должен понять, что делать дальше,
+    // а не гадать над кодом ошибки.
     throw new TRPCError({ code: "FORBIDDEN", message: decision.message });
   }
 }

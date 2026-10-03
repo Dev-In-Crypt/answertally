@@ -4,12 +4,10 @@ import {
   createClient,
   createDb,
   deleteAgency,
-  incrementAiChecks,
   listRunsByClient,
   setScheduleNextRun,
   upsertSubscription,
 } from "@repo/db";
-import { billingPeriod, FREE_CHECK_ALLOWANCE } from "@repo/core";
 import { runSchedules } from "@repo/db/schema/measurement";
 import { nextRunAfter, tickSchedules } from "./scheduler";
 import { createConnection, createQueues } from "./queues";
@@ -42,6 +40,17 @@ describe("tickSchedules", () => {
   beforeEach(async () => {
     const agency = await createAgency(db, { name: "Tick Agency", clientLimit: 10 });
     agencyId = agency.id;
+    // Измерение по расписанию — платная часть продукта, поэтому агентство здесь
+    // платит. Бесплатный случай проверяется отдельно и явно.
+    await upsertSubscription(db, {
+      agencyId,
+      customerId: `cus_${agencyId.slice(0, 8)}`,
+      subscriptionId: `sub_${agencyId.slice(0, 8)}`,
+      plan: "starter",
+      status: "active",
+      currentPeriodEnd: new Date("2099-01-01T00:00:00.000Z"),
+      cancelAtPeriodEnd: false,
+    });
     const client = await createClient(db, {
       agencyId,
       name: "Tick Client",
@@ -159,16 +168,36 @@ describe("tickSchedules", () => {
     expect(started.filter((r) => r.scheduleId === scheduleId)).toHaveLength(1);
   });
 
-  it("расписание бесплатного аккаунта останавливается на границе проверок", async () => {
-    // Кнопку закрыли, а расписание обходило бы границу стороной: раз в две
-    // недели, месяцами, за наш счёт.
-    await setScheduleNextRun(db, scheduleId, new Date(Date.now() - 1000));
-    await incrementAiChecks(db, agencyId, billingPeriod(), FREE_CHECK_ALLOWANCE);
+  it("у бесплатного аккаунта расписание не запускается вовсе", async () => {
+    /**
+     * Даже с нетронутым лимитом. Бесплатный аудит — один и руками; измерение
+     * по расписанию — платная часть. Раньше здесь проверялась только граница
+     * проверок, а счётчик был месячным: брошенный аккаунт с сохранённым
+     * расписанием получал новый аудит первого числа, бессрочно, за наш счёт.
+     */
+    const free = await createAgency(db, { name: "Free Agency", clientLimit: 3 });
+    try {
+      const client = await createClient(db, {
+        agencyId: free.id,
+        name: "Free Client",
+        domain: "free.test",
+      });
+      const freeSchedule = (
+        await db
+          .insert(runSchedules)
+          .values({ clientId: client.id, cadence: "weekly", platforms: ["chatgpt"], samplesPerPrompt: 3 })
+          .returning()
+      )[0]!;
+      await setScheduleNextRun(db, freeSchedule.id, new Date(Date.now() - 1000));
 
-    const { started, skipped } = await tickSchedules(db, new Date());
+      const { started, skipped } = await tickSchedules(db, new Date());
 
-    expect(started.filter((r) => r.scheduleId === scheduleId)).toHaveLength(0);
-    expect(skipped.find((s) => s.scheduleId === scheduleId)?.reason).toMatch(/free audit/i);
+      expect(started.filter((r) => r.scheduleId === freeSchedule.id)).toHaveLength(0);
+      expect(await listRunsByClient(db, client.id)).toHaveLength(0);
+      expect(skipped.find((s) => s.scheduleId === freeSchedule.id)?.reason).toMatch(/free audit/i);
+    } finally {
+      await deleteAgency(db, free.id);
+    }
   });
 
   it("действующая подписка измерение не останавливает", async () => {

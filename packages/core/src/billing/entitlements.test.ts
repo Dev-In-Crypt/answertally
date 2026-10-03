@@ -163,6 +163,35 @@ describe("canStartMeasurement", () => {
   const free = entitlementsFor(null, NOW);
   const paid = entitlementsFor(snapshot(), NOW);
 
+  it("бесплатному расписание не запускает ничего, даже при нетронутом лимите", () => {
+    // Измерение по расписанию — платная часть. Иначе брошенный аккаунт с
+    // сохранённым расписанием тратил бы наши деньги, не появляясь.
+    const decision = canStartMeasurement(free, 0, 0, { trigger: "scheduled" });
+    expect(decision.allowed).toBe(false);
+    expect(decision.message).toMatch(/free audit/i);
+  });
+
+  it("плательщику расписание запускается как раньше", () => {
+    expect(canStartMeasurement(paid, 0, 0, { trigger: "scheduled" }).allowed).toBe(true);
+  });
+
+  it("пока идёт прогон, бесплатному второй не стартует", () => {
+    /**
+     * Проверки списываются, когда ответ записан, а решение — при старте.
+     * Три «Run now» подряд на трёх клиентах видели бы «использовано 0» и
+     * уходили бы три аудита вместо одного.
+     */
+    const decision = canStartMeasurement(free, 0, 144, { trigger: "manual", runsInFlight: 1 });
+    expect(decision.allowed).toBe(false);
+    expect(decision.message).toMatch(/still running/i);
+  });
+
+  it("плательщика идущие прогоны не останавливают", () => {
+    expect(canStartMeasurement(paid, 0, 144, { trigger: "manual", runsInFlight: 3 }).allowed).toBe(
+      true,
+    );
+  });
+
   it("до первой оплаты бесплатные проверки кончаются", () => {
     // Без этой границы незаплативший измерял бы бесконечно: месячный лимит
     // тарифа нигде не проверялся, он только показывался на экране.

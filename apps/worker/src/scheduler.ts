@@ -74,7 +74,7 @@ export async function tickSchedules(
 
     let decision = byAgency.get(client.agencyId);
     if (!decision) {
-      decision = await measurementAllowedForAgency(db, client.agencyId, now);
+      decision = await measurementAllowedForAgency(db, client.agencyId, { trigger: "scheduled" }, now);
       byAgency.set(client.agencyId, decision);
     }
 

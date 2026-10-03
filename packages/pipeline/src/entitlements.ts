@@ -1,5 +1,10 @@
-import { billingPeriod, canStartMeasurement, entitlementsFor, type Entitlements, type LimitDecision } from "@repo/core";
-import { getSubscriptionByAgency, getUsageCounter, type Database } from "@repo/db";
+import { canStartMeasurement, entitlementsFor, type Entitlements, type LimitDecision } from "@repo/core";
+import {
+  countRunsInFlight,
+  getLifetimeAiChecks,
+  getSubscriptionByAgency,
+  type Database,
+} from "@repo/db";
 
 /**
  * Права агентства по его подписке.
@@ -34,19 +39,38 @@ export async function entitlementsForAgency(
 }
 
 /**
- * Можно ли начать измерение агентству: и права, и остаток бесплатных проверок.
+ * Можно ли начать измерение агентству — единственная такая проверка.
  *
- * Тем же правилом, что и в вебе. Иначе расписание обходило бы границу,
- * закрытую для кнопки: бесплатный аккаунт продолжал бы опрашивать
- * ассистентов раз в две недели за наш счёт.
+ * Её зовут и веб (кнопка, аудит), и воркер (расписание). Раньше у каждого
+ * была своя, и воркерная не знала ни сколько прогон потратит, ни кто его
+ * запускает: при «можно» она запускала все созревшие расписания агентства
+ * разом, а бесплатный счётчик брала за календарный месяц — то есть каждый
+ * брошенный бесплатный аккаунт получал новый аудит первого числа.
+ *
+ * Плательщику права проверяются без счётчиков: ему не отказывают.
  */
 export async function measurementAllowedForAgency(
   db: Database,
   agencyId: string,
+  run: { trigger: "manual" | "scheduled"; checksPlanned?: number },
   now: Date = new Date(),
 ): Promise<LimitDecision> {
   const entitlements = await entitlementsForAgency(db, agencyId, now);
-  const counter = await getUsageCounter(db, agencyId, billingPeriod(now));
+  if (!entitlements.active || entitlements.paying) {
+    return canStartMeasurement(entitlements, 0);
+  }
 
-  return canStartMeasurement(entitlements, counter?.aiChecksUsed ?? 0);
+  // ponytail: проверка и создание прогона — не одна транзакция. Два запроса,
+  // пришедшие одновременно до создания первого прогона, оба увидят ноль идущих.
+  // Окно — миллисекунды, потолок — три клиента бесплатного аккаунта. Закрывать
+  // блокировкой на агентство, если это начнут делать нарочно.
+  const [used, inFlight] = await Promise.all([
+    getLifetimeAiChecks(db, agencyId),
+    countRunsInFlight(db, agencyId, now),
+  ]);
+
+  return canStartMeasurement(entitlements, used, run.checksPlanned ?? 0, {
+    runsInFlight: inFlight,
+    trigger: run.trigger,
+  });
 }
