@@ -11,8 +11,12 @@
 # Хранилища: распаковать storage-<время>.tgz в том answertally-prod_storage-data.
 set -eu
 
+# В копиях — все данные агентств. Читать их может только владелец: и новые
+# файлы (umask), и сам каталог, даже если он создан раньше с другими правами.
+umask 077
 dest=/opt/answertally-backups
 mkdir -p "$dest"
+chmod 700 "$dest"
 stamp=$(date -u +%Y%m%d-%H%M)
 
 # -Fc: сжатый формат, восстанавливается выборочно и в другую версию Postgres.
@@ -20,8 +24,9 @@ docker exec answertally-prod-postgres-1 pg_dump -U aisdos -Fc aisdos > "$dest/db
 
 # Сырые ответы и логотипы. Без сырых ответов измерения нельзя переразобрать,
 # когда меняется парсер, — копия этого тома так же обязательна, как базы.
+# tar в контейнере пишет от root, и umask хоста на него не действует.
 docker run --rm -v answertally-prod_storage-data:/data:ro -v "$dest":/out alpine \
-  tar czf "/out/storage-$stamp.tgz" -C /data .
+  sh -c "umask 077 && tar czf /out/storage-$stamp.tgz -C /data ."
 
 # Копии старше двух недель — только наши собственные копии, не данные:
 # без этого диск заполнится, и упадёт сначала база.
