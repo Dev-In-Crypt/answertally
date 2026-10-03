@@ -269,10 +269,10 @@ describe("orchestrateRun (mock-режим)", () => {
     await orchestrateRun(db, runId, "mock");
     const second = await orchestrateRun(db, runId, "mock");
 
-    // Уникальный индекс (run, prompt, platform, sample) не даёт записать дубль;
-    // прогон честно помечается failed, а не рапортует об успехе.
-    expect(second.failed).toBe(18);
-    expect(second.status).toBe("failed");
+    // Записанный сэмпл не спрашивается второй раз: повтор после падения
+    // воркера не платит за ответ дважды и не пишет дубль.
+    expect(second.failed).toBe(0);
+    expect(second.written).toBe(18);
     expect(await listResponsesByRun(db, runId)).toHaveLength(18);
   });
 });
