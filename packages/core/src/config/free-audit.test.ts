@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { ANSWER_PRICES } from "../adapters/pricing";
 import { PLAN_LIMITS } from "../billing/period";
+import { FREE_CHECK_ALLOWANCE } from "../billing/entitlements";
+import { DEFAULT_GENERATED_PROMPT_COUNT } from "../prompts/generate";
+import { MIN_SAMPLES_PER_CELL } from "../metrics/visibility";
 import type { PlanId } from "../billing/entitlements";
 import { FREE_AUDIT_ASSISTANTS, capabilitiesFor, capabilitiesForAgency } from "./measurement";
 import {
@@ -109,5 +112,30 @@ describe("как набор называется на витрине", () => {
     // Иначе страница обещает ассистента, которого человек не получит.
     expect(freeAuditAssistantSentence()).not.toContain("Grok");
     expect(defaultAssistantSentence("starter")).toContain("Grok");
+  });
+});
+
+describe("лимит бесплатного аудита", () => {
+  /** Во что обходится аудит на наборе вопросов по умолчанию. */
+  const DEFAULT_AUDIT =
+    DEFAULT_GENERATED_PROMPT_COUNT * MIN_SAMPLES_PER_CELL * FREE_AUDIT_ASSISTANTS.length;
+
+  it("покрывает один аудит целиком", () => {
+    /**
+     * Прогон начинается целиком или не начинается вовсе. Лимит ниже одного
+     * аудита означает отказ на первом же экране нового агентства — и узнали
+     * бы мы об этом не отсюда, а от человека, который ушёл.
+     *
+     * Множители взяты из тех же мест, что и поведение: набор ассистентов
+     * бесплатного аудита уже менялся, и в тот день это соотношение
+     * поехало молча.
+     */
+    expect(FREE_CHECK_ALLOWANCE).toBeGreaterThanOrEqual(DEFAULT_AUDIT);
+  });
+
+  it("не покрывает второй такой аудит", () => {
+    // Витрина обещает «one full audit on one brand». Два — это не щедрость,
+    // а расхождение обещания с поведением, и появилось оно однажды само.
+    expect(FREE_CHECK_ALLOWANCE).toBeLessThan(DEFAULT_AUDIT * 2);
   });
 });
