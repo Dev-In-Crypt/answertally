@@ -30,6 +30,7 @@ import {
   getClientById,
   getReportById,
   getShareForReport,
+  revokeReportShares,
   listActions,
   listActionsCompletedBetween,
   listOpportunities,
@@ -567,6 +568,25 @@ export const reportsRouter = router({
     }),
 
   /** Выдаёт ссылку для клиента агентства. Повторный вызов её не меняет. */
+  /**
+   * Отозвать ссылку на отчёт: она перестаёт открываться, а следующая
+   * выдача даст новую. Так обещано в политике конфиденциальности и DPA.
+   */
+  revokeShare: roleProcedure("member")
+    .input(z.object({ reportId: z.uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const report = await getReportById(ctx.db, input.reportId);
+      if (!report) {
+        assertTenant(null, ctx.user.agencyId);
+        throw new Error("unreachable");
+      }
+      const client = await getClientById(ctx.db, report.clientId);
+      assertTenant(client, ctx.user.agencyId);
+
+      await revokeReportShares(ctx.db, report.id);
+      return { reportId: report.id };
+    }),
+
   share: roleProcedure("member")
     .input(z.object({ reportId: z.uuid() }))
     .mutation(async ({ ctx, input }) => {

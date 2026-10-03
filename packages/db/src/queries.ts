@@ -1567,13 +1567,24 @@ export async function setReportPdfKey(
   await db.update(reports).set({ pdfStorageKey }).where(eq(reports.id, reportId));
 }
 
+/**
+ * Сколько живёт ссылка на отчёт. Так обещано на страницах политики и DPA:
+ * ссылка истекает и отзывается. Раньше она была вечной, и пересланное
+ * письмо открывало отчёт клиента — с конкурентами — навсегда.
+ */
+export const REPORT_SHARE_TTL_DAYS = 90;
+
 export async function createReportShare(
   db: Database,
   values: { reportId: string; token: string; expiresAt?: Date | null },
 ): Promise<ReportShare> {
+  const expiresAt =
+    values.expiresAt === undefined
+      ? new Date(Date.now() + REPORT_SHARE_TTL_DAYS * 86_400_000)
+      : values.expiresAt;
   const rows = await db
     .insert(reportShares)
-    .values({ reportId: values.reportId, token: values.token, expiresAt: values.expiresAt ?? null })
+    .values({ reportId: values.reportId, token: values.token, expiresAt })
     .returning();
   const created = rows[0];
   if (!created) {
@@ -1590,27 +1601,50 @@ export async function getShareByToken(
   return rows[0];
 }
 
+/** Действующая ссылка на отчёт — самая новая из неистёкших и неотозванных. */
 export async function getShareForReport(
   db: Database,
   reportId: string,
+  now: Date = new Date(),
 ): Promise<ReportShare | undefined> {
   const rows = await db
     .select()
     .from(reportShares)
-    .where(eq(reportShares.reportId, reportId))
+    .where(
+      and(
+        eq(reportShares.reportId, reportId),
+        sql`(${reportShares.expiresAt} is null or ${reportShares.expiresAt} > ${now.toISOString()}::timestamptz)`,
+      ),
+    )
+    .orderBy(desc(reportShares.createdAt))
     .limit(1);
   return rows[0];
 }
 
+/** Отозвать все ссылки на отчёт: срок истекает сейчас, следующая будет новой. */
+export async function revokeReportShares(db: Database, reportId: string): Promise<void> {
+  await db
+    .update(reportShares)
+    .set({ expiresAt: new Date(Date.now() - 1000) })
+    .where(eq(reportShares.reportId, reportId));
+}
+
+/**
+ * Подтвердить отчёт — один раз. Проверка и запись одним UPDATE: два
+ * одновременных подтверждения больше не переписывают имя друг друга.
+ * `false` — отчёт уже подтверждён.
+ */
 export async function approveShare(
   db: Database,
   token: string,
   approvedByName: string,
-): Promise<void> {
-  await db
+): Promise<boolean> {
+  const rows = await db
     .update(reportShares)
     .set({ approvedAt: new Date(), approvedByName })
-    .where(eq(reportShares.token, token));
+    .where(and(eq(reportShares.token, token), isNull(reportShares.approvedAt)))
+    .returning({ id: reportShares.id });
+  return rows.length > 0;
 }
 
 /** Действия, завершённые в периоде — материал для раздела «что сделано». */

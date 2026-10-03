@@ -5,6 +5,7 @@ import {
   createClient,
   createDb,
   deleteAgency,
+  getShareByToken,
   listActivity,
   upsertSubscription,
   upsertVisibilitySnapshot,
@@ -164,6 +165,24 @@ describe("reports.generate", () => {
     } finally {
       setEmailSender(null);
     }
+  });
+
+  it("ссылка на отчёт живёт 90 дней и отзывается", async () => {
+    // Так обещано в политике и DPA; раньше ссылка была вечной.
+    const report = await generate();
+    const { token } = await caller(agencyId).reports.share({ reportId: report.id });
+
+    const share = await getShareByToken(db, token);
+    const days = (share!.expiresAt!.getTime() - Date.now()) / 86_400_000;
+    expect(Math.round(days)).toBe(90);
+
+    await caller(agencyId).reports.revokeShare({ reportId: report.id });
+    await expect(
+      caller(agencyId).publicReport.approve({ token, name: "Late Reader" }),
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+
+    const next = await caller(agencyId).reports.share({ reportId: report.id });
+    expect(next.token).not.toBe(token);
   });
 
   it("вопрос без сравнимой выборки не попадает в «что изменилось»", async () => {

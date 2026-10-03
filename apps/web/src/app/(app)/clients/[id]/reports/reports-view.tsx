@@ -10,7 +10,6 @@ import { controlClass, inputClass } from "@/components/ui/field";
 import { cn } from "@/lib/utils";
 import { FileText } from "lucide-react";
 
-
 export function ReportsView({ clientId }: { clientId: string }) {
   const utils = api.useUtils();
   const client = api.clients.get.useQuery({ id: clientId });
@@ -41,6 +40,19 @@ export function ReportsView({ clientId }: { clientId: string }) {
     },
   });
 
+  // Пересланная ссылка открывала бы отчёт клиента — с конкурентами — пока
+  // её не отзовут; сама она живёт 90 дней.
+  const revoke = api.reports.revokeShare.useMutation({
+    onSuccess: async (_result, variables) => {
+      setShareLinks((current) => {
+        const next = { ...current };
+        delete next[variables.reportId];
+        return next;
+      });
+      await utils.reports.list.invalidate({ clientId });
+    },
+  });
+
   const rows = reports.data ?? [];
 
   return (
@@ -61,13 +73,16 @@ export function ReportsView({ clientId }: { clientId: string }) {
       </div>
 
       {client.data?.status === "prospect" && (
-        <OpportunityForm clientId={clientId} onGenerated={() => utils.reports.list.invalidate({ clientId })} />
+        <OpportunityForm
+          clientId={clientId}
+          onGenerated={() => utils.reports.list.invalidate({ clientId })}
+        />
       )}
 
       {rows.length === 0 ? (
         <EmptyState
           title="No reports yet"
-        icon={FileText}
+          icon={FileText}
           description="A report gathers the period's measurements, the work completed and what is planned next, in a page you can send to the client as-is."
         />
       ) : (
@@ -142,7 +157,16 @@ export function ReportsView({ clientId }: { clientId: string }) {
                       className="text-primary underline-offset-4 hover:underline"
                     >
                       {reportUrl(token, { origin })}
-                    </a>
+                    </a>{" "}
+                    <button
+                      type="button"
+                      data-testid={`revoke-${report.id}`}
+                      disabled={revoke.isPending}
+                      onClick={() => revoke.mutate({ reportId: report.id })}
+                      className={buttonClass("ghost", "sm")}
+                    >
+                      Revoke link
+                    </button>
                   </p>
                 )}
               </li>
@@ -348,11 +372,7 @@ function SendReport({
         >
           {send.isPending ? "Sending…" : "Send"}
         </button>
-        <button
-          type="button"
-          onClick={onCancel}
-          className={buttonClass("outline", "md")}
-        >
+        <button type="button" onClick={onCancel} className={buttonClass("outline", "md")}>
           Cancel
         </button>
       </div>

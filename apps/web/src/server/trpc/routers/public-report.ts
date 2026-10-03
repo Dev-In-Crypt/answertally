@@ -33,11 +33,9 @@ export const publicReportRouter = router({
         throw new TRPCError({ code: "NOT_FOUND" });
       }
 
-      if (share.approvedAt) {
-        return { alreadyApproved: true, approvedAt: share.approvedAt };
+      if (share.approvedAt || !(await approveShare(ctx.db, input.token, input.name))) {
+        return { alreadyApproved: true, approvedAt: share.approvedAt ?? new Date() };
       }
-
-      await approveShare(ctx.db, input.token, input.name);
 
       const report = await getReportById(ctx.db, share.reportId);
       if (report) {
