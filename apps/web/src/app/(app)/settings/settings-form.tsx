@@ -184,6 +184,12 @@ function TeamSection() {
         </button>
       </div>
 
+      {invite.error && (
+        <p data-testid="invite-error" className="text-sm text-destructive">
+          {invite.error.message}
+        </p>
+      )}
+
       {invited && (
         // Ссылка показывается всегда, даже когда письмо ушло: почта может
         // задержаться или попасть в спам, а пригласить человека надо сейчас.

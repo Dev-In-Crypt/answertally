@@ -6,6 +6,7 @@ import {
   createDb,
   deleteAgency,
   listActivity,
+  upsertSubscription,
   upsertVisibilitySnapshot,
 } from "@repo/db";
 import { appRouter } from "./root";
@@ -119,9 +120,27 @@ describe("reports.generate", () => {
     });
   });
 
+  it("до оплаты отчёт письмом не отправляется — только ссылкой", async () => {
+    // Иначе это рассылка фишинга от нашего домена: название агентства и
+    // приписку задаёт сам пользователь.
+    const report = await generate();
+    await expect(
+      caller(agencyId).reports.send({ reportId: report.id, to: "x@example.test" }),
+    ).rejects.toThrow(/Copy the client link/);
+  });
+
   it("отправка отчёта письмом даёт ссылку и попадает в журнал", async () => {
     const mailbox = new MemoryEmailSender();
     setEmailSender(mailbox);
+    await upsertSubscription(db, {
+      agencyId,
+      customerId: `cus_${agencyId.slice(0, 8)}`,
+      subscriptionId: `sub_${agencyId.slice(0, 8)}`,
+      plan: "starter",
+      status: "active",
+      currentPeriodEnd: new Date("2099-01-01T00:00:00.000Z"),
+      cancelAtPeriodEnd: false,
+    });
 
     try {
       const report = await generate();

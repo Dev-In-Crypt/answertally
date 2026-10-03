@@ -70,4 +70,21 @@ describe("agency.invite", () => {
     const info = await caller(agencyId).agency.inviteInfo({ token: result.token });
     expect(info.email).toBe("unreachable@agency.test");
   });
+
+  it("до оплаты в ожидании не больше трёх приглашений", async () => {
+    // Приглашение — письмо на любой адрес с названием агентства, которое
+    // задаёт пользователь. Без границы это рассылка от нашего домена.
+    for (const n of [1, 2, 3]) {
+      await caller(agencyId).agency.invite({ email: `teammate${n}@agency.test` });
+    }
+    await expect(
+      caller(agencyId).agency.invite({ email: "teammate4@agency.test" }),
+    ).rejects.toThrow(/Up to 3 invitations/);
+  });
+
+  it("адрес приглашения хранится в нижнем регистре", async () => {
+    const result = await caller(agencyId).agency.invite({ email: "Mixed.Case@Agency.test" });
+    const info = await caller(agencyId).agency.inviteInfo({ token: result.token });
+    expect(info.email).toBe("mixed.case@agency.test");
+  });
 });

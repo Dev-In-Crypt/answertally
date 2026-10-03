@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { z } from "zod";
+import { assertMayInvite } from "../../email-quota";
 import { TRPCError } from "@trpc/server";
 import {
   createInvitation,
@@ -56,6 +57,7 @@ export const agencyRouter = router({
   invite: roleProcedure("admin")
     .input(z.object({ email: z.email(), role: z.enum(["admin", "member"]).default("member") }))
     .mutation(async ({ ctx, input }) => {
+      await assertMayInvite(ctx.db, ctx.user.agencyId);
       const token = randomBytes(24).toString("hex");
       const expiresAt = new Date(Date.now() + INVITE_TTL_DAYS * 24 * 60 * 60 * 1000);
 

@@ -44,11 +44,13 @@ async function setUpReport(page: Page): Promise<{ clientId: string; token: strin
   await page.goto(`/clients/${clientId}/reports`);
   await page.getByTestId("generate-report").click();
   await expect(page.getByTestId("reports-list").locator("li")).toHaveCount(1);
-  // Отчёт можно отправить письмом, а не только скопировать ссылку.
+  // До оплаты отчёт письмом не уходит — только ссылкой: иначе наш домен
+  // стал бы рассылкой с подписью, которую задаёт сам пользователь.
   await page.getByRole("button", { name: "Send to client" }).click();
   await page.getByLabel("Client email").fill("finance@acmecrm.test");
   await page.getByTestId("confirm-send").click();
-  await expect(page.getByTestId("send-done")).toBeVisible();
+  await expect(page.getByTestId("form-error")).toContainText("Copy the client link");
+  await page.getByRole("button", { name: "Cancel" }).click();
 
   await page.getByRole("button", { name: "Get client link" }).click();
 
