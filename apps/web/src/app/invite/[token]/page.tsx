@@ -1,24 +1,19 @@
 import Link from "next/link";
-import { createDb, getAgencyById, getInvitationByToken } from "@repo/db";
+import { getAgencyById, getInvitationByToken } from "@repo/db";
 import { AuthForm } from "@/components/auth-form";
+import { db } from "@/server/db";
 
 export default async function InvitePage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
 
-  const { db, close } = createDb();
   let agencyName: string | null = null;
   let email: string | null = null;
-  try {
-    const invitation = await getInvitationByToken(db, token);
-    const valid =
-      invitation && !invitation.accepted && invitation.expiresAt.getTime() >= Date.now();
+  const invitation = await getInvitationByToken(db, token);
+  const valid = invitation && !invitation.accepted && invitation.expiresAt.getTime() >= Date.now();
 
-    if (valid) {
-      email = invitation.email;
-      agencyName = (await getAgencyById(db, invitation.agencyId))?.name ?? null;
-    }
-  } finally {
-    await close();
+  if (valid) {
+    email = invitation.email;
+    agencyName = (await getAgencyById(db, invitation.agencyId))?.name ?? null;
   }
 
   if (!email) {
@@ -38,9 +33,7 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-sm flex-col justify-center gap-6 px-6">
       <div className="flex flex-col gap-1.5">
-        <h1 className="text-xl font-semibold tracking-tight">
-          Join {agencyName ?? "your team"}
-        </h1>
+        <h1 className="text-xl font-semibold tracking-tight">Join {agencyName ?? "your team"}</h1>
         <p className="text-sm text-muted-foreground">
           Create your account for <span className="font-medium text-foreground">{email}</span> to
           join the workspace.

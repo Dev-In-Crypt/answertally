@@ -1,4 +1,5 @@
-import { createDb, getAgencyById, getClientById, getReportById, getShareByToken } from "@repo/db";
+import { getAgencyById, getClientById, getReportById, getShareByToken } from "@repo/db";
+import { db } from "@/server/db";
 
 /**
  * Иконка вкладки для отчёта клиенту — в бренде агентства.
@@ -32,19 +33,14 @@ function escapeXml(value: string): string {
 }
 
 async function brandFor(token: string): Promise<{ color: string; initial: string }> {
-  const { db, close } = createDb();
-  try {
-    const share = await getShareByToken(db, token);
-    const expired = share?.expiresAt ? share.expiresAt.getTime() < Date.now() : false;
-    if (!share || expired) return { color: FALLBACK_COLOR, initial: "" };
+  const share = await getShareByToken(db, token);
+  const expired = share?.expiresAt ? share.expiresAt.getTime() < Date.now() : false;
+  if (!share || expired) return { color: FALLBACK_COLOR, initial: "" };
 
-    const report = await getReportById(db, share.reportId);
-    const client = report ? await getClientById(db, report.clientId) : undefined;
-    const agency = client ? await getAgencyById(db, client.agencyId) : undefined;
-    return { color: safeColor(agency?.brandColor), initial: initialOf(agency?.name) };
-  } finally {
-    await close();
-  }
+  const report = await getReportById(db, share.reportId);
+  const client = report ? await getClientById(db, report.clientId) : undefined;
+  const agency = client ? await getAgencyById(db, client.agencyId) : undefined;
+  return { color: safeColor(agency?.brandColor), initial: initialOf(agency?.name) };
 }
 
 export default async function Icon({

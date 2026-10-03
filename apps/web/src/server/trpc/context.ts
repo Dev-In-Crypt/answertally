@@ -1,5 +1,6 @@
-import { createDb, type Database } from "@repo/db";
+import type { Database } from "@repo/db";
 import { auth } from "@/lib/auth";
+import { db } from "../db";
 
 export type UserRole = "owner" | "admin" | "member";
 
@@ -16,8 +17,6 @@ export interface TrpcContext {
   user: SessionUser | null;
 }
 
-// Одно подключение на процесс: Next переиспользует модуль между запросами.
-const { db } = createDb();
 
 /** Собирает контекст из заголовков запроса. Используется и в route handler, и в тестах. */
 export async function createContext({ headers }: { headers: Headers }): Promise<TrpcContext> {

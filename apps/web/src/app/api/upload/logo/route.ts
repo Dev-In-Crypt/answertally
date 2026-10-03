@@ -1,8 +1,9 @@
 import { headers } from "next/headers";
-import { createDb, updateAgency } from "@repo/db";
+import { updateAgency } from "@repo/db";
 import { logoKey, validateLogoUpload } from "@repo/core/storage/types";
 import { auth } from "@/lib/auth";
 import { storage } from "@/server/storage";
+import { db } from "@/server/db";
 
 const EXTENSION_BY_TYPE: Record<string, string> = {
   "image/png": "png",
@@ -39,13 +40,8 @@ export async function POST(request: Request) {
   const bytes = new Uint8Array(await file.arrayBuffer());
   const url = await storage.put(key, bytes, file.type);
 
-  const { db, close } = createDb();
-  try {
-    // Кэш-бастер: путь стабильный, поэтому браузер иначе покажет старый логотип.
-    await updateAgency(db, user.agencyId, { logoUrl: `${url}?v=${Date.now()}` });
-  } finally {
-    await close();
-  }
+  // Кэш-бастер: путь стабильный, поэтому браузер иначе покажет старый логотип.
+  await updateAgency(db, user.agencyId, { logoUrl: `${url}?v=${Date.now()}` });
 
   return Response.json({ url });
 }

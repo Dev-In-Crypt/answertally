@@ -12,16 +12,15 @@ import {
   accounts,
   agencies,
   claimInvitation,
-  createDb,
   findUserByCanonicalEmail,
   sessions,
   users,
   verifications,
 } from "@repo/db";
+import { db } from "@/server/db";
 import { getEmailSender } from "@/server/email";
 import { hit } from "@/server/rate-limit";
 
-const { db } = createDb();
 
 /** Токен приглашения из тела регистрации — его шлёт форма на `/invite/[token]`. */
 function inviteTokenFrom(body: unknown): string | null {

@@ -32,11 +32,35 @@ function launchOptions() {
     : {};
 }
 
-export async function renderReportPdf(options: PdfOptions): Promise<Uint8Array> {
+/**
+ * Печать — строго по одной на процесс.
+ *
+ * Каждый Chromium — сотни мегабайт; параллельные печати упирали веб в
+ * предел памяти контейнера, и его убивало вместе со всеми запросами.
+ * Очередь из одного медленнее, но не падает.
+ */
+let printing: Promise<unknown> = Promise.resolve();
+
+export function renderReportPdf(options: PdfOptions): Promise<Uint8Array> {
+  const next = printing.then(() => render(options));
+  printing = next.catch(() => undefined);
+  return next;
+}
+
+async function render(options: PdfOptions): Promise<Uint8Array> {
   const browser = await chromium.launch(launchOptions());
 
   try {
     const page = await browser.newPage();
+    // Браузер печати ходит только к своей странице. Логотип агентства —
+    // это ссылка, которую задаёт пользователь, и без этого запрета печать
+    // ходила бы по ней из серверной сети: к базе, Redis, метаданным машины.
+    const origin = new URL(options.url).origin;
+    await page.route("**/*", (route) =>
+      new URL(route.request().url()).origin === origin || route.request().url().startsWith("data:")
+        ? route.continue()
+        : route.abort(),
+    );
     await page.goto(options.url, {
       waitUntil: "networkidle",
       timeout: options.timeoutMs ?? 30_000,

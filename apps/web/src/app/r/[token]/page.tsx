@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { reportPayloadSchema } from "@repo/core";
-import { createDb, getAgencyById, getClientById, getReportById, getShareByToken } from "@repo/db";
+import { getAgencyById, getClientById, getReportById, getShareByToken } from "@repo/db";
 import { ReportView } from "@/components/report-view";
 import { reportUrl } from "../report-url";
 import { ApproveForm } from "./approve-form";
+import { db } from "@/server/db";
 
 /**
  * Публичный отчёт по ссылке — единственный анонимный доступ в продукте
@@ -53,62 +54,49 @@ export async function generateMetadata({
   };
 }
 
-export default async function PublicReportPage({
-  params,
-}: {
-  params: Promise<{ token: string }>;
-}) {
+export default async function PublicReportPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
-  const { db, close } = createDb();
 
-  try {
-    const share = await getShareByToken(db, token);
-    const expired = share?.expiresAt ? share.expiresAt.getTime() < Date.now() : false;
+  const share = await getShareByToken(db, token);
+  const expired = share?.expiresAt ? share.expiresAt.getTime() < Date.now() : false;
 
-    if (!share || expired) {
-      return (
-        <main className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center gap-3 px-6">
-          <h1 className="text-xl font-semibold tracking-tight">This link is no longer valid</h1>
-          <p className="text-sm text-muted-foreground">
-            It may have expired. Ask for a fresh link.
-          </p>
-        </main>
-      );
-    }
-
-    const report = await getReportById(db, share.reportId);
-    const client = report ? await getClientById(db, report.clientId) : undefined;
-    const agency = client ? await getAgencyById(db, client.agencyId) : undefined;
-
-    if (!report || !client || !agency) {
-      return (
-        <main className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center gap-3 px-6">
-          <h1 className="text-xl font-semibold tracking-tight">This report is unavailable</h1>
-        </main>
-      );
-    }
-
-    const payload = reportPayloadSchema.parse(report.payload);
-
+  if (!share || expired) {
     return (
-      // Цвет агентства задан на всей странице, а не только внутри отчёта:
-      // кнопка approve живёт снаружи и тоже должна быть в его бренде.
-      <main style={{ ["--primary" as string]: agency.brandColor }}>
-        <ReportView
-          payload={payload}
-          agency={{
-            name: agency.name,
-            logoUrl: agency.logoUrl,
-            brandColor: agency.brandColor,
-          }}
-          approved={
-            share.approvedAt ? { at: share.approvedAt, byName: share.approvedByName } : null
-          }
-        />
-        {!share.approvedAt && <ApproveForm token={token} />}
+      <main className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center gap-3 px-6">
+        <h1 className="text-xl font-semibold tracking-tight">This link is no longer valid</h1>
+        <p className="text-sm text-muted-foreground">It may have expired. Ask for a fresh link.</p>
       </main>
     );
-  } finally {
-    await close();
   }
+
+  const report = await getReportById(db, share.reportId);
+  const client = report ? await getClientById(db, report.clientId) : undefined;
+  const agency = client ? await getAgencyById(db, client.agencyId) : undefined;
+
+  if (!report || !client || !agency) {
+    return (
+      <main className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center gap-3 px-6">
+        <h1 className="text-xl font-semibold tracking-tight">This report is unavailable</h1>
+      </main>
+    );
+  }
+
+  const payload = reportPayloadSchema.parse(report.payload);
+
+  return (
+    // Цвет агентства задан на всей странице, а не только внутри отчёта:
+    // кнопка approve живёт снаружи и тоже должна быть в его бренде.
+    <main style={{ ["--primary" as string]: agency.brandColor }}>
+      <ReportView
+        payload={payload}
+        agency={{
+          name: agency.name,
+          logoUrl: agency.logoUrl,
+          brandColor: agency.brandColor,
+        }}
+        approved={share.approvedAt ? { at: share.approvedAt, byName: share.approvedByName } : null}
+      />
+      {!share.approvedAt && <ApproveForm token={token} />}
+    </main>
+  );
 }

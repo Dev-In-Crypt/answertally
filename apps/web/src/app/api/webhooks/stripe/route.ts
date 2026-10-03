@@ -1,6 +1,6 @@
-import { createDb } from "@repo/db";
 import { getPaymentEventLedger, getPaymentProvider } from "@/server/payments";
 import { applyPaymentEvent } from "./apply";
+import { db } from "@/server/db";
 
 /**
  * Вебхук платёжного провайдера — единственный вход, который меняет права
@@ -36,17 +36,13 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json({ error: "Signature rejected" }, { status: 400 });
   }
 
-  const { db, close } = createDb();
-
   try {
     const result = await applyPaymentEvent(db, envelope, getPaymentEventLedger(db));
 
     if (result.status !== "applied") {
       // 200 намеренно: провайдер иначе будет слать это событие снова и снова.
       // В логе только тип и идентификатор события — ни карты, ни ключей.
-      console.info(
-        `[stripe] ${envelope.type} ${envelope.eventId} not applied: ${result.reason}`,
-      );
+      console.info(`[stripe] ${envelope.type} ${envelope.eventId} not applied: ${result.reason}`);
     }
 
     return Response.json({
@@ -58,7 +54,5 @@ export async function POST(request: Request): Promise<Response> {
     // 500 — просьба повторить: событие отпущено, и повтор его применит.
     console.error("[stripe] failed to apply webhook", error);
     return Response.json({ error: "Could not apply the event" }, { status: 500 });
-  } finally {
-    await close();
   }
 }

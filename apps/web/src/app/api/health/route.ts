@@ -1,4 +1,5 @@
-import { createDb, pingDatabase } from "@repo/db";
+import { pingDatabase } from "@repo/db";
+import { db } from "@/server/db";
 
 /**
  * Проверка живости для платформы развёртывания.
@@ -12,15 +13,11 @@ import { createDb, pingDatabase } from "@repo/db";
 export const dynamic = "force-dynamic";
 
 export async function GET(): Promise<Response> {
-  const { db, close } = createDb();
-
   try {
     await pingDatabase(db);
     return Response.json({ status: "ok" });
   } catch (error) {
     console.error("[health] database is unreachable", error);
     return Response.json({ status: "unavailable" }, { status: 503 });
-  } finally {
-    await close();
   }
 }

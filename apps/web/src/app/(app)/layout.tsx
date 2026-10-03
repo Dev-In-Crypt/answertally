@@ -1,9 +1,10 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { createDb, getAgencyById } from "@repo/db";
+import { getAgencyById } from "@repo/db";
 import { auth } from "@/lib/auth";
 import { AppShell } from "@/components/app-shell";
 import { ClientErrorReporting } from "@/components/client-error-reporting";
+import { db } from "@/server/db";
 
 /** Общий каркас всех защищённых экранов: сессия проверяется здесь, а не в каждой странице. */
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -14,14 +15,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   }
 
   const agencyId = (session.user as { agencyId?: string }).agencyId;
-  const { db, close } = createDb();
   let agencyName = "Your agency";
-  try {
-    if (agencyId) {
-      agencyName = (await getAgencyById(db, agencyId))?.name ?? agencyName;
-    }
-  } finally {
-    await close();
+  if (agencyId) {
+    agencyName = (await getAgencyById(db, agencyId))?.name ?? agencyName;
   }
 
   return (
