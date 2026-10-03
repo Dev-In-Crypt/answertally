@@ -1,4 +1,4 @@
-import { and, desc, eq, gt, gte, inArray, isNotNull, isNull, lte, sql } from "drizzle-orm";
+import { and, desc, eq, gt, gte, inArray, isNotNull, isNull, lte, sql, type AnyColumn, type SQL } from "drizzle-orm";
 import type { Database } from "./client";
 import { agencies, clients, users } from "./schema/tenancy";
 import type { Agency, Client, NewClient, User } from "./schema/tenancy";
@@ -990,6 +990,39 @@ export async function getLifetimeAiChecks(db: Database, agencyId: string): Promi
 }
 
 /**
+ * Канонический адрес в SQL — то же правило, что `canonicalEmail` в @repo/core
+ * (нижний регистр, без `+метки`, у Gmail без точек и googlemail → gmail).
+ * Тест сверяет оба на одной таблице примеров.
+ */
+export function canonicalEmailSql(column: SQL | AnyColumn): SQL {
+  const lower = sql`lower(${column})`;
+  const domain = sql`split_part(${lower}, '@', 2)`;
+  const local = sql`split_part(split_part(${lower}, '@', 1), '+', 1)`;
+  return sql`case when ${domain} in ('gmail.com', 'googlemail.com')
+    then replace(${local}, '.', '') || '@gmail.com'
+    else ${local} || '@' || ${domain} end`;
+}
+
+/**
+ * Есть ли уже аккаунт на этот ящик под другим написанием адреса.
+ *
+ * ponytail: выражение по всей таблице пользователей — без индекса. Пока
+ * пользователей тысячи, это миллисекунды; при сотнях тысяч — индекс по
+ * выражению.
+ */
+export async function findUserByCanonicalEmail(
+  db: Database,
+  canonical: string,
+): Promise<User | undefined> {
+  const rows = await db
+    .select()
+    .from(users)
+    .where(sql`${canonicalEmailSql(users.email)} = ${canonical}`)
+    .limit(1);
+  return rows[0];
+}
+
+/**
  * Блокировка агентства до конца текущей транзакции.
  *
  * Для пар «проверить лимит — вставить», которые иначе проходят параллельно:
@@ -1026,6 +1059,35 @@ export async function sumPlannedChecks(
       ),
     );
   return rows[0]?.total ?? 0;
+}
+
+/**
+ * Измеряли ли этот сайт вживую в другом агентстве.
+ *
+ * Бесплатный аудит обещан «на один бренд», а не «на один аккаунт»: десять
+ * аккаунтов на один сайт — это десять аудитов одного и того же за наш счёт.
+ * Домен клиента хранится нормализованным (`normalizeDomain` при заведении).
+ *
+ * ponytail: без индекса по домену — пока клиентов тысячи, это быстро.
+ */
+export async function domainMeasuredElsewhere(
+  db: Database,
+  domain: string,
+  agencyId: string,
+): Promise<boolean> {
+  const rows = await db
+    .select({ id: runs.id })
+    .from(runs)
+    .innerJoin(clients, eq(runs.clientId, clients.id))
+    .where(
+      and(
+        eq(clients.domain, domain),
+        sql`${clients.agencyId} <> ${agencyId}`,
+        eq(runs.adaptersMode, "live"),
+      ),
+    )
+    .limit(1);
+  return rows.length > 0;
 }
 
 /**

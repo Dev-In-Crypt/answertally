@@ -83,6 +83,7 @@ export {
   UnconfiguredSerpProvider,
 } from "./adapters/surfaces";
 export type { SerpProvider, SurfaceCapability, SurfaceRequirement } from "./adapters/surfaces";
+export * from "./auth/email";
 export * from "./billing/period";
 export * from "./billing/cost";
 export * from "./billing/entitlements";

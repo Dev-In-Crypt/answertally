@@ -78,3 +78,35 @@ describe("регистрация по приглашению", () => {
     expect(user?.agencyId).toBe(hostAgencyId);
   });
 });
+
+describe("один ящик — один аккаунт", () => {
+  afterEach(async () => {
+    for (const id of createdAgencies.splice(0)) {
+      await deleteAgency(db, id);
+    }
+  });
+
+  async function register(email: string) {
+    await auth.api.signUpEmail({
+      body: { email, password: "correct-horse-battery", name: "Farmer" },
+    });
+    const user = await getUserByEmail(db, email.toLowerCase());
+    if (user?.agencyId) createdAgencies.push(user.agencyId);
+    return user;
+  }
+
+  it("вариант адреса Gmail с точкой или меткой не заводит второй аккаунт", async () => {
+    const base = `farmer${crypto.randomUUID().slice(0, 6)}`;
+    await register(`${base}@gmail.com`);
+
+    await expect(register(`${base.slice(0, 3)}.${base.slice(3)}+free@gmail.com`)).rejects.toThrow(
+      /already exists/,
+    );
+  });
+
+  it("одноразовый ящик не принимается", async () => {
+    await expect(register(`x${crypto.randomUUID().slice(0, 6)}@mailinator.com`)).rejects.toThrow(
+      /Temporary inboxes/,
+    );
+  });
+});

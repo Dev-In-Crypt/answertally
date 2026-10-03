@@ -9,6 +9,8 @@ import {
 import {
   countRunsInFlight,
   createRun,
+  domainMeasuredElsewhere,
+  getClientById,
   getLifetimeAiChecks,
   getSubscriptionByAgency,
   getUsageCounter,
@@ -132,6 +134,25 @@ export async function startRunIfAllowed(
     if (!decision.allowed) {
       return { decision, run: null };
     }
+
+    // Бесплатный аудит — один на бренд, а не на аккаунт: десять аккаунтов на
+    // один сайт были бы десятью аудитами одного и того же за наш счёт.
+    if (
+      values.adaptersMode === "live" &&
+      !(await entitlementsForAgency(tx, agencyId, now)).paying
+    ) {
+      const client = await getClientById(tx, values.clientId);
+      if (client && (await domainMeasuredElsewhere(tx, client.domain, agencyId))) {
+        return {
+          decision: {
+            allowed: false,
+            message: `${client.domain} already had its free audit in another workspace. Pick a plan to measure it, or audit a different brand.`,
+          },
+          run: null,
+        };
+      }
+    }
+
     const run = await createRun(tx, { ...values, plannedChecks: checksPlanned });
     return { decision, run };
   });

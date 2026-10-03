@@ -1,12 +1,19 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { passwordResetEmail, verifyEmailEmail } from "@repo/core";
+import { APIError } from "better-auth/api";
+import {
+  canonicalEmail,
+  isDisposableEmail,
+  passwordResetEmail,
+  verifyEmailEmail,
+} from "@repo/core";
 import { requiresEmailVerification } from "@/lib/email-verification";
 import {
   accounts,
   agencies,
   claimInvitation,
   createDb,
+  findUserByCanonicalEmail,
   sessions,
   users,
   verifications,
@@ -169,12 +176,28 @@ export const auth = betterAuth({
         before: async (user, context) => {
           const email = user.email;
 
+          // Один ящик — один аккаунт: a.b@gmail, ab+1@gmail и ab@googlemail
+          // попадают в один ящик, и каждый вариант давал новый бесплатный аудит.
+          if (await findUserByCanonicalEmail(db, canonicalEmail(email))) {
+            throw new APIError("BAD_REQUEST", {
+              message: "An account for this inbox already exists. Sign in instead.",
+            });
+          }
+
           // Только по токену из ссылки приглашения: совпадение почты само по
           // себе ничего не доказывает (см. `claimInvitation`).
           const inviteToken = inviteTokenFrom(context?.body);
           const invitation = inviteToken ? await claimInvitation(db, inviteToken, email) : undefined;
           if (invitation) {
             return { data: { ...user, agencyId: invitation.agencyId, role: invitation.role } };
+          }
+
+          // Своё агентство — это бесплатный аудит. Одноразовый ящик живёт
+          // десять минут и нужен ровно для того, чтобы получить его ещё раз.
+          if (isDisposableEmail(email)) {
+            throw new APIError("BAD_REQUEST", {
+              message: "Use a work or personal email that you keep. Temporary inboxes are not accepted.",
+            });
           }
 
           const [agency] = await db

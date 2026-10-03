@@ -151,10 +151,16 @@ describe("старт прогона под блокировкой", () => {
     const allowance = PLAN_LIMITS.starter.aiCheckAllowance;
     await incrementAiChecks(db, agencyId, billingPeriod(), allowance - 100);
 
-    const fits = await measurementAllowedForAgency(db, agencyId, { trigger: "manual", checksPlanned: 100 });
+    const fits = await measurementAllowedForAgency(db, agencyId, {
+      trigger: "manual",
+      checksPlanned: 100,
+    });
     expect(fits.allowed).toBe(true);
 
-    const over = await measurementAllowedForAgency(db, agencyId, { trigger: "scheduled", checksPlanned: 101 });
+    const over = await measurementAllowedForAgency(db, agencyId, {
+      trigger: "scheduled",
+      checksPlanned: 101,
+    });
     expect(over.allowed).toBe(false);
   });
 
@@ -162,7 +168,66 @@ describe("старт прогона под блокировкой", () => {
     await makePaying(db, agencyId, "starter");
     await incrementAiChecks(db, agencyId, "2000-01", PLAN_LIMITS.starter.aiCheckAllowance);
 
-    const decision = await measurementAllowedForAgency(db, agencyId, { trigger: "manual", checksPlanned: 144 });
+    const decision = await measurementAllowedForAgency(db, agencyId, {
+      trigger: "manual",
+      checksPlanned: 144,
+    });
     expect(decision.allowed).toBe(true);
+  });
+});
+
+describe("один бесплатный аудит на сайт", () => {
+  const agencies: string[] = [];
+
+  afterEach(async () => {
+    for (const id of agencies.splice(0)) {
+      await deleteAgency(db, id);
+    }
+  });
+
+  async function agencyWithClient(domain: string) {
+    const agencyId = (await createAgency(db, { name: "Farm Agency", clientLimit: 3 })).id;
+    agencies.push(agencyId);
+    const clientId = (await createClient(db, { agencyId, name: "Brand", domain })).id;
+    return { agencyId, clientId };
+  }
+
+  it("тот же домен в другом бесплатном аккаунте аудита не получает", async () => {
+    // Десять аккаунтов на один сайт — это десять аудитов одного и того же.
+    const domain = `farm-${crypto.randomUUID().slice(0, 8)}.test`;
+    const first = await agencyWithClient(domain);
+    const second = await agencyWithClient(domain);
+    const values = { scheduleId: null, trigger: "manual" as const, adaptersMode: "live" as const };
+
+    expect(
+      (await startRunIfAllowed(db, first.agencyId, { ...values, clientId: first.clientId }, 144))
+        .run,
+    ).not.toBeNull();
+
+    const refused = await startRunIfAllowed(
+      db,
+      second.agencyId,
+      { ...values, clientId: second.clientId },
+      144,
+    );
+    expect(refused.run).toBeNull();
+    expect(refused.decision.message).toContain(domain);
+  });
+
+  it("платящему тот же домен измерять можно", async () => {
+    const domain = `farm-${crypto.randomUUID().slice(0, 8)}.test`;
+    const first = await agencyWithClient(domain);
+    const second = await agencyWithClient(domain);
+    await makePaying(db, second.agencyId);
+    const values = { scheduleId: null, trigger: "manual" as const, adaptersMode: "live" as const };
+
+    await startRunIfAllowed(db, first.agencyId, { ...values, clientId: first.clientId }, 144);
+    const allowed = await startRunIfAllowed(
+      db,
+      second.agencyId,
+      { ...values, clientId: second.clientId },
+      144,
+    );
+    expect(allowed.run).not.toBeNull();
   });
 });
