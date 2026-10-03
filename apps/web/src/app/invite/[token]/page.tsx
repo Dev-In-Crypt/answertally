@@ -47,7 +47,7 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
         </p>
       </div>
 
-      <AuthForm mode="signup" lockedEmail={email} />
+      <AuthForm mode="signup" lockedEmail={email} inviteToken={token} />
     </main>
   );
 }

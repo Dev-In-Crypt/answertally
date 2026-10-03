@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, inArray, isNotNull, isNull, lte, sql } from "drizzle-orm";
+import { and, desc, eq, gt, gte, inArray, isNotNull, isNull, lte, sql } from "drizzle-orm";
 import type { Database } from "./client";
 import { agencies, clients, users } from "./schema/tenancy";
 import type { Agency, Client, NewClient, User } from "./schema/tenancy";
@@ -1948,21 +1948,6 @@ export async function getInvitationByToken(db: Database, token: string) {
   return rows[0];
 }
 
-/** Действующее приглашение для адреса: не принято и не истекло. */
-export async function getPendingInvitationByEmail(db: Database, email: string) {
-  const rows = await db
-    .select()
-    .from(invitations)
-    .where(and(eq(invitations.email, email), eq(invitations.accepted, false)))
-    .limit(1);
-
-  const invitation = rows[0];
-  if (!invitation || invitation.expiresAt.getTime() < Date.now()) {
-    return undefined;
-  }
-  return invitation;
-}
-
 export async function listInvitationsByAgency(db: Database, agencyId: string) {
   return db
     .select()
@@ -1970,8 +1955,35 @@ export async function listInvitationsByAgency(db: Database, agencyId: string) {
     .where(and(eq(invitations.agencyId, agencyId), eq(invitations.accepted, false)));
 }
 
-export async function markInvitationAccepted(db: Database, token: string): Promise<void> {
-  await db.update(invitations).set({ accepted: true }).where(eq(invitations.token, token));
+/**
+ * Принять приглашение — по токену из ссылки, один раз, до срока и только
+ * на тот адрес, которому оно выписано.
+ *
+ * Раньше регистрация присоединяла к агентству по одному совпадению почты.
+ * Любой мог пригласить чужой адрес, и человек, зарегистрировавшийся сам,
+ * молча попадал в агентство пригласившего вместе со всеми своими клиентами.
+ * Проверка и отметка — одним UPDATE: две регистрации по одной ссылке не
+ * примут её обе.
+ */
+export async function claimInvitation(
+  db: Database,
+  token: string,
+  email: string,
+  now: Date = new Date(),
+) {
+  const rows = await db
+    .update(invitations)
+    .set({ accepted: true })
+    .where(
+      and(
+        eq(invitations.token, token),
+        eq(invitations.accepted, false),
+        gt(invitations.expiresAt, now),
+        sql`lower(${invitations.email}) = ${email.toLowerCase()}`,
+      ),
+    )
+    .returning();
+  return rows[0];
 }
 
 /* ------------------------------------------------------------------ */

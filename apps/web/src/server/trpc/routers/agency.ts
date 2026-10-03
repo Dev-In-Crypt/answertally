@@ -42,7 +42,16 @@ export const agencyRouter = router({
     return members.map((m) => ({ id: m.id, email: m.email, name: m.name, role: m.role }));
   }),
 
-  invites: protectedProcedure.query(({ ctx }) => listInvitationsByAgency(ctx.db, ctx.user.agencyId)),
+  // Без токенов: по токену входят в агентство, и видеть его рядовому
+  // участнику незачем — ссылку показывают тому, кто приглашал, один раз.
+  invites: protectedProcedure.query(async ({ ctx }) =>
+    (await listInvitationsByAgency(ctx.db, ctx.user.agencyId)).map((invite) => ({
+      id: invite.id,
+      email: invite.email,
+      role: invite.role,
+      expiresAt: invite.expiresAt,
+    })),
+  ),
 
   invite: roleProcedure("admin")
     .input(z.object({ email: z.email(), role: z.enum(["admin", "member"]).default("member") }))
@@ -52,7 +61,8 @@ export const agencyRouter = router({
 
       const invitation = await createInvitation(ctx.db, {
         agencyId: ctx.user.agencyId,
-        email: input.email,
+        // Better Auth хранит почту пользователя в нижнем регистре.
+        email: input.email.toLowerCase(),
         role: input.role,
         token,
         expiresAt,

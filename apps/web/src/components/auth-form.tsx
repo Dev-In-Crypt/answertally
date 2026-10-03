@@ -9,7 +9,16 @@ import { cn } from "@/lib/utils";
 
 type Mode = "login" | "signup";
 
-export function AuthForm({ mode, lockedEmail }: { mode: Mode; lockedEmail?: string }) {
+export function AuthForm({
+  mode,
+  lockedEmail,
+  inviteToken,
+}: {
+  mode: Mode;
+  lockedEmail?: string;
+  /** Токен приглашения: без него регистрация заводит своё агентство. */
+  inviteToken?: string;
+}) {
   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState(lockedEmail ?? "");
@@ -30,7 +39,13 @@ export function AuthForm({ mode, lockedEmail }: { mode: Mode; lockedEmail?: stri
     const callbackURL = "/dashboard";
     const result =
       mode === "signup"
-        ? await signUp.email({ email, password, name, callbackURL })
+        ? await signUp.email({
+            email,
+            password,
+            name,
+            callbackURL,
+            ...(inviteToken ? { inviteToken } : {}),
+          })
         : await signIn.email({ email, password, callbackURL });
 
     setPending(false);
@@ -68,13 +83,15 @@ export function AuthForm({ mode, lockedEmail }: { mode: Mode; lockedEmail?: stri
       <div data-testid="verify-email-sent" className="flex flex-col gap-3">
         <h2 className="text-lg font-medium">Confirm your email</h2>
         <p className="text-sm text-muted-foreground">
-          {resent ? "This address is not confirmed yet. We sent a fresh link to " : "We sent a link to "}
+          {resent
+            ? "This address is not confirmed yet. We sent a fresh link to "
+            : "We sent a link to "}
           <span className="font-medium">{awaitingEmail}</span>. Open it to finish setting up the
           account — the link signs you in.
         </p>
         <p className="text-sm text-muted-foreground">
-          Nothing arrived? Check the spam folder, or sign in again with the same email and password —
-          we will send a new link. Each link works for an hour.
+          Nothing arrived? Check the spam folder, or sign in again with the same email and password
+          — we will send a new link. Each link works for an hour.
         </p>
       </div>
     );
@@ -130,11 +147,7 @@ export function AuthForm({ mode, lockedEmail }: { mode: Mode; lockedEmail?: stri
         </p>
       )}
 
-      <button
-        type="submit"
-        disabled={pending}
-        className={buttonClass("primary", "lg")}
-      >
+      <button type="submit" disabled={pending} className={buttonClass("primary", "lg")}>
         {pending ? "Please wait…" : mode === "signup" ? "Create account" : "Sign in"}
       </button>
     </form>

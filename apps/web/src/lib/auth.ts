@@ -5,9 +5,8 @@ import { requiresEmailVerification } from "@/lib/email-verification";
 import {
   accounts,
   agencies,
+  claimInvitation,
   createDb,
-  getPendingInvitationByEmail,
-  markInvitationAccepted,
   sessions,
   users,
   verifications,
@@ -15,6 +14,12 @@ import {
 import { getEmailSender } from "@/server/email";
 
 const { db } = createDb();
+
+/** Токен приглашения из тела регистрации — его шлёт форма на `/invite/[token]`. */
+function inviteTokenFrom(body: unknown): string | null {
+  const token = (body as { inviteToken?: unknown } | undefined)?.inviteToken;
+  return typeof token === "string" && token.length > 0 ? token : null;
+}
 
 /** Имя агентства по умолчанию выводим из домена почты: owner@acme-agency.com -> "Acme Agency". */
 export function deriveAgencyName(email: string): string {
@@ -130,12 +135,14 @@ export const auth = betterAuth({
          * обычная регистрация создаёт новое, и пользователь становится его owner'ом
          * (инвариант 1 из CLAUDE.md: у каждого пользователя есть agency_id).
          */
-        before: async (user) => {
+        before: async (user, context) => {
           const email = user.email;
 
-          const invitation = await getPendingInvitationByEmail(db, email);
+          // Только по токену из ссылки приглашения: совпадение почты само по
+          // себе ничего не доказывает (см. `claimInvitation`).
+          const inviteToken = inviteTokenFrom(context?.body);
+          const invitation = inviteToken ? await claimInvitation(db, inviteToken, email) : undefined;
           if (invitation) {
-            await markInvitationAccepted(db, invitation.token);
             return { data: { ...user, agencyId: invitation.agencyId, role: invitation.role } };
           }
 
