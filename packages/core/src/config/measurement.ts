@@ -21,12 +21,25 @@ export type Cadence = "daily" | "weekly" | "biweekly";
 /** Все частоты, которые понимает расписание. Порядок — от редкой к частой. */
 export const CADENCES: readonly Cadence[] = ["biweekly", "weekly", "daily"] as const;
 
+/**
+ * Потолок активных вопросов на клиента — 100, решение фаундера.
+ *
+ * Без него одна загрузка CSV добавляла клиенту десятки тысяч вопросов, и
+ * каждый прогон по ним стоил тысячи долларов. Месячный лимит проверок
+ * останавливает такой прогон, но не очередь задач и не базу. Набор по
+ * умолчанию — 24 вопроса, так что запас кратный.
+ */
+export const PROMPTS_PER_CLIENT = 100;
+
+/** Длина текста вопроса и имени кластера — одна на форме, генераторе и CSV. */
+export const PROMPT_TEXT_MAX = 1000;
+export const CLUSTER_NAME_MAX = 200;
+
 export interface MeasurementCapabilities {
   /**
    * Потолок активных вопросов на клиента. `null` — потолка нет.
    *
-   * Тариф и так ограничен числом проверок в месяц: вопросы × ассистенты ×
-   * сэмплы × прогоны. Второй потолок поверх этого вводится только осознанно.
+   * Сегодня у всех тарифов он один — `PROMPTS_PER_CLIENT`.
    */
   promptsPerClient: number | null;
   /** Частоты, которые агентство может выбрать в расписании. */
@@ -77,7 +90,7 @@ const MEASURABLE: readonly Platform[] = PLATFORM_IDS.filter((id) =>
 );
 
 const ALL_ASSISTANTS: MeasurementCapabilities = {
-  promptsPerClient: null,
+  promptsPerClient: PROMPTS_PER_CLIENT,
   cadences: CADENCES,
   assistants: MEASURABLE,
   defaultAssistants: DEFAULT_PLATFORMS,
@@ -92,7 +105,7 @@ const ALL_ASSISTANTS: MeasurementCapabilities = {
  */
 export const MEASUREMENT_CAPABILITIES: Record<PlanId, MeasurementCapabilities> = {
   starter: {
-    promptsPerClient: null,
+    promptsPerClient: PROMPTS_PER_CLIENT,
     cadences: WITHOUT_DAILY,
     assistants: STARTER_ASSISTANTS,
     // Умолчание не может предлагать то, чего тариф не разрешает.

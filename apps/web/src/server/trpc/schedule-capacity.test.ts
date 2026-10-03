@@ -102,7 +102,7 @@ describe("ёмкость расписания", () => {
     ]);
     expect(capacity.monthlyCheckAllowance).toBe(PLAN_LIMITS[capacity.plan].aiCheckAllowance);
     expect(capacity.defaultAssistants).toEqual([...STARTER_ASSISTANTS]);
-    expect(capacity.promptsPerClient).toBeNull();
+    expect(capacity.promptsPerClient).toBe(100);
   });
 
   it("считает активные вопросы клиента — множитель оценки", async () => {

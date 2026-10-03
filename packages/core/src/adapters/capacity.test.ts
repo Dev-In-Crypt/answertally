@@ -16,6 +16,7 @@ import {
   CADENCES,
   capabilitiesFor,
   monthlyAnswers,
+  PROMPTS_PER_CLIENT,
   type Cadence,
   type MeasurementCapabilities,
 } from "../config/measurement";
@@ -62,8 +63,9 @@ describe("сегодняшняя политика тарифов", () => {
     }
   });
 
-  it.each(PLANS)("у тарифа %s нет потолка промптов", (plan) => {
-    expect(capabilitiesFor(plan).promptsPerClient).toBeNull();
+  it.each(PLANS)("у тарифа %s есть потолок вопросов на клиента", (plan) => {
+    // Без потолка одна загрузка CSV добавляла десятки тысяч вопросов.
+    expect(capabilitiesFor(plan).promptsPerClient).toBe(PROMPTS_PER_CLIENT);
   });
 
   it("умолчание частоты осталось biweekly", () => {

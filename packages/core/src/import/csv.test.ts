@@ -24,6 +24,17 @@ describe("parsePromptCsv", () => {
     "CRM basics,learning,best project management tool,true",
   ].join("\n");
 
+  it("слишком длинный вопрос пропускается с ошибкой, как в форме", () => {
+    // Через файл проходил вопрос на полмегабайта — каждый ответ на него
+    // стоил десятки центов.
+    const csv = [VALID, `CRM basics,learning,${"x".repeat(1001)},false`].join("\n");
+    const result = parsePromptCsv(csv);
+
+    expect(result.rows).toHaveLength(4);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0]).toMatch(/1000 characters/);
+  });
+
   it("разбирает валидный файл", () => {
     const result = parsePromptCsv(VALID);
 

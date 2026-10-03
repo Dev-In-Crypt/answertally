@@ -40,7 +40,7 @@ export const recommendationEvidenceSchema = z.object({
   /** Доля цитирований кластера, приходящаяся на источник. */
   sharePct: z.number().nonnegative().optional(),
   /** Конкуренты, присутствующие там, где клиента нет. */
-  competitorsPresent: z.array(z.string()).default([]),
+  competitorsPresent: z.array(z.string().max(100)).max(50).default([]),
   /** Сколько влиятельных источников всего рассматривалось. */
   influentialCount: z.number().int().nonnegative().optional(),
 });
@@ -49,15 +49,17 @@ export type RecommendationEvidence = z.infer<typeof recommendationEvidenceSchema
 
 export const recommendationSchema = z.object({
   actionType: z.enum(ACTION_TYPES),
-  title: z.string().min(1),
+  // Границы длины — потому что схема принимает и ввод агентства (действие
+  // из рекомендации), а не только то, что собрал сам продукт.
+  title: z.string().min(1).max(500),
   /** Непустой по схеме: рекомендация без объяснения бесполезна агентству. */
-  reason: z.string().min(1),
+  reason: z.string().min(1).max(4000),
   estimatedImpact: z.enum(["low", "medium", "high"]),
   effort: z.enum(["low", "medium", "high"]),
-  sourceDomain: z.string().optional(),
-  clusterId: z.string().optional(),
+  sourceDomain: z.string().max(255).optional(),
+  clusterId: z.string().max(64).optional(),
   /** Правило, которое породило рекомендацию — видно, откуда она взялась. */
-  rule: z.string().min(1),
+  rule: z.string().min(1).max(200),
   evidence: recommendationEvidenceSchema.optional(),
 });
 

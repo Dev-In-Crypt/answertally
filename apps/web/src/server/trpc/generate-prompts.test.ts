@@ -126,3 +126,40 @@ describe("prompts.generate / saveGenerated", () => {
     }
   });
 });
+
+describe("потолок вопросов на клиента", () => {
+  let agencyId = "";
+  let clientId = "";
+
+  beforeEach(async () => {
+    agencyId = (await createAgency(db, { name: "Cap Agency", clientLimit: 3 })).id;
+    clientId = (await createClient(db, { agencyId, name: "Cap", domain: "cap.test" })).id;
+  });
+
+  afterEach(async () => {
+    await deleteAgency(db, agencyId);
+  });
+
+  function csvOf(count: number): string {
+    const rows = Array.from({ length: count }, (_, i) => `Cluster,other,question ${i},false`);
+    return ["cluster,intent,prompt,is_control", ...rows].join("\n");
+  }
+
+  it("файл, который не помещается в 100 вопросов, не импортируется вовсе", async () => {
+    // Раньше одна загрузка добавляла клиенту десятки тысяч вопросов.
+    await expect(
+      caller(agencyId).prompts.importCsv({ clientId, csv: csvOf(101) }),
+    ).rejects.toThrow(/up to 100 active prompts/);
+    expect(await listPromptsByClient(db, clientId)).toHaveLength(0);
+  });
+
+  it("сотый вопрос добавляется, сто первый — нет", async () => {
+    await caller(agencyId).prompts.importCsv({ clientId, csv: csvOf(99) });
+    const [cluster] = await listPromptClusters(db, clientId);
+
+    await caller(agencyId).prompts.create({ clusterId: cluster!.id, text: "one hundred" });
+    await expect(
+      caller(agencyId).prompts.create({ clusterId: cluster!.id, text: "one hundred one" }),
+    ).rejects.toThrow(/up to 100 active prompts/);
+  });
+});

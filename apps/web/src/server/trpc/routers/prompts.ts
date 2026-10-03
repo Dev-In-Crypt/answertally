@@ -7,6 +7,11 @@ import {
   TemplatePromptGenerator,
 } from "@repo/core";
 import {
+  CLUSTER_NAME_MAX,
+  PROMPT_TEXT_MAX,
+  PROMPTS_PER_CLIENT,
+} from "@repo/core/config/measurement";
+import {
   createPrompt,
   createPromptCluster,
   deletePrompt,
@@ -14,11 +19,13 @@ import {
   getClientById,
   getPromptById,
   getPromptClusterById,
+  listActivePromptsForClient,
   listPromptClusters,
   listPromptsByClient,
   updatePrompt,
   updatePromptCluster,
 } from "@repo/db";
+import { TRPCError } from "@trpc/server";
 import { assertTenant, protectedProcedure, roleProcedure, router } from "../trpc";
 
 const INTENTS = ["learning", "comparison", "purchase", "other"] as const;
@@ -38,10 +45,35 @@ async function assertClusterAccess(
   return cluster;
 }
 
+/**
+ * Хватает ли клиенту места ещё на `adding` активных вопросов.
+ *
+ * Потолок проверяется на каждом пути, которым вопрос становится активным:
+ * форма, черновик, CSV, включение выключенного. Пропусти один — и через
+ * него проходят те же тысячи вопросов.
+ *
+ * ponytail: подсчёт и вставка не под блокировкой — batch из десяти вызовов
+ * может перешагнуть потолок на девять. Деньги охраняет лимит проверок при
+ * старте прогона, этот потолок — от очереди и базы на десятки тысяч.
+ */
+async function assertRoomForPrompts(
+  db: Parameters<typeof listActivePromptsForClient>[0],
+  clientId: string,
+  adding: number,
+): Promise<void> {
+  const active = (await listActivePromptsForClient(db, clientId)).length;
+  if (active + adding > PROMPTS_PER_CLIENT) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: `A client can have up to ${PROMPTS_PER_CLIENT} active prompts. This one has ${active}; pause or delete some to add ${adding} more.`,
+    });
+  }
+}
+
 const generatedPrompt = z.object({
-  text: z.string().min(1).max(1000),
+  text: z.string().min(1).max(PROMPT_TEXT_MAX),
   intent: z.enum(INTENTS),
-  cluster: z.string().min(1).max(200),
+  cluster: z.string().min(1).max(CLUSTER_NAME_MAX),
   isControl: z.boolean(),
 });
 
@@ -72,7 +104,7 @@ export const promptsRouter = router({
     .input(
       z.object({
         clientId: z.uuid(),
-        name: z.string().min(1).max(200),
+        name: z.string().min(1).max(CLUSTER_NAME_MAX),
         intent: z.enum(INTENTS).default("other"),
       }),
     )
@@ -86,7 +118,7 @@ export const promptsRouter = router({
     .input(
       z.object({
         id: z.uuid(),
-        name: z.string().min(1).max(200).optional(),
+        name: z.string().min(1).max(CLUSTER_NAME_MAX).optional(),
         intent: z.enum(INTENTS).optional(),
       }),
     )
@@ -108,12 +140,13 @@ export const promptsRouter = router({
     .input(
       z.object({
         clusterId: z.uuid(),
-        text: z.string().min(1).max(1000),
+        text: z.string().min(1).max(PROMPT_TEXT_MAX),
         isControl: z.boolean().default(false),
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      await assertClusterAccess(ctx, input.clusterId);
+      const cluster = await assertClusterAccess(ctx, input.clusterId);
+      await assertRoomForPrompts(ctx.db, cluster.clientId, 1);
       return createPrompt(ctx.db, input);
     }),
 
@@ -121,7 +154,7 @@ export const promptsRouter = router({
     .input(
       z.object({
         id: z.uuid(),
-        text: z.string().min(1).max(1000).optional(),
+        text: z.string().min(1).max(PROMPT_TEXT_MAX).optional(),
         isControl: z.boolean().optional(),
         active: z.boolean().optional(),
       }),
@@ -132,7 +165,10 @@ export const promptsRouter = router({
         assertTenant(null, ctx.user.agencyId);
         throw new Error("unreachable");
       }
-      await assertClusterAccess(ctx, prompt.clusterId);
+      const cluster = await assertClusterAccess(ctx, prompt.clusterId);
+      if (input.active === true && !prompt.active) {
+        await assertRoomForPrompts(ctx.db, cluster.clientId, 1);
+      }
 
       const { id, ...patch } = input;
       return updatePrompt(ctx.db, id, patch);
@@ -197,6 +233,7 @@ export const promptsRouter = router({
     .mutation(async ({ ctx, input }) => {
       const client = await getClientById(ctx.db, input.clientId);
       assertTenant(client, ctx.user.agencyId);
+      await assertRoomForPrompts(ctx.db, input.clientId, input.prompts.length);
 
       const existing = await listPromptClusters(ctx.db, input.clientId);
       const byName = new Map(existing.map((cluster) => [cluster.name.toLowerCase(), cluster]));
@@ -234,6 +271,8 @@ export const promptsRouter = router({
       assertTenant(client, ctx.user.agencyId);
 
       const parsed = parsePromptCsv(input.csv);
+      // Файл целиком или ничего: обрезанный импорт молча терял бы вопросы.
+      await assertRoomForPrompts(ctx.db, input.clientId, parsed.rows.length);
       const groups = groupByCluster(parsed.rows);
 
       const existing = await listPromptClusters(ctx.db, input.clientId);

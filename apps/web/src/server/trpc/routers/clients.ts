@@ -16,6 +16,7 @@ import {
   listClientsByAgency,
   agencyRunStats,
   listPortfolioRows,
+  lockAgency,
   updateClient,
 } from "@repo/db";
 import { assertTenant, protectedProcedure, roleProcedure, router } from "../trpc";
@@ -23,6 +24,14 @@ import { capabilitiesForAgency } from "@repo/core/config/measurement";
 import { entitlementsForAgency } from "../../subscription";
 import { buildWeeklyBrief } from "../../weekly-brief";
 import { droppedAssistants, needsFor } from "../../needs";
+
+/**
+ * Имена бренда и конкурентов. Границы обязательны: списки лежат в строке
+ * клиента, а она читается почти каждым запросом ради проверки владельца, и
+ * парсер строит по выражению на каждое имя на каждый ответ. Десять
+ * мегабайт имён тормозили бы всё агентство и воркер.
+ */
+const nameList = z.array(z.string().min(1).max(100)).max(50);
 
 const clientInput = z.object({
   name: z.string().min(1).max(200),
@@ -39,8 +48,8 @@ const clientInput = z.object({
     .transform(normalizeDomain)
     .refine((value) => value.includes("."), "Enter a domain, for example acme.com"),
   industry: z.string().max(200).optional(),
-  brandNames: z.array(z.string().min(1)).default([]),
-  competitorNames: z.array(z.string().min(1)).default([]),
+  brandNames: nameList.default([]),
+  competitorNames: nameList.default([]),
   /**
    * `prospect` — клиент для бесплатного аудита: ещё не платит, но измеряется
    * тем же пайплайном. Отдельного флага нет — статус и так перечисление.
@@ -52,13 +61,10 @@ const clientInput = z.object({
  * Входные данные обновления: те же поля, но без умолчаний. Отсутствующий ключ
  * обязан означать «не трогай», а не «поставь пустое».
  */
-const clientPatch = clientInput
-  .omit({ brandNames: true, competitorNames: true })
-  .partial()
-  .extend({
-    brandNames: z.array(z.string().min(1)).optional(),
-    competitorNames: z.array(z.string().min(1)).optional(),
-  });
+const clientPatch = clientInput.omit({ brandNames: true, competitorNames: true }).partial().extend({
+  brandNames: nameList.optional(),
+  competitorNames: nameList.optional(),
+});
 
 export const clientsRouter = router({
   list: protectedProcedure.query(({ ctx }) => listClientsByAgency(ctx.db, ctx.user.agencyId)),
@@ -199,24 +205,29 @@ export const clientsRouter = router({
 
   create: roleProcedure("admin")
     .input(clientInput)
-    .mutation(async ({ ctx, input }) => {
-      const [entitlements, used] = await Promise.all([
-        entitlementsForAgency(ctx.db, ctx.user.agencyId),
-        countClientsByAgency(ctx.db, ctx.user.agencyId),
-      ]);
+    .mutation(async ({ ctx, input }) =>
+      // Подсчёт и вставка под блокировкой агентства: иначе batch из десяти
+      // вызовов видел «0 клиентов» десять раз и обходил лимит тарифа.
+      ctx.db.transaction(async (tx) => {
+        await lockAgency(tx, ctx.user.agencyId);
+        const [entitlements, used] = await Promise.all([
+          entitlementsForAgency(tx, ctx.user.agencyId),
+          countClientsByAgency(tx, ctx.user.agencyId),
+        ]);
 
-      /**
-       * Лимит тарифа — billing unit продукта это активный клиентский аккаунт.
-       * Считается от подписки, а не от полей агентства: они производные, и
-       * рассинхрон должен разрешаться в пользу того, за что заплачено.
-       */
-      const decision = canAddClient(entitlements, used);
-      if (!decision.allowed) {
-        throw new TRPCError({ code: "FORBIDDEN", message: decision.message });
-      }
+        /**
+         * Лимит тарифа — billing unit продукта это активный клиентский аккаунт.
+         * Считается от подписки, а не от полей агентства: они производные, и
+         * рассинхрон должен разрешаться в пользу того, за что заплачено.
+         */
+        const decision = canAddClient(entitlements, used);
+        if (!decision.allowed) {
+          throw new TRPCError({ code: "FORBIDDEN", message: decision.message });
+        }
 
-      return createClient(ctx.db, { ...input, agencyId: ctx.user.agencyId });
-    }),
+        return createClient(tx, { ...input, agencyId: ctx.user.agencyId });
+      }),
+    ),
 
   /**
    * Частичное обновление. `clientPatch`, а не `clientInput.partial()`:

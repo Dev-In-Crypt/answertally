@@ -9,6 +9,10 @@ function handler(request: Request) {
     req: request,
     router: appRouter,
     createContext: () => createContext({ headers: request.headers }),
+    // Без потолка один HTTP-запрос нёс тысячи вызовов, исполняемых
+    // параллельно: так обходились проверки «посчитать — вставить» и
+    // забивался пул подключений к базе. Клиент склеивает куда меньше.
+    maxBatchSize: 10,
     onError({ error, path, type }) {
       // NOT_FOUND и UNAUTHORIZED — нормальная работа защиты тенанта (инвариант 1),
       // а не инцидент. Сообщать нужно о том, что сломалось на сервере.

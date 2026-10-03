@@ -1,3 +1,5 @@
+import { CLUSTER_NAME_MAX, PROMPT_TEXT_MAX } from "../config/measurement";
+
 /**
  * Импорт промптов из CSV. Колонки: cluster, intent, prompt, is_control.
  *
@@ -115,6 +117,15 @@ export function parsePromptCsv(input: string): CsvImportResult {
 
     if (cluster === "" || prompt === "") {
       errors.push(`Line ${lineNumber}: cluster and prompt cannot be empty.`);
+      continue;
+    }
+
+    // Те же границы, что у формы: без них через файл проходил вопрос на
+    // полмегабайта, и каждый ответ на него стоил десятки центов.
+    if (prompt.length > PROMPT_TEXT_MAX || cluster.length > CLUSTER_NAME_MAX) {
+      errors.push(
+        `Line ${lineNumber}: prompts are up to ${PROMPT_TEXT_MAX} characters and cluster names up to ${CLUSTER_NAME_MAX}, skipped.`,
+      );
       continue;
     }
 

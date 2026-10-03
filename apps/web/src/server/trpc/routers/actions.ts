@@ -123,7 +123,7 @@ export const actionsRouter = router({
         actionType: z.enum(ACTION_TYPES),
         estimatedImpact: z.enum(IMPACT).default("medium"),
         effort: z.enum(IMPACT).default("medium"),
-        affectedClusterIds: z.array(z.uuid()).default([]),
+        affectedClusterIds: z.array(z.uuid()).max(50).default([]),
         sourceDomain: z.string().max(255).optional(),
       }),
     )

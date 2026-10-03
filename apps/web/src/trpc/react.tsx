@@ -20,7 +20,9 @@ export function TrpcProvider({ children }: { children: React.ReactNode }) {
 
   const [trpcClient] = useState(() =>
     api.createClient({
-      links: [httpBatchLink({ url: "/api/trpc", transformer: superjson })],
+      // maxItems — тот же потолок, что у сервера (`maxBatchSize`): страница с
+      // дюжиной запросов делится на два batch, а не получает отказ.
+      links: [httpBatchLink({ url: "/api/trpc", transformer: superjson, maxItems: 10 })],
     }),
   );
 
