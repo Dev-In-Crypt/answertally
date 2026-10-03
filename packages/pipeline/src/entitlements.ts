@@ -7,6 +7,7 @@ import {
   type LimitDecision,
 } from "@repo/core";
 import {
+  countClientsByAgency,
   countRunsInFlight,
   createRun,
   domainMeasuredElsewhere,
@@ -136,25 +137,44 @@ export async function startRunIfAllowed(
       return { decision, run: null };
     }
 
-    // Бесплатный аудит — один на бренд, а не на аккаунт: десять аккаунтов на
-    // один сайт были бы десятью аудитами одного и того же за наш счёт.
-    if (
-      values.adaptersMode === "live" &&
-      !(await entitlementsForAgency(tx, agencyId, now)).paying
-    ) {
-      const client = await getClientById(tx, values.clientId);
-      if (client && (await domainMeasuredElsewhere(tx, client.domain, agencyId))) {
-        return {
-          decision: {
-            allowed: false,
-            message: `${client.domain} already had its free audit in another workspace. Pick a plan to measure it, or audit a different brand.`,
-          },
-          run: null,
-        };
-      }
+    const refusal = await afterDowngradeOrFarming(tx, agencyId, values, now);
+    if (refusal) {
+      return { decision: { allowed: false, message: refusal }, run: null };
     }
 
     const run = await createRun(tx, { ...values, plannedChecks: checksPlanned });
     return { decision, run };
   });
+}
+
+/**
+ * Отказы, которых не знает счётчик проверок. Пусто — можно.
+ *
+ * - Клиентов больше, чем покрывает тариф: лимит проверялся только при
+ *   заведении, и понижение тарифа (или смена его в кабинете провайдера)
+ *   оставляло агентству всех прежних клиентов.
+ * - Бесплатный аудит — один на бренд, а не на аккаунт: десять аккаунтов на
+ *   один сайт были бы десятью аудитами одного и того же за наш счёт.
+ */
+async function afterDowngradeOrFarming(
+  db: Database,
+  agencyId: string,
+  values: Omit<NewRun, "plannedChecks">,
+  now: Date,
+): Promise<string | null> {
+  const entitlements = await entitlementsForAgency(db, agencyId, now);
+
+  const clients = await countClientsByAgency(db, agencyId);
+  if (clients > entitlements.clientLimit) {
+    return `The workspace has ${clients} clients and the ${entitlements.plan} plan covers ${entitlements.clientLimit}. Remove clients or upgrade to keep measuring.`;
+  }
+
+  if (values.adaptersMode === "live" && !entitlements.paying) {
+    const client = await getClientById(db, values.clientId);
+    if (client && (await domainMeasuredElsewhere(db, client.domain, agencyId))) {
+      return `${client.domain} already had its free audit in another workspace. Pick a plan to measure it, or audit a different brand.`;
+    }
+  }
+
+  return null;
 }

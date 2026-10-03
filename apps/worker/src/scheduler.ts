@@ -1,4 +1,8 @@
-import { capabilitiesForAgency, plannedChecksForRun } from "@repo/core/config/measurement";
+import {
+  allowsCadence,
+  capabilitiesForAgency,
+  plannedChecksForRun,
+} from "@repo/core/config/measurement";
 import {
   getClientById,
   listActivePromptsForClient,
@@ -77,6 +81,18 @@ export async function tickSchedules(
     // с месячным потолком каждое созревшее расписание тратит свою долю, и
     // решение, принятое для первого, для третьего уже неверно.
     const entitlements = await entitlementsForAgency(db, client.agencyId, now);
+
+    // Частота, сохранённая на старшем тарифе, после понижения не действует:
+    // ежедневный опрос — четырнадцатикратный расход против базового.
+    if (!allowsCadence(entitlements.plan, schedule.cadence)) {
+      skipped.push({
+        scheduleId: schedule.id,
+        clientId: schedule.clientId,
+        reason: `The ${entitlements.plan} plan does not include ${schedule.cadence} checks. Pick another cadence or upgrade.`,
+      });
+      continue;
+    }
+
     const prompts = await listActivePromptsForClient(db, schedule.clientId);
     const checksPlanned = plannedChecksForRun(
       capabilitiesForAgency(entitlements),

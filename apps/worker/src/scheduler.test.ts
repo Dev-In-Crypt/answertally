@@ -6,6 +6,7 @@ import {
   deleteAgency,
   listRunsByClient,
   setScheduleNextRun,
+  upsertRunSchedule,
   upsertSubscription,
 } from "@repo/db";
 import { runSchedules } from "@repo/db/schema/measurement";
@@ -185,7 +186,12 @@ describe("tickSchedules", () => {
       const freeSchedule = (
         await db
           .insert(runSchedules)
-          .values({ clientId: client.id, cadence: "weekly", platforms: ["chatgpt"], samplesPerPrompt: 3 })
+          .values({
+            clientId: client.id,
+            cadence: "weekly",
+            platforms: ["chatgpt"],
+            samplesPerPrompt: 3,
+          })
           .returning()
       )[0]!;
       await setScheduleNextRun(db, freeSchedule.id, new Date(Date.now() - 1000));
@@ -198,6 +204,36 @@ describe("tickSchedules", () => {
     } finally {
       await deleteAgency(db, free.id);
     }
+  });
+
+  it("ежедневная частота после понижения тарифа не действует", async () => {
+    // Daily — только на Scale; сохранённая раньше, она не должна тратить
+    // в четырнадцать раз больше на Starter.
+    await upsertRunSchedule(db, clientId, {
+      cadence: "daily",
+      platforms: ["chatgpt"],
+      samplesPerPrompt: 3,
+      active: true,
+    });
+    await setScheduleNextRun(db, scheduleId, new Date(Date.now() - 1000));
+
+    const { started, skipped } = await tickSchedules(db, new Date());
+
+    expect(started.filter((r) => r.scheduleId === scheduleId)).toHaveLength(0);
+    expect(skipped.find((s) => s.scheduleId === scheduleId)?.reason).toMatch(/daily/);
+  });
+
+  it("клиентов больше, чем покрывает тариф, — измерение стоит", async () => {
+    // Лимит проверялся только при заведении: понижение тарифа оставляло всех.
+    for (const n of [1, 2, 3]) {
+      await createClient(db, { agencyId, name: `Extra ${n}`, domain: `extra${n}.test` });
+    }
+    await setScheduleNextRun(db, scheduleId, new Date(Date.now() - 1000));
+
+    const { started, skipped } = await tickSchedules(db, new Date());
+
+    expect(started.filter((r) => r.scheduleId === scheduleId)).toHaveLength(0);
+    expect(skipped.find((s) => s.scheduleId === scheduleId)?.reason).toMatch(/Remove clients/);
   });
 
   it("действующая подписка измерение не останавливает", async () => {
