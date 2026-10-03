@@ -9,8 +9,12 @@ name: answertally-prod
 # платформы. Когда понадобится больше — веб и воркер масштабируются
 # независимо, потому что уже разделены.
 #
-# Запуск:
-#   docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
+# Запуск: scripts/deploy.sh — он скачивает образы, собранные в CI под
+# текущий коммит, и поднимает их без сборки на этой машине.
+#
+# Образы помечены хэшем коммита (IMAGE_TAG). Без него имя — `:local`, и
+# `up -d --build` собирает приложение здесь, как раньше: это запасной путь,
+# если CI недоступен, — долгий, но рабочий.
 #
 # Порядок первого запуска, откат, резервные копии и проверка после деплоя —
 # в docs/deploy.md.
@@ -80,6 +84,7 @@ services:
           memory: ${REDIS_MEMORY_LIMIT:-512m}
 
   migrate:
+    image: ghcr.io/dev-in-crypt/answertally-worker:${IMAGE_TAG:-local}
     build:
       context: .
       dockerfile: apps/worker/Dockerfile
@@ -97,6 +102,7 @@ services:
       - no-new-privileges:true
 
   web:
+    image: ghcr.io/dev-in-crypt/answertally-web:${IMAGE_TAG:-local}
     build:
       context: .
       dockerfile: apps/web/Dockerfile
@@ -197,6 +203,7 @@ services:
           memory: ${WEB_MEMORY_LIMIT:-2g}
 
   worker:
+    image: ghcr.io/dev-in-crypt/answertally-worker:${IMAGE_TAG:-local}
     build:
       context: .
       dockerfile: apps/worker/Dockerfile
