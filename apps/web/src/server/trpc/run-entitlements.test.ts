@@ -196,12 +196,20 @@ describe("запуск измерения и подписка", () => {
     );
   });
 
-  it("оплата снимает границу: перерасход не отключает посреди месяца", async () => {
-    await incrementAiChecks(db, agencyId, billingPeriod(), FREE_CHECK_ALLOWANCE * 100);
+  it("оплата снимает бесплатную границу", async () => {
+    await incrementAiChecks(db, agencyId, billingPeriod(), FREE_CHECK_ALLOWANCE * 10);
     await subscribe(agencyId, "active", new Date(Date.now() + 30 * DAY));
 
     const result = await caller(agencyId).runs.triggerManual({ clientId });
     expect(result.runId).toBeTruthy();
+  });
+
+  it("плательщику месячный лимит тарифа — потолок", async () => {
+    // Раньше лимит только показывался, и тариф мог тратить без конца.
+    await incrementAiChecks(db, agencyId, billingPeriod(), FREE_CHECK_ALLOWANCE * 100);
+    await subscribe(agencyId, "active", new Date(Date.now() + 30 * DAY));
+
+    await expect(caller(agencyId).runs.triggerManual({ clientId })).rejects.toThrow(/used up/);
   });
 
   it("отказ случается до создания прогона, а не после", async () => {
