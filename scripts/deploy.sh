@@ -19,5 +19,8 @@ $compose pull web worker migrate
 # --no-build: если образа почему-то нет, лучше упасть, чем молча собирать
 # семь минут на месте.
 $compose up -d --no-build
+# Caddyfile подключён файлом, и его правку compose не замечает: прокси
+# продолжал бы работать по старому конфигу, пока его не перезапустят руками.
+$compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile
 
 echo "Выложен $(git log --oneline -1)"
