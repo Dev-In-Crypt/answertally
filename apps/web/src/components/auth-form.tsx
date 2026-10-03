@@ -18,18 +18,30 @@ export function AuthForm({ mode, lockedEmail }: { mode: Mode; lockedEmail?: stri
   const [pending, setPending] = useState(false);
   /** Адрес, на который ушло письмо с подтверждением. Null — подтверждать не нужно. */
   const [awaitingEmail, setAwaitingEmail] = useState<string | null>(null);
+  /** Письмо ушло повторно — при попытке войти с неподтверждённым адресом. */
+  const [resent, setResent] = useState(false);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
     setPending(true);
 
+    // Куда вести после ссылки из письма: сервер впускает по ней сразу.
+    const callbackURL = "/dashboard";
     const result =
       mode === "signup"
-        ? await signUp.email({ email, password, name })
-        : await signIn.email({ email, password });
+        ? await signUp.email({ email, password, name, callbackURL })
+        : await signIn.email({ email, password, callbackURL });
 
     setPending(false);
+
+    // Адрес не подтверждён: сервер уже отправил свежую ссылку. Сказать
+    // «Email not verified» и оставить человека с этим — тупик.
+    if (result.error?.code === "EMAIL_NOT_VERIFIED") {
+      setResent(true);
+      setAwaitingEmail(email);
+      return;
+    }
 
     if (result.error) {
       setError(result.error.message ?? "Something went wrong. Please try again.");
@@ -56,11 +68,13 @@ export function AuthForm({ mode, lockedEmail }: { mode: Mode; lockedEmail?: stri
       <div data-testid="verify-email-sent" className="flex flex-col gap-3">
         <h2 className="text-lg font-medium">Confirm your email</h2>
         <p className="text-sm text-muted-foreground">
-          We sent a link to <span className="font-medium">{awaitingEmail}</span>. Open it to finish
-          setting up the account — you will not be able to sign in until you do.
+          {resent ? "This address is not confirmed yet. We sent a fresh link to " : "We sent a link to "}
+          <span className="font-medium">{awaitingEmail}</span>. Open it to finish setting up the
+          account — the link signs you in.
         </p>
         <p className="text-sm text-muted-foreground">
-          Nothing arrived? Check the spam folder, then try signing up again.
+          Nothing arrived? Check the spam folder, or sign in again with the same email and password —
+          we will send a new link. Each link works for an hour.
         </p>
       </div>
     );
