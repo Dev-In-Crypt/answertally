@@ -112,7 +112,14 @@ export async function listClientsByAgency(db: Database, agencyId: string): Promi
  * Вызывающий обязан прогнать результат через assertTenant, чтобы чужой ресурс
  * и несуществующий давали одинаковый ответ.
  */
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export async function getClientById(db: Database, clientId: string): Promise<Client | undefined> {
+  // Идентификатор из пути публичного API приходит как есть. Не-UUID — это
+  // несуществующий клиент, а не ошибка Postgres и ответ 500.
+  if (!UUID_PATTERN.test(clientId)) {
+    return undefined;
+  }
   const rows = await db.select().from(clients).where(eq(clients.id, clientId)).limit(1);
   return rows[0];
 }

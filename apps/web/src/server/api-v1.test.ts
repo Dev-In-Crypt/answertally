@@ -96,6 +96,15 @@ describe("public API v1", () => {
     expect(response.status).toBe(404);
   });
 
+  it("мусор вместо идентификатора — 404, а не 500", async () => {
+    const response = await getVisibility(
+      request(token, "http://localhost/api/v1/clients/not-a-uuid/visibility"),
+      { params: Promise.resolve({ id: "not-a-uuid" }) },
+    );
+
+    expect(response.status).toBe(404);
+  });
+
   it("видимость отдаётся с интервалом и признаком различимости", async () => {
     const response = await getVisibility(
       request(token, `http://localhost/api/v1/clients/${clientId}/visibility`),
