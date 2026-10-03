@@ -5,7 +5,12 @@ import { FREE_CHECK_ALLOWANCE } from "../billing/entitlements";
 import { DEFAULT_GENERATED_PROMPT_COUNT } from "../prompts/generate";
 import { MIN_SAMPLES_PER_CELL } from "../metrics/visibility";
 import type { PlanId } from "../billing/entitlements";
-import { FREE_AUDIT_ASSISTANTS, capabilitiesFor, capabilitiesForAgency } from "./measurement";
+import {
+  FREE_AUDIT_ASSISTANTS,
+  capabilitiesFor,
+  capabilitiesForAgency,
+  platformsForRun,
+} from "./measurement";
 import {
   defaultAssistantSentence,
   freeAuditAssistantSentence,
@@ -137,5 +142,40 @@ describe("лимит бесплатного аудита", () => {
     // Витрина обещает «one full audit on one brand». Два — это не щедрость,
     // а расхождение обещания с поведением, и появилось оно однажды само.
     expect(FREE_CHECK_ALLOWANCE).toBeLessThan(DEFAULT_AUDIT * 2);
+  });
+});
+
+describe("platformsForRun — кого спросит прогон", () => {
+  const free = capabilitiesForAgency({ plan: "starter", paying: false });
+  const starter = capabilitiesForAgency({ plan: "starter", paying: true });
+  const scale = capabilitiesForAgency({ plan: "scale", paying: true });
+
+  it("без расписания берёт умолчание того, что агентству положено", () => {
+    expect(platformsForRun(free, null)).toEqual([...FREE_AUDIT_ASSISTANTS]);
+    expect(platformsForRun(starter, undefined)).toEqual([...starter.defaultAssistants]);
+  });
+
+  it("из расписания выбрасывает то, чего бесплатному аудиту не положено", () => {
+    // Ровно та ошибка: расписание с Grok у неплатящего.
+    expect(platformsForRun(free, ["chatgpt", "perplexity", "grok"])).toEqual([
+      "chatgpt",
+      "perplexity",
+    ]);
+  });
+
+  it("из расписания выбрасывает то, чего не даёт тариф", () => {
+    expect(platformsForRun(starter, ["chatgpt", "claude"])).toEqual(["chatgpt"]);
+    expect(platformsForRun(scale, ["chatgpt", "claude"])).toEqual(["chatgpt", "claude"]);
+  });
+
+  it("из расписания выбрасывает платформу, которую перестали измерять", () => {
+    // Gemini остался в enum базы, но не спрашивается ни на одном тарифе.
+    expect(platformsForRun(scale, ["chatgpt", "gemini"])).toEqual(["chatgpt"]);
+  });
+
+  it("сохраняет порядок расписания и не добавляет от себя", () => {
+    expect(platformsForRun(scale, ["grok", "chatgpt"])).toEqual(["grok", "chatgpt"]);
+    // Пустое расписание — пустой прогон, а не подмена умолчанием.
+    expect(platformsForRun(scale, [])).toEqual([]);
   });
 });

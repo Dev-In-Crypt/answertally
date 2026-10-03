@@ -1,6 +1,6 @@
 import { PLAN_LIMITS } from "../billing/period";
 import type { PlanId } from "../billing/entitlements";
-import { ASSISTANTS } from "../adapters/catalogue";
+import { ASSISTANTS, isMeasurableAssistant } from "../adapters/catalogue";
 import { DEFAULT_PLATFORMS, PLATFORM_IDS, type Platform } from "../adapters/types";
 
 /**
@@ -190,3 +190,33 @@ export function monthlyAnswers(input: {
 export function monthlyCheckAllowance(plan: PlanId): number {
   return PLAN_LIMITS[plan].aiCheckAllowance;
 }
+
+/**
+ * Кого спросит прогон: единственное место, где это решается.
+ *
+ * Раньше решали трижды — функция прогона, очередь воркера и подсчёт
+ * проверок перед стартом, — и решали по-разному. Когда бесплатный аудит
+ * перестал включать Grok, правка попала в функцию прогона, тесты прошли, а
+ * в боевом режиме прогон ставит в очередь воркер, и там стояло своё
+ * «расписание или тройка по умолчанию» без тарифа и без платности. Grok
+ * продолжал отвечать за наш счёт, и ни один тест этого не видел, потому
+ * что проверял не тот путь.
+ *
+ * Из расписания отсеивается то, чего агентству сейчас не положено: тариф
+ * сменился, платформу перестали измерять, аудит ещё бесплатный. Строку
+ * расписания никто не переписывает — данные мы не трогаем, — поэтому
+ * сверка нужна в момент прогона. Без расписания берётся умолчание.
+ */
+export function platformsForRun(
+  capabilities: MeasurementCapabilities,
+  schedulePlatforms: readonly string[] | null | undefined,
+): Platform[] {
+  if (!schedulePlatforms) {
+    return [...capabilities.defaultAssistants];
+  }
+  const allowed = new Set<string>(capabilities.assistants);
+  return schedulePlatforms.filter(
+    (id): id is Platform => isMeasurableAssistant(id) && allowed.has(id),
+  );
+}
+

@@ -1,6 +1,7 @@
 import type { FlowProducer } from "bullmq";
 import {
   claimPendingRun,
+  getAgencyIdForRun,
   failStalePendingRuns,
   finishRun,
   getRunById,
@@ -10,9 +11,9 @@ import {
   releaseRun,
 } from "@repo/db";
 import type { Database } from "@repo/db";
-import { DEFAULT_PLATFORMS } from "@repo/core";
-import type { AdaptersMode, Platform } from "@repo/core";
-import { planRunJobs } from "@repo/pipeline";
+import type { AdaptersMode } from "@repo/core";
+import { capabilitiesForAgency, platformsForRun } from "@repo/core/config/measurement";
+import { entitlementsForAgency, planRunJobs } from "@repo/pipeline";
 import { QUEUE_NAMES, runsQueueName, type FinalizeJobData, type RunJobData } from "./queues";
 
 /**
@@ -42,10 +43,19 @@ export async function enqueueRun(
   }
 
   const schedule = run.scheduleId ? await getRunSchedule(db, run.scheduleId) : undefined;
-  // Без расписания берётся весь запускной набор, а не одна платформа: молча
-  // измерить одну и показать это как «видимость» хуже, чем потратить больше.
-  // Новые платформы сюда не входят — их включают в расписании осознанно.
-  const platforms = (schedule?.platforms ?? DEFAULT_PLATFORMS) as Platform[];
+  /**
+   * Кого спросить — по правам агентства, а не по общему умолчанию.
+   *
+   * Это боевой путь: в живом режиме веб только создаёт прогон, а ставит его
+   * в очередь этот код. Здесь стояло «расписание или тройка по умолчанию»
+   * без тарифа и без платности, и бесплатный аудит спрашивал Grok за наш
+   * счёт, хотя в функции прогона его уже убрали. Решает теперь одна функция.
+   */
+  const agencyId = await getAgencyIdForRun(db, runId);
+  const entitlements = agencyId
+    ? await entitlementsForAgency(db, agencyId)
+    : { plan: "starter" as const, paying: false };
+  const platforms = platformsForRun(capabilitiesForAgency(entitlements), schedule?.platforms);
   const samples = schedule?.samplesPerPrompt ?? 3;
 
   const prompts = await listActivePromptsForClient(db, clientId);

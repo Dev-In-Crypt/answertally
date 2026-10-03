@@ -4,8 +4,7 @@ import {
   type AdaptersMode,
   type Platform,
 } from "@repo/core";
-import { isMeasurableAssistant } from "@repo/core";
-import { capabilitiesForAgency } from "@repo/core/config/measurement";
+import { capabilitiesForAgency, platformsForRun } from "@repo/core/config/measurement";
 import {
   createResponse,
   countResponsesByRun,
@@ -164,32 +163,9 @@ export async function orchestrateRun(
     ? await entitlementsForAgency(db, agencyId)
     : { plan: "starter" as const, paying: false };
   const capabilities = capabilitiesForAgency(entitlements);
-  /**
-   * Из сохранённого расписания отсеиваются те, кого продукт больше не
-   * измеряет.
-   *
-   * Расписание переживает решение перестать измерять платформу: строку с
-   * ним никто не переписывает — данные мы не трогаем. Поэтому набор
-   * сверяется с каталогом в момент прогона. Иначе клиент, у которого
-   * Gemini включён с прошлого года, продолжал бы его опрашивать после
-   * того, как измерять его стало нельзя.
-   *
-   * Тем же фильтром отсекается и то, чего больше не даёт тариф: агентство
-   * могло перейти на младший, а расписание пережило переход. Спрашивать
-   * ассистента, за которого не платят, — тратить наши деньги на то, о чём
-   * не просили.
-   *
-   * Молчаливым это не остаётся: форма показывает такой ассистент отдельной
-   * пометкой и прямо говорит, что измерение по нему остановлено и что
-   * сделать. Раньше он выглядел там обычной галочкой — и тогда отсекать
-   * его здесь было бы тихой подменой.
-   */
-  const allowed = new Set<string>(capabilities.assistants);
-  const platforms = (
-    schedule
-      ? schedule.platforms.filter((id) => isMeasurableAssistant(id) && allowed.has(id))
-      : [...capabilities.defaultAssistants]
-  ) as Platform[];
+  // Кого спросить — решает одна функция для всех путей прогона: здесь, в
+  // очереди воркера и в подсчёте проверок перед стартом (см. её описание).
+  const platforms = platformsForRun(capabilities, schedule?.platforms);
   const samples = schedule?.samplesPerPrompt ?? 3;
 
   const prompts = await listActivePromptsForClient(db, run.clientId);

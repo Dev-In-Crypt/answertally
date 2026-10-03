@@ -1,6 +1,14 @@
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { FlowProducer } from "bullmq";
-import { createAgency, createClient, createDb, createRun, deleteAgency, getRunById } from "@repo/db";
+import {
+  createAgency,
+  createClient,
+  createDb,
+  createRun,
+  deleteAgency,
+  getRunById,
+  upsertSubscription,
+} from "@repo/db";
 import { promptClusters, prompts } from "@repo/db/schema/measurement";
 import { PENDING_RUN_MAX_AGE_MS, pickUpPendingRuns } from "./enqueue-run";
 
@@ -52,7 +60,27 @@ describe("pickUpPendingRuns", () => {
     return createRun(db, { clientId, scheduleId: null, trigger: "manual", adaptersMode: mode });
   }
 
+  /** Агентство-плательщик: у него набор тарифа, а не бесплатного аудита. */
+  async function makePaying() {
+    await upsertSubscription(db, {
+      agencyId,
+      customerId: `cus_${agencyId.slice(0, 8)}`,
+      subscriptionId: `sub_${agencyId.slice(0, 8)}`,
+      plan: "starter",
+      status: "active",
+      currentPeriodEnd: new Date("2099-01-01T00:00:00.000Z"),
+      cancelAtPeriodEnd: false,
+    });
+  }
+
+  /** Очереди платформ, в которые попали задачи прогона. */
+  function queuedPlatforms(add: ReturnType<typeof fakeFlow>["add"]): string[] {
+    const call = add.mock.calls[0] as unknown as [{ children: { queueName: string }[] }];
+    return [...new Set(call[0].children.map((child) => child.queueName))].sort();
+  }
+
   it("ставит ручной живой прогон в очередь: 2 промпта × 3 платформы × 3 сэмпла", async () => {
+    await makePaying();
     const run = await manualRun();
     const { flow, add } = fakeFlow();
 
@@ -62,6 +90,35 @@ describe("pickUpPendingRuns", () => {
     expect(result.queuedJobs).toBe(18);
     expect(add).toHaveBeenCalledTimes(1);
     expect((await getRunById(db, run.id))?.status).toBe("running");
+  });
+
+  it("бесплатный аудит не ставит в очередь Grok", async () => {
+    /**
+     * Это боевой путь: в живом режиме веб только создаёт прогон, а ставит
+     * его в очередь этот код. Здесь стояло «расписание или тройка по
+     * умолчанию» без платности, и Grok — $0.1058 за ответ, 89% цены круга —
+     * отвечал на бесплатных аудитах, хотя в функции прогона его уже убрали.
+     * Тест на функцию прогона проходил, а этот путь никто не проверял.
+     */
+    await manualRun();
+    const { flow, add } = fakeFlow();
+
+    const result = await pickUpPendingRuns(db, flow, "live");
+
+    // 2 промпта × 2 платформы × 3 сэмпла.
+    expect(result.queuedJobs).toBe(12);
+    expect(queuedPlatforms(add).some((queue) => queue.includes("grok"))).toBe(false);
+  });
+
+  it("плательщику Grok ставится", async () => {
+    // Иначе это была бы не граница бесплатного аудита, а потеря ассистента.
+    await makePaying();
+    await manualRun();
+    const { flow, add } = fakeFlow();
+
+    await pickUpPendingRuns(db, flow, "live");
+
+    expect(queuedPlatforms(add).some((queue) => queue.includes("grok"))).toBe(true);
   });
 
   it("два одновременных прохода ставят прогон ровно один раз", async () => {

@@ -14,7 +14,11 @@ import {
   refuseSchedule,
   type Cadence,
 } from "@repo/core/adapters/capacity";
-import { capabilitiesFor, capabilitiesForAgency } from "@repo/core/config/measurement";
+import {
+  capabilitiesFor,
+  capabilitiesForAgency,
+  platformsForRun,
+} from "@repo/core/config/measurement";
 import { completeRun } from "@repo/pipeline";
 import {
   createRun,
@@ -108,8 +112,10 @@ function plannedChecks(
   entitlements: { plan: PlanId; paying: boolean },
   { promptCount, schedule }: RunSize,
 ): number {
-  const platforms =
-    schedule?.platforms.length || capabilitiesForAgency(entitlements).defaultAssistants.length;
+  // Тем же правилом, что и сам прогон: иначе подсчёт брал бы расписание
+  // целиком, а прогон — только разрешённых, и при тесном бесплатном лимите
+  // аудит, который помещается, получал бы отказ.
+  const platforms = platformsForRun(capabilitiesForAgency(entitlements), schedule?.platforms).length;
   const samples = schedule?.samplesPerPrompt ?? MIN_SAMPLES_PER_CELL;
   return promptCount * platforms * samples;
 }
