@@ -31,6 +31,14 @@ const nextConfig: NextConfig = {
       { source: "/r/:path*", headers: [{ key: "Referrer-Policy", value: "no-referrer" }] },
     ];
   },
+  /**
+   * Оптимизатор картинок выключен: `next/image` в продукте не используется,
+   * а эндпоинт `/_next/image` открыт по умолчанию и дважды за 2026 год был
+   * входом для критических уязвимостей. Ненужная поверхность — лишний риск.
+   */
+  images: { unoptimized: true },
+  // Версию движка снаружи знать незачем.
+  poweredByHeader: false,
   transpilePackages: ["@repo/core", "@repo/db"],
   typedRoutes: true,
   /**
