@@ -70,13 +70,17 @@ export async function storeCitations(
   responseId: string,
   urls: { url: string; title?: string }[],
 ): Promise<number> {
-  const rows = urls.map((citation, index) => ({
-    responseId,
-    url: citation.url,
-    domain: domainOf(citation.url),
-    title: citation.title ?? null,
-    position: index + 1,
-  }));
+  // Только http(s): ссылки приходят от ассистента, а значит и от любого,
+  // кто подбросил ему страницу. `javascript:` в ссылке на экране — это код.
+  const rows = urls
+    .filter((citation) => /^https?:\/\//i.test(citation.url))
+    .map((citation, index) => ({
+      responseId,
+      url: citation.url,
+      domain: domainOf(citation.url),
+      title: citation.title ?? null,
+      position: index + 1,
+    }));
 
   await replaceCitations(db, responseId, rows);
   return rows.length;

@@ -2,6 +2,7 @@ import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
 import { TRPCError } from "@trpc/server";
 import { makeRecommendation } from "@repo/core";
 import {
+  createPromptCluster,
   createAgency,
   createClient,
   createDb,
@@ -36,7 +37,8 @@ function caller(agencyId: string, role: SessionUser["role"] = "owner") {
 const RECOMMENDATION = makeRecommendation({
   actionType: "review_platform",
   title: "Get the client covered on g2.com",
-  reason: "g2.com is cited in 23% of answers here (12 citations). Northstack appears; the client does not.",
+  reason:
+    "g2.com is cited in 23% of answers here (12 citations). Northstack appears; the client does not.",
   estimatedImpact: "high",
   effort: "low",
   sourceDomain: "g2.com",
@@ -121,7 +123,8 @@ describe("actions.convertFromRecommendation", () => {
   });
 
   it("кластер рекомендации попадает в affected_cluster_ids", async () => {
-    const clusterId = crypto.randomUUID();
+    const clusterId = (await createPromptCluster(db, { clientId, name: "Own", intent: "other" }))
+      .id;
     const { action } = await caller(agencyId).actions.convertFromRecommendation({
       clientId,
       recommendation: makeRecommendation({ ...RECOMMENDATION, clusterId }),
@@ -129,6 +132,17 @@ describe("actions.convertFromRecommendation", () => {
 
     // Это база для treatment-группы будущего эксперимента (T43).
     expect(action.affectedClusterIds).toEqual([clusterId]);
+  });
+
+  it("чужой кластер в действие не попадает", async () => {
+    // Идентификатор приходит с экрана; чужой кластер подмешал бы в
+    // эксперимент чужие цифры.
+    const { action } = await caller(agencyId).actions.convertFromRecommendation({
+      clientId,
+      recommendation: makeRecommendation({ ...RECOMMENDATION, clusterId: crypto.randomUUID() }),
+    });
+
+    expect(action.affectedClusterIds).toEqual([]);
   });
 });
 

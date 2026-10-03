@@ -209,6 +209,10 @@ services:
           # С запасом на Chromium: печать PDF поднимает браузер внутри этого
           # же контейнера, и жёсткий лимит убил бы не браузер, а сервер.
           memory: ${WEB_MEMORY_LIMIT:-2g}
+    # Потолок процессов: сбежавший Chromium или форк-бомба не съедят машину
+    # целиком вместе с базой. Ядра не ограничены — их число на машине
+    # компоуз не знает, а лишний лимит не дал бы контейнеру стартовать.
+    pids_limit: 512
 
   worker:
     image: ghcr.io/dev-in-crypt/answertally-worker:${IMAGE_TAG:-local}
@@ -278,6 +282,7 @@ services:
       resources:
         limits:
           memory: ${WORKER_MEMORY_LIMIT:-1g}
+    pids_limit: 256
 
   caddy:
     image: caddy:2-alpine

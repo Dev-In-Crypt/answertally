@@ -15,6 +15,7 @@ import {
   listActions,
   listActivity,
   listDatedCitationFacts,
+  listPromptClusters,
   listUsersByAgency,
   logActivity,
   updateAction,
@@ -35,13 +36,11 @@ export const actionsRouter = router({
       return listActivity(ctx.db, input.clientId, input.limit);
     }),
 
-  list: protectedProcedure
-    .input(z.object({ clientId: z.uuid() }))
-    .query(async ({ ctx, input }) => {
-      const client = await getClientById(ctx.db, input.clientId);
-      assertTenant(client, ctx.user.agencyId);
-      return listActions(ctx.db, input.clientId);
-    }),
+  list: protectedProcedure.input(z.object({ clientId: z.uuid() })).query(async ({ ctx, input }) => {
+    const client = await getClientById(ctx.db, input.clientId);
+    assertTenant(client, ctx.user.agencyId);
+    return listActions(ctx.db, input.clientId);
+  }),
 
   /**
    * Рабочее задание по действию.
@@ -133,10 +132,15 @@ export const actionsRouter = router({
 
       const { clientId, sourceDomain, ...rest } = input;
       const source = sourceDomain ? await getSourceByDomain(ctx.db, sourceDomain) : undefined;
+      // Только кластеры этого клиента — чужие подмешали бы в эксперимент чужие цифры.
+      const own = new Set(
+        (await listPromptClusters(ctx.db, clientId)).map((cluster) => cluster.id),
+      );
 
       const action = await createAction(ctx.db, {
         clientId,
         ...rest,
+        affectedClusterIds: rest.affectedClusterIds.filter((id) => own.has(id)),
         sourceDomain: sourceDomain ?? null,
         sourceId: source?.id ?? null,
         // Владелец назначается явно, а не автоматически: тот, кто завёл действие,

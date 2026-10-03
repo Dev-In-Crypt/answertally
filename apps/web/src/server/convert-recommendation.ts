@@ -3,6 +3,7 @@ import {
   createAction,
   findExistingAction,
   getSourceByDomain,
+  listPromptClusters,
   logActivity,
   updateAction,
   type Action,
@@ -33,10 +34,13 @@ export async function convertRecommendationToAction(
 ): Promise<{ action: Action; created: boolean }> {
   const { recommendation } = input;
 
+  // Только кластеры этого клиента: идентификаторы приходят с экрана, и
+  // чужой кластер в treatment-группе подмешал бы в эксперимент чужие цифры.
+  const own = new Set((await listPromptClusters(db, input.clientId)).map((cluster) => cluster.id));
   const clusterIds = [
     ...new Set(
       [recommendation.clusterId, ...(input.extraClusterIds ?? [])].filter(
-        (value): value is string => Boolean(value),
+        (value): value is string => Boolean(value) && own.has(value as string),
       ),
     ),
   ];

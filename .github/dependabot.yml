@@ -1,0 +1,13 @@
+# Обновления зависимостей. Действия CI — главное: у задачи сборки образов
+# есть права на запись пакетов, и устаревшее действие — путь на прод.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
