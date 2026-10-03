@@ -1,9 +1,9 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import {
-  MIN_SAMPLES_PER_CELL,
   parseAdaptersMode,
   PLATFORM_IDS,
+  type AdaptersMode,
   type PlanId,
 } from "@repo/core";
 import {
@@ -15,11 +15,10 @@ import {
 import {
   capabilitiesFor,
   capabilitiesForAgency,
-  platformsForRun,
+  plannedChecksForRun,
 } from "@repo/core/config/measurement";
-import { completeRun, measurementAllowedForAgency } from "@repo/pipeline";
+import { completeRun, startRunIfAllowed } from "@repo/pipeline";
 import {
-  createRun,
   getClientById,
   getRunById,
   getPromptById,
@@ -30,6 +29,7 @@ import {
   listRecentRuns,
   logActivity,
   upsertRunSchedule,
+  type Run,
 } from "@repo/db";
 import { assertTenant, protectedProcedure, roleProcedure, router } from "../trpc";
 import type { TrpcContext } from "../context";
@@ -61,25 +61,30 @@ const cadenceSchema = z.custom<Cadence>(
  * Публичный отчёт `/r/[token]` этой проверки не получает намеренно: клиент
  * агентства не отвечает за его карту и не должен видеть закрытую дверь.
  */
-async function assertMeasurementAllowed(
+async function startMeasuredRun(
   db: TrpcContext["db"],
   agencyId: string,
-  run?: RunSize,
-): Promise<void> {
+  size: RunSize,
+  values: { clientId: string; scheduleId: string | null; adaptersMode: AdaptersMode },
+): Promise<Run> {
   const entitlements = await entitlementsForAgency(db, agencyId);
 
-  // Та же проверка, что у воркера: две копии одного правила уже расходились,
-  // и каждый раз это стоило живых денег.
-  const decision = await measurementAllowedForAgency(db, agencyId, {
-    trigger: "manual",
-    checksPlanned: run ? plannedChecks(entitlements, run) : 0,
-  });
+  // Та же проверка, что у воркера, и под той же блокировкой: две копии
+  // одного правила уже расходились, а проверка отдельно от вставки
+  // пропускала параллельные запуски — и каждый раз это стоило живых денег.
+  const { decision, run } = await startRunIfAllowed(
+    db,
+    agencyId,
+    { ...values, trigger: "manual" },
+    plannedChecks(entitlements, size),
+  );
 
-  if (!decision.allowed) {
+  if (!run) {
     // Причина отдаётся как есть: человек должен понять, что делать дальше,
     // а не гадать над кодом ошибки.
     throw new TRPCError({ code: "FORBIDDEN", message: decision.message });
   }
+  return run;
 }
 
 interface RunSize {
@@ -87,23 +92,12 @@ interface RunSize {
   schedule: { platforms: string[]; samplesPerPrompt: number } | null | undefined;
 }
 
-/**
- * Во сколько ответов обойдётся прогон: по нему решается, хватает ли остатка.
- *
- * Без расписания набор берётся у тарифа, а не из общего литерала: умолчание
- * на младшем тарифе уже, чем на старших, и считать всем по широкому значило
- * бы отказывать в прогоне, который на самом деле помещается в остаток.
- */
+/** Во сколько ответов обойдётся прогон: по нему решается, хватает ли остатка. */
 function plannedChecks(
   entitlements: { plan: PlanId; paying: boolean },
   { promptCount, schedule }: RunSize,
 ): number {
-  // Тем же правилом, что и сам прогон: иначе подсчёт брал бы расписание
-  // целиком, а прогон — только разрешённых, и при тесном бесплатном лимите
-  // аудит, который помещается, получал бы отказ.
-  const platforms = platformsForRun(capabilitiesForAgency(entitlements), schedule?.platforms).length;
-  const samples = schedule?.samplesPerPrompt ?? MIN_SAMPLES_PER_CELL;
-  return promptCount * platforms * samples;
+  return plannedChecksForRun(capabilitiesForAgency(entitlements), promptCount, schedule);
 }
 
 export const runsRouter = router({
@@ -239,22 +233,16 @@ export const runsRouter = router({
       }
 
       const schedule = await getScheduleForClient(ctx.db, input.clientId);
+      const mode = parseAdaptersMode(process.env.ADAPTERS_MODE);
+
       // Размер прогона известен до его создания: отказать надо раньше, чем
       // запись появится в базе и повиснет в ожидании навсегда.
-      await assertMeasurementAllowed(
+      const run = await startMeasuredRun(
         ctx.db,
         ctx.user.agencyId,
         { promptCount: prompts.length, schedule },
+        { clientId: input.clientId, scheduleId: schedule?.id ?? null, adaptersMode: mode },
       );
-
-      const mode = parseAdaptersMode(process.env.ADAPTERS_MODE);
-
-      const run = await createRun(ctx.db, {
-        clientId: input.clientId,
-        scheduleId: schedule?.id ?? null,
-        trigger: "manual",
-        adaptersMode: mode,
-      });
 
       if (mode === "mock") {
         // В mock-режиме прогон занимает миллисекунды, поэтому выполняется здесь же:
@@ -290,20 +278,14 @@ export const runsRouter = router({
         });
       }
 
+      const mode = parseAdaptersMode(process.env.ADAPTERS_MODE);
       // У аудита расписания нет — он идёт по полному набору ассистентов.
-      await assertMeasurementAllowed(
+      const run = await startMeasuredRun(
         ctx.db,
         ctx.user.agencyId,
         { promptCount: prompts.length, schedule: null },
+        { clientId: input.clientId, scheduleId: null, adaptersMode: mode },
       );
-
-      const mode = parseAdaptersMode(process.env.ADAPTERS_MODE);
-      const run = await createRun(ctx.db, {
-        clientId: input.clientId,
-        scheduleId: null,
-        trigger: "manual",
-        adaptersMode: mode,
-      });
 
       const outcome = mode === "mock"
         ? await completeRun(ctx.db, run.id, input.clientId, mode)

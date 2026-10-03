@@ -1,6 +1,12 @@
-import { createRun, getClientById, listDueSchedules, setScheduleNextRun } from "@repo/db";
+import { capabilitiesForAgency, plannedChecksForRun } from "@repo/core/config/measurement";
+import {
+  getClientById,
+  listActivePromptsForClient,
+  listDueSchedules,
+  setScheduleNextRun,
+} from "@repo/db";
 import type { Database } from "@repo/db";
-import { measurementAllowedForAgency } from "@repo/pipeline";
+import { entitlementsForAgency, startRunIfAllowed } from "@repo/pipeline";
 
 export type Cadence = "daily" | "weekly" | "biweekly";
 
@@ -55,11 +61,6 @@ export async function tickSchedules(
   const started: TickResult[] = [];
   const skipped: SkippedSchedule[] = [];
 
-  // Права на агентство читаются один раз за тик: у одного агентства обычно
-  // созревает сразу несколько клиентов, и спрашивать базу на каждого — это
-  // те же данные тем же запросом.
-  const byAgency = new Map<string, { allowed: boolean; message: string }>();
-
   for (const schedule of due) {
     const client = await getClientById(db, schedule.clientId);
     if (!client) {
@@ -72,13 +73,34 @@ export async function tickSchedules(
       continue;
     }
 
-    let decision = byAgency.get(client.agencyId);
-    if (!decision) {
-      decision = await measurementAllowedForAgency(db, client.agencyId, { trigger: "scheduled" }, now);
-      byAgency.set(client.agencyId, decision);
-    }
+    // Права и размер — на каждое расписание отдельно, без кэша на агентство:
+    // с месячным потолком каждое созревшее расписание тратит свою долю, и
+    // решение, принятое для первого, для третьего уже неверно.
+    const entitlements = await entitlementsForAgency(db, client.agencyId, now);
+    const prompts = await listActivePromptsForClient(db, schedule.clientId);
+    const checksPlanned = plannedChecksForRun(
+      capabilitiesForAgency(entitlements),
+      prompts.length,
+      schedule,
+    );
 
-    if (!decision.allowed) {
+    const { decision, run } = await startRunIfAllowed(
+      db,
+      client.agencyId,
+      {
+        scheduleId: schedule.id,
+        clientId: schedule.clientId,
+        status: "pending",
+        trigger: "scheduled",
+        // Режим фиксируется в момент создания прогона: по нему потом решается,
+        // складывать ли эти ответы с остальными измерениями клиента.
+        adaptersMode,
+      },
+      checksPlanned,
+      now,
+    );
+
+    if (!run) {
       skipped.push({
         scheduleId: schedule.id,
         clientId: schedule.clientId,
@@ -86,16 +108,6 @@ export async function tickSchedules(
       });
       continue;
     }
-
-    const run = await createRun(db, {
-      scheduleId: schedule.id,
-      clientId: schedule.clientId,
-      status: "pending",
-      trigger: "scheduled",
-      // Режим фиксируется в момент создания прогона: по нему потом решается,
-      // складывать ли эти ответы с остальными измерениями клиента.
-      adaptersMode,
-    });
 
     await setScheduleNextRun(db, schedule.id, nextRunAfter(schedule.cadence, now));
 

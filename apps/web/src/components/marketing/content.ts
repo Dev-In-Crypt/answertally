@@ -53,11 +53,12 @@ export const PRICING_NOTES = {
    */
   checks: `One AI check is one assistant answering one prompt once. A client measured the default way (around two dozen prompts, three samples each, three assistants, every two weeks) uses roughly ${int(TYPICAL_CHECKS_BIWEEKLY)} checks a month. Measured weekly, it uses roughly ${int(TYPICAL_CHECKS_PER_CLIENT)} checks, and each plan still covers every client with about 40% to spare.`,
   /**
-   * Предупреждения о перерасходе нет — есть полоса расхода на дашборде.
-   * Так и сказано; молчание про перерасход читалось бы как «сколько угодно».
+   * Лимит — потолок: следующий прогон сверх него не начнётся (решение
+   * фаундера, после аудита расходов). Начатый не обрывается. Обещание
+   * «ничего не отключаем» сняли вместе с поведением, иначе текст лгал бы.
    */
   overage:
-    "Going past the allowance does not cut anything off mid-month. The usage bar on your dashboard shows where you stand, and we agree the next step together.",
+    "The allowance is a ceiling: a check that would go past it does not start, and one already running always finishes. The usage bar on your dashboard shows where you stand; measuring resumes on the 1st, or write to us to raise the allowance.",
   /**
    * Что происходит на потолке — включая потолок старшего тарифа, за которым
    * следующего плана уже нет. Пока здесь об этом молчали, ответ на самый

@@ -2,6 +2,7 @@ import { PLAN_LIMITS } from "../billing/period";
 import type { PlanId } from "../billing/entitlements";
 import { ASSISTANTS, isMeasurableAssistant } from "../adapters/catalogue";
 import { DEFAULT_PLATFORMS, PLATFORM_IDS, type Platform } from "../adapters/types";
+import { MIN_SAMPLES_PER_CELL } from "../metrics/visibility";
 
 /**
  * Что тарифу разрешено измерять.
@@ -218,5 +219,21 @@ export function platformsForRun(
   return schedulePlatforms.filter(
     (id): id is Platform => isMeasurableAssistant(id) && allowed.has(id),
   );
+}
+
+/**
+ * Во сколько ответов обойдётся прогон — тем же правилом, что и сам прогон.
+ *
+ * Одна функция на веб (кнопка), планировщик (расписание) и воркер (что
+ * ставить в очередь): разные подсчёты одного размера уже расходились.
+ * Без расписания выборок `MIN_SAMPLES_PER_CELL`.
+ */
+export function plannedChecksForRun(
+  capabilities: MeasurementCapabilities,
+  promptCount: number,
+  schedule: { platforms: readonly string[]; samplesPerPrompt: number } | null | undefined,
+): number {
+  const platforms = platformsForRun(capabilities, schedule?.platforms).length;
+  return promptCount * platforms * (schedule?.samplesPerPrompt ?? MIN_SAMPLES_PER_CELL);
 }
 

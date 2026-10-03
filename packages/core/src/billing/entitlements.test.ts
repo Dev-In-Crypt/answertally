@@ -213,10 +213,19 @@ describe("canStartMeasurement", () => {
     expect(decision.message).toContain("10");
   });
 
-  it("плательщику не отказывают даже за пределами тарифа", () => {
-    // «Перерасход ничего не отключает посреди месяца» — обещание со
-    // страницы тарифов, и оно дано плательщику.
-    expect(canStartMeasurement(paid, 10_000_000, 216).allowed).toBe(true);
+  it("плательщик упирается ровно в месячный лимит тарифа", () => {
+    // Раньше лимит только показывался, и тариф за $499 мог сжечь на
+    // ответах десятки тысяч в месяц. Потолок — 100%, решение фаундера.
+    const allowance = paid.aiCheckAllowance;
+    expect(canStartMeasurement(paid, allowance - 216, 216).allowed).toBe(true);
+
+    const over = canStartMeasurement(paid, allowance - 215, 216);
+    expect(over.allowed).toBe(false);
+    expect(over.message).toContain("216");
+
+    const spent = canStartMeasurement(paid, allowance, 1);
+    expect(spent.allowed).toBe(false);
+    expect(spent.message).toMatch(/used up/i);
   });
 
   it("просрочка в пределах отсрочки — это ещё плательщик", () => {
@@ -226,7 +235,7 @@ describe("canStartMeasurement", () => {
     );
 
     expect(pastDue.paying).toBe(true);
-    expect(canStartMeasurement(pastDue, 10_000_000).allowed).toBe(true);
+    expect(canStartMeasurement(pastDue, 0, 144).allowed).toBe(true);
   });
 
   it("выключенный аккаунт не измеряет вовсе", () => {

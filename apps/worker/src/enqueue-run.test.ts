@@ -92,6 +92,60 @@ describe("pickUpPendingRuns", () => {
     expect((await getRunById(db, run.id))?.status).toBe("running");
   });
 
+  it("больше одобренного в очередь не ставится", async () => {
+    /**
+     * Веб одобрил прогон на 12 ответов, а за секунды до подбора человек
+     * загрузил ещё вопросы. Раньше воркер ставил всё, что находил, и
+     * бесплатный аудит раздувался в сотни долларов.
+     */
+    const run = await createRun(db, {
+      clientId,
+      scheduleId: null,
+      trigger: "manual",
+      adaptersMode: "live",
+      plannedChecks: 6,
+    });
+    const { flow, add } = fakeFlow();
+
+    const result = await pickUpPendingRuns(db, flow, "live");
+
+    expect(result.queuedJobs).toBe(0);
+    expect(add).not.toHaveBeenCalled();
+    expect((await getRunById(db, run.id))?.status).toBe("failed");
+  });
+
+  it("одобренный размер ставится как есть", async () => {
+    await createRun(db, {
+      clientId,
+      scheduleId: null,
+      trigger: "manual",
+      adaptersMode: "live",
+      plannedChecks: 12,
+    });
+    const { flow } = fakeFlow();
+
+    expect((await pickUpPendingRuns(db, flow, "live")).queuedJobs).toBe(12);
+  });
+
+  it("отменившему подписку прогон в очередь не ставится", async () => {
+    await upsertSubscription(db, {
+      agencyId,
+      customerId: `cus_${agencyId.slice(0, 8)}`,
+      subscriptionId: `sub_${agencyId.slice(0, 8)}`,
+      plan: "starter",
+      status: "canceled",
+      currentPeriodEnd: new Date("2000-01-01T00:00:00.000Z"),
+      cancelAtPeriodEnd: false,
+    });
+    const run = await manualRun();
+    const { flow, add } = fakeFlow();
+
+    await pickUpPendingRuns(db, flow, "live");
+
+    expect(add).not.toHaveBeenCalled();
+    expect((await getRunById(db, run.id))?.status).toBe("failed");
+  });
+
   it("бесплатный аудит не ставит в очередь Grok", async () => {
     /**
      * Это боевой путь: в живом режиме веб только создаёт прогон, а ставит

@@ -109,9 +109,8 @@ export function UsageView() {
                 {allowance ? `${Math.round(allowance.ratio * 100)}%` : "—"}
               </span>
               <span className="text-sm text-muted-foreground">
-                {/* Перерасход ничего не отключает посреди месяца — так сказано
-                    и на странице тарифов; молчание читалось бы как отключение. */}
-                Going past it does not cut anything off mid-month.
+                {/* Лимит — потолок: так же сказано на странице тарифов. */}
+                At 100%, new checks wait until the 1st. Running ones always finish.
               </span>
             </div>
           </div>

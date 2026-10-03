@@ -232,12 +232,14 @@ export const FREE_CHECK_ALLOWANCE = 150;
 /**
  * Можно ли начать измерение: хватает ли того, что осталось.
  *
- * Плательщику не отказываем никогда. Перерасход тарифа — это разговор в
- * конце месяца, а не отключение посреди работы: так обещано и на странице
- * тарифов, и ломать это обещание ради экономии нельзя.
+ * Плательщик упирается в месячный лимит своего тарифа — ровно в 100%,
+ * решение фаундера. Раньше лимит только показывался, и один тариф за $499
+ * мог потратить на ответы ассистентов десятки тысяч в месяц. Начатый прогон
+ * не обрывается: отказ получает только следующий, и страница тарифов
+ * говорит об этом прямо.
  *
- * Отказ получает только тот, кто ещё ни разу не платил и уже израсходовал
- * бесплатные проверки. Отказ называет остаток и что делать дальше.
+ * Неплательщик упирается в бесплатный остаток за всё время. Отказ называет
+ * остаток и что делать дальше.
  */
 export interface MeasurementContext {
   /**
@@ -254,7 +256,8 @@ export interface MeasurementContext {
 }
 
 /**
- * `checksUsed` для неплательщика — расход **за всё время**, а не за месяц.
+ * `checksUsed` для плательщика — расход за текущий биллинговый месяц, для
+ * неплательщика — **за всё время**.
  *
  * Бесплатный аудит — один на аккаунт. Считай его по календарному месяцу, и
  * каждый аккаунт получал бы новый аудит первого числа, бессрочно; а с
@@ -272,6 +275,16 @@ export function canStartMeasurement(
   }
 
   if (entitlements.paying) {
+    const left = Math.max(0, entitlements.aiCheckAllowance - checksUsed);
+    if (checksPlanned > left) {
+      return {
+        allowed: false,
+        message:
+          left === 0
+            ? `This month's ${entitlements.aiCheckAllowance} AI checks are used up. Measuring resumes on the 1st, or write to us to raise the allowance.`
+            : `This run needs ${checksPlanned} AI checks and ${left} of this month's ${entitlements.aiCheckAllowance} are left. Measure fewer questions or assistants, or write to us to raise the allowance.`,
+      };
+    }
     return { allowed: true, message: "" };
   }
 

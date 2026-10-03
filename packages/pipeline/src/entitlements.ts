@@ -1,9 +1,22 @@
-import { canStartMeasurement, entitlementsFor, type Entitlements, type LimitDecision } from "@repo/core";
+import {
+  billingPeriod,
+  billingPeriodBounds,
+  canStartMeasurement,
+  entitlementsFor,
+  type Entitlements,
+  type LimitDecision,
+} from "@repo/core";
 import {
   countRunsInFlight,
+  createRun,
   getLifetimeAiChecks,
   getSubscriptionByAgency,
+  getUsageCounter,
+  lockAgency,
+  sumPlannedChecks,
   type Database,
+  type NewRun,
+  type Run,
 } from "@repo/db";
 
 /**
@@ -41,13 +54,15 @@ export async function entitlementsForAgency(
 /**
  * Можно ли начать измерение агентству — единственная такая проверка.
  *
- * Её зовут и веб (кнопка, аудит), и воркер (расписание). Раньше у каждого
- * была своя, и воркерная не знала ни сколько прогон потратит, ни кто его
- * запускает: при «можно» она запускала все созревшие расписания агентства
- * разом, а бесплатный счётчик брала за календарный месяц — то есть каждый
- * брошенный бесплатный аккаунт получал новый аудит первого числа.
+ * Её зовут и веб (кнопка, аудит), и воркер (расписание) — через
+ * `startRunIfAllowed`, которая проверяет и создаёт прогон под одной
+ * блокировкой. Раньше у каждого была своя проверка, и воркерная не знала ни
+ * сколько прогон потратит, ни кто его запускает.
  *
- * Плательщику права проверяются без счётчиков: ему не отказывают.
+ * Израсходованным считается бо́льшее из счётчика ответов и суммы одобренных
+ * прогонов: счётчик не видит идущих прогонов и платных вызовов, упавших до
+ * записи, а у прогонов, созданных до появления размера, суммы нет.
+ * Плательщику — за текущий месяц, неплательщику — за всё время.
  */
 export async function measurementAllowedForAgency(
   db: Database,
@@ -56,21 +71,68 @@ export async function measurementAllowedForAgency(
   now: Date = new Date(),
 ): Promise<LimitDecision> {
   const entitlements = await entitlementsForAgency(db, agencyId, now);
-  if (!entitlements.active || entitlements.paying) {
+  if (!entitlements.active) {
     return canStartMeasurement(entitlements, 0);
   }
 
-  // ponytail: проверка и создание прогона — не одна транзакция. Два запроса,
-  // пришедшие одновременно до создания первого прогона, оба увидят ноль идущих.
-  // Окно — миллисекунды, потолок — три клиента бесплатного аккаунта. Закрывать
-  // блокировкой на агентство, если это начнут делать нарочно.
-  const [used, inFlight] = await Promise.all([
-    getLifetimeAiChecks(db, agencyId),
-    countRunsInFlight(db, agencyId, now),
-  ]);
+  const context = { trigger: run.trigger, runsInFlight: 0 };
+  let used: number;
 
-  return canStartMeasurement(entitlements, used, run.checksPlanned ?? 0, {
-    runsInFlight: inFlight,
-    trigger: run.trigger,
+  if (entitlements.paying) {
+    const period = billingPeriod(now);
+    const [counter, planned] = await Promise.all([
+      getUsageCounter(db, agencyId, period),
+      sumPlannedChecks(db, agencyId, billingPeriodBounds(period).start),
+    ]);
+    used = Math.max(counter?.aiChecksUsed ?? 0, planned);
+  } else {
+    const [counted, planned, inFlight] = await Promise.all([
+      getLifetimeAiChecks(db, agencyId),
+      sumPlannedChecks(db, agencyId),
+      countRunsInFlight(db, agencyId, now),
+    ]);
+    used = Math.max(counted, planned);
+    context.runsInFlight = inFlight;
+  }
+
+  return canStartMeasurement(entitlements, used, run.checksPlanned ?? 0, context);
+}
+
+export interface StartRunResult {
+  decision: LimitDecision;
+  run: Run | null;
+}
+
+/**
+ * Проверить лимит и создать прогон — атомарно для агентства.
+ *
+ * Проверка и вставка идут в одной транзакции под advisory-блокировкой по
+ * агентству. Без неё двадцать одновременных запросов (один batch tRPC) все
+ * видели «израсходовано 0, идущих 0» и создавали двадцать бесплатных
+ * аудитов. Блокировка снимается с концом транзакции; других агентств она
+ * не задерживает.
+ *
+ * Размер записывается в прогон: воркер больше одобренного не поставит.
+ */
+export async function startRunIfAllowed(
+  db: Database,
+  agencyId: string,
+  values: Omit<NewRun, "plannedChecks">,
+  checksPlanned: number,
+  now: Date = new Date(),
+): Promise<StartRunResult> {
+  return db.transaction(async (tx) => {
+    await lockAgency(tx, agencyId);
+    const decision = await measurementAllowedForAgency(
+      tx,
+      agencyId,
+      { trigger: values.trigger ?? "scheduled", checksPlanned },
+      now,
+    );
+    if (!decision.allowed) {
+      return { decision, run: null };
+    }
+    const run = await createRun(tx, { ...values, plannedChecks: checksPlanned });
+    return { decision, run };
   });
 }

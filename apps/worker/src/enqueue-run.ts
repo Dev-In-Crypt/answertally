@@ -52,9 +52,12 @@ export async function enqueueRun(
    * счёт, хотя в функции прогона его уже убрали. Решает теперь одна функция.
    */
   const agencyId = await getAgencyIdForRun(db, runId);
-  const entitlements = agencyId
-    ? await entitlementsForAgency(db, agencyId)
-    : { plan: "starter" as const, paying: false };
+  if (!agencyId) {
+    // Клиент удалён вместе с агентством — спрашивать не для кого.
+    await finishRun(db, runId, "failed");
+    return 0;
+  }
+  const entitlements = await entitlementsForAgency(db, agencyId);
   const platforms = platformsForRun(capabilitiesForAgency(entitlements), schedule?.platforms);
   const samples = schedule?.samplesPerPrompt ?? 3;
 
@@ -64,6 +67,15 @@ export async function enqueueRun(
   if (jobs.length === 0) {
     // Спрашивать нечего — прогон закрывается, а не висит в ожидании: иначе
     // подбор брал бы его снова каждые несколько секунд.
+    await finishRun(db, runId, "failed");
+    return 0;
+  }
+
+  // Тратится не больше одобренного. Между проверкой в вебе и этим местом
+  // проходит до пятнадцати секунд, и раньше за них можно было загрузить
+  // тысячи вопросов и поднять выборки до десяти — воркер ставил всё, что
+  // находил. Прогон без размера создан до появления поля.
+  if (!entitlements.active || (run.plannedChecks !== null && jobs.length > run.plannedChecks)) {
     await finishRun(db, runId, "failed");
     return 0;
   }

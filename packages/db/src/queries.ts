@@ -990,6 +990,45 @@ export async function getLifetimeAiChecks(db: Database, agencyId: string): Promi
 }
 
 /**
+ * Блокировка агентства до конца текущей транзакции.
+ *
+ * Для пар «проверить лимит — вставить», которые иначе проходят параллельно:
+ * старт прогона, заведение клиента. Вне транзакции бессмысленна — снимается
+ * сразу.
+ */
+export async function lockAgency(db: Database, agencyId: string): Promise<void> {
+  await db.execute(sql`select pg_advisory_xact_lock(hashtext(${agencyId}))`);
+}
+
+/**
+ * Сколько ответов агентству разрешено живыми прогонами — с `since` или за
+ * всё время.
+ *
+ * Счётчик расхода растёт, когда ответ уже записан, а этот — когда прогон
+ * одобрен. Разница — идущие прогоны и платные вызовы, упавшие до записи:
+ * по счётчику их не видно, а деньги за них ушли. Прогоны в mock-режиме не
+ * стоят ничего и не считаются.
+ */
+export async function sumPlannedChecks(
+  db: Database,
+  agencyId: string,
+  since: Date | null = null,
+): Promise<number> {
+  const rows = await db
+    .select({ total: sql<number>`coalesce(sum(${runs.plannedChecks}), 0)::int` })
+    .from(runs)
+    .innerJoin(clients, eq(runs.clientId, clients.id))
+    .where(
+      and(
+        eq(clients.agencyId, agencyId),
+        eq(runs.adaptersMode, "live"),
+        since ? gte(runs.startedAt, since) : undefined,
+      ),
+    );
+  return rows[0]?.total ?? 0;
+}
+
+/**
  * Сколько прогонов агентства ещё идёт.
  *
  * Только за последние сутки: прогон, застрявший в «running» после падения

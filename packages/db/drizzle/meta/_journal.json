@@ -169,6 +169,13 @@
       "when": 1790264509754,
       "tag": "0023_yielding_emma_frost",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1791057562111,
+      "tag": "0024_broad_stature",
+      "breakpoints": true
     }
   ]
 }

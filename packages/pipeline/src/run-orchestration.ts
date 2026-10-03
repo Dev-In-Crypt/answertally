@@ -66,7 +66,15 @@ export async function executeRunJob(
   db: Database,
   job: RunJobSpec,
   mode: AdaptersMode = "mock",
-): Promise<string> {
+): Promise<string | null> {
+  // Задачи прогона живут в очереди часами. Агентство, отменившее подписку
+  // или вернувшее деньги за это время, не должно дальше тратить наши: иначе
+  // «оплатить, набить очередь, отменить» оставляло бы недели вызовов.
+  const agencyId = mode === "live" ? (job.agencyId ?? (await getAgencyIdForRun(db, job.runId))) : null;
+  if (mode === "live" && (!agencyId || !(await entitlementsForAgency(db, agencyId)).active)) {
+    return null;
+  }
+
   const adapter = getAdapter(job.platform, mode);
   // Номер сэмпла нужен фикстурам, чтобы повторы одного вопроса различались;
   // живые адаптеры его игнорируют.
@@ -106,7 +114,6 @@ export async function executeRunJob(
    * расхода это и так утверждает отдельной строкой — теперь счётчик с ним
    * согласен. Заодно бесплатный аудит не съедает сам себя в демо-режиме.
    */
-  const agencyId = mode === "live" ? (job.agencyId ?? (await getAgencyIdForRun(db, job.runId))) : null;
   if (agencyId) {
     await incrementAiChecks(db, agencyId, billingPeriod());
   }
