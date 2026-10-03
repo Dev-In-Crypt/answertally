@@ -69,7 +69,12 @@ services:
     # noeviction — умолчание, но записано явно: политика с вытеснением тихо
     # выбрасывала бы задачи под нагрузкой. Это тот случай, когда отказ на
     # запись лучше незаметной потери.
-    command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"]
+    #
+    # maxmemory ниже потолка контейнера (512m): без него Redis рос до
+    # OOM-kill, а перезапуск с append-only файлом поднимал ту же память и
+    # падал снова. С ним переполнение — отказ на запись, а не цикл падений.
+    command:
+      ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction", "--maxmemory", "400mb"]
     volumes:
       - redis-data:/data
     stop_grace_period: 30s

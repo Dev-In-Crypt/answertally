@@ -8,6 +8,7 @@ import { capabilitiesForAgency, platformsForRun } from "@repo/core/config/measur
 import {
   createResponse,
   countResponsesByRun,
+  findSampleResponseId,
   getAgencyIdForRun,
   incrementAiChecks,
   finishRun,
@@ -73,6 +74,13 @@ export async function executeRunJob(
   const agencyId = mode === "live" ? (job.agencyId ?? (await getAgencyIdForRun(db, job.runId))) : null;
   if (mode === "live" && (!agencyId || !(await entitlementsForAgency(db, agencyId)).active)) {
     return null;
+  }
+
+  // Задачу могут выполнить дважды: воркер упал посреди вызова, и BullMQ
+  // отдал её снова. Ответ уже записан — второй платный вызов не нужен.
+  const existing = await findSampleResponseId(db, job);
+  if (existing) {
+    return existing;
   }
 
   const adapter = getAdapter(job.platform, mode);

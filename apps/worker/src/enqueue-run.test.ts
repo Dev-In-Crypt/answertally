@@ -232,6 +232,40 @@ describe("pickUpPendingRuns", () => {
     expect((await getRunById(db, run.id))?.status).toBe("failed");
   });
 
+  it("прогон, идущий больше суток, закрывается как зависший", async () => {
+    // Сборка такого прогона уже не придёт, а бесплатный аккаунт иначе
+    // оставался бы с вечно занятым аудитом.
+    const run = await createRun(db, {
+      clientId,
+      scheduleId: null,
+      trigger: "manual",
+      adaptersMode: "live",
+      status: "running",
+    });
+    const later = new Date(Date.now() + PENDING_RUN_MAX_AGE_MS + 60_000);
+    const { flow } = fakeFlow();
+
+    const result = await pickUpPendingRuns(db, flow, "live", later);
+
+    expect(result.expiredRuns).toContain(run.id);
+    expect((await getRunById(db, run.id))?.status).toBe("failed");
+  });
+
+  it("задачи не копятся в Redis, а упавший ответ не держит сборку", async () => {
+    await makePaying();
+    await manualRun();
+    const { flow, add } = fakeFlow();
+
+    await pickUpPendingRuns(db, flow, "live");
+
+    const call = add.mock.calls[0] as unknown as [
+      { opts: Record<string, unknown>; children: { opts: Record<string, unknown> }[] },
+    ];
+    expect(call[0].opts).toHaveProperty("removeOnComplete");
+    expect(call[0].children[0]?.opts).toMatchObject({ ignoreDependencyOnFailure: true });
+    expect(call[0].children[0]?.opts).toHaveProperty("removeOnFail");
+  });
+
   it("сбой очереди возвращает прогон в ожидание, чтобы подобрать его снова", async () => {
     const run = await manualRun();
     const { flow } = fakeFlow(() => Promise.reject(new Error("redis is down")));

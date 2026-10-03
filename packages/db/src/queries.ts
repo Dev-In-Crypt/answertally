@@ -269,13 +269,16 @@ export async function listPendingRuns(
 }
 
 /**
- * Закрывает как неудавшиеся прогоны, прождавшие дольше `before`.
+ * Закрывает как неудавшиеся прогоны, начатые раньше `before` и так и не
+ * законченные.
  *
- * Такой прогон никто уже не ждёт: запускать его сейчас значило бы потратить
- * деньги на замер, о котором давно забыли, и подписать его старой датой.
- * Статус failed честнее вечного pending — в истории прогонов он виден.
+ * Ожидающий такой прогон никто уже не ждёт: запускать его сейчас значило бы
+ * потратить деньги на замер, о котором давно забыли, и подписать его старой
+ * датой. Идущий сутки — завис: его сборка не придёт. Статус failed честнее
+ * вечного «в процессе» — в истории прогонов он виден, и бесплатный аккаунт
+ * не остаётся с вечно занятым аудитом.
  */
-export async function failStalePendingRuns(
+export async function failStaleRuns(
   db: Database,
   mode: "mock" | "live",
   before: Date,
@@ -284,10 +287,34 @@ export async function failStalePendingRuns(
     .update(runs)
     .set({ status: "failed", finishedAt: new Date() })
     .where(
-      and(eq(runs.status, "pending"), eq(runs.adaptersMode, mode), sql`${runs.startedAt} < ${before.toISOString()}::timestamptz`),
+      and(
+        inArray(runs.status, ["pending", "running"]),
+        eq(runs.adaptersMode, mode),
+        sql`${runs.startedAt} < ${before.toISOString()}::timestamptz`,
+      ),
     )
     .returning({ id: runs.id });
   return rows.map((row) => row.id);
+}
+
+/** Есть ли уже ответ на этот сэмпл — повтор задачи не должен платить второй раз. */
+export async function findSampleResponseId(
+  db: Database,
+  sample: { runId: string; promptId: string; platform: Response["platform"]; sampleIndex: number },
+): Promise<string | undefined> {
+  const rows = await db
+    .select({ id: responses.id })
+    .from(responses)
+    .where(
+      and(
+        eq(responses.runId, sample.runId),
+        eq(responses.promptId, sample.promptId),
+        eq(responses.platform, sample.platform),
+        eq(responses.sampleIndex, sample.sampleIndex),
+      ),
+    )
+    .limit(1);
+  return rows[0]?.id;
 }
 
 export async function createResponse(db: Database, values: NewResponse): Promise<Response> {

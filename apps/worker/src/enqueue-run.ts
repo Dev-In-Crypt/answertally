@@ -2,7 +2,7 @@ import type { FlowProducer } from "bullmq";
 import {
   claimPendingRun,
   getAgencyIdForRun,
-  failStalePendingRuns,
+  failStaleRuns,
   finishRun,
   getRunById,
   getRunSchedule,
@@ -15,6 +15,18 @@ import type { AdaptersMode } from "@repo/core";
 import { capabilitiesForAgency, platformsForRun } from "@repo/core/config/measurement";
 import { entitlementsForAgency, planRunJobs } from "@repo/pipeline";
 import { QUEUE_NAMES, runsQueueName, type FinalizeJobData, type RunJobData } from "./queues";
+
+/**
+ * Сколько задачи живут в Redis после завершения.
+ *
+ * Без этого каждая выполненная задача — с текстом вопроса — оставалась в
+ * Redis навсегда. Память росла до предела контейнера, и очередь падала
+ * целиком. Сутки на разбор удачных и неделя на разбор упавших.
+ */
+const JOB_RETENTION = {
+  removeOnComplete: { age: 24 * 60 * 60 },
+  removeOnFail: { age: 7 * 24 * 60 * 60 },
+};
 
 /**
  * Ставит задачи прогона в очереди платформ и вешает на них сборку.
@@ -89,10 +101,16 @@ export async function enqueueRun(
       name: "finalize",
       queueName: QUEUE_NAMES.finalize,
       data: { runId, clientId, expected: jobs.length } satisfies FinalizeJobData,
+      opts: JOB_RETENTION,
       children: jobs.map((job) => ({
         name: `${job.platform}-${job.sampleIndex}`,
         queueName: runsQueueName(job.platform),
         data: job satisfies RunJobData,
+        // Упавший ответ не держит сборку прогона: без этого один таймаут
+        // оставлял прогон «в процессе» навсегда, без свёртки и без цифр.
+        // Сборка и так считает, сколько ответов дошло. Повторов нет
+        // намеренно: каждая попытка — платный вызов.
+        opts: { ...JOB_RETENTION, ignoreDependencyOnFailure: true },
       })),
     });
   } catch (error) {
@@ -130,7 +148,7 @@ export async function pickUpPendingRuns(
   now: Date = new Date(),
 ): Promise<PendingPickup> {
   const cutoff = new Date(now.getTime() - PENDING_RUN_MAX_AGE_MS);
-  const expiredRuns = await failStalePendingRuns(db, mode, cutoff);
+  const expiredRuns = await failStaleRuns(db, mode, cutoff);
 
   const pending = await listPendingRuns(db, mode, cutoff);
   const result: PendingPickup = { queuedRuns: 0, queuedJobs: 0, failedRuns: [], expiredRuns };
