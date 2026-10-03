@@ -29,7 +29,8 @@ export const agencyRouter = router({
     .input(
       z.object({
         name: z.string().min(1).max(200).optional(),
-        logoUrl: z.string().max(2000).nullable().optional(),
+        // Логотипа здесь нет: его ставит только загрузка файла. Произвольная
+        // ссылка уходила в отчёт клиенту и в браузер печати PDF на сервере.
         brandColor: z
           .string()
           .regex(/^#[0-9a-fA-F]{6}$/, "Use a hex colour like #4f46e5")
