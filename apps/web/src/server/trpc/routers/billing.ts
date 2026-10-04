@@ -21,6 +21,7 @@ import {
   type Subscription,
 } from "@repo/db";
 import { protectedProcedure, roleProcedure, router } from "../trpc";
+import { SUPPORT_EMAIL } from "@/config/site";
 import { appUrl } from "../../email";
 import { getPaymentProvider } from "../../payments";
 import { entitlementsForAgency } from "../../subscription";
@@ -97,14 +98,16 @@ export const billingRouter = router({
 
       const base = `${appUrl()}/settings/billing`;
 
-      const session = await payments.createCheckout({
-        agencyId: ctx.user.agencyId,
+      const session = await viaProvider(() =>
+        payments.createCheckout({
+          agencyId: ctx.user.agencyId,
         plan: input.plan,
         email: ctx.user.email,
         successUrl: `${base}?checkout=done`,
         cancelUrl: base,
-        ...(subscription?.customerId ? { customerId: subscription.customerId } : {}),
-      });
+          ...(subscription?.customerId ? { customerId: subscription.customerId } : {}),
+        }),
+      );
 
       return { url: session.url };
     }),
@@ -129,6 +132,14 @@ export const billingRouter = router({
         return { plan: input.plan, changed: false };
       }
 
+      // Провайдер не меняет тариф подписки, которая уже закрывается.
+      if (subscription.cancelAtPeriodEnd) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "This subscription is set to end. Keep the subscription first, then change the plan.",
+        });
+      }
+
       /**
        * Понижение ниже числа заведённых клиентов не пропускается.
        *
@@ -148,10 +159,9 @@ export const billingRouter = router({
         throw new TRPCError({ code: "BAD_REQUEST", message: decision.message });
       }
 
-      await payments.changePlan({
-        subscriptionId: subscription.subscriptionId,
-        plan: input.plan,
-      });
+      await viaProvider(() =>
+        payments.changePlan({ subscriptionId: subscription.subscriptionId, plan: input.plan }),
+      );
 
       return { plan: input.plan, changed: true };
     }),
@@ -166,10 +176,12 @@ export const billingRouter = router({
     const payments = requirePayments();
     const subscription = await requireLiveSubscription(ctx.db, ctx.user.agencyId);
 
-    await payments.setCancelAtPeriodEnd({
-      subscriptionId: subscription.subscriptionId,
-      cancelAtPeriodEnd: true,
-    });
+    await viaProvider(() =>
+      payments.setCancelAtPeriodEnd({
+        subscriptionId: subscription.subscriptionId,
+        cancelAtPeriodEnd: true,
+      }),
+    );
 
     return { cancelAtPeriodEnd: true };
   }),
@@ -179,10 +191,12 @@ export const billingRouter = router({
     const payments = requirePayments();
     const subscription = await requireLiveSubscription(ctx.db, ctx.user.agencyId);
 
-    await payments.setCancelAtPeriodEnd({
-      subscriptionId: subscription.subscriptionId,
-      cancelAtPeriodEnd: false,
-    });
+    await viaProvider(() =>
+      payments.setCancelAtPeriodEnd({
+        subscriptionId: subscription.subscriptionId,
+        cancelAtPeriodEnd: false,
+      }),
+    );
 
     return { cancelAtPeriodEnd: false };
   }),
@@ -199,10 +213,10 @@ export const billingRouter = router({
       });
     }
 
-    const session = await payments.createPortal({
-      customerId: subscription.customerId,
-      returnUrl: `${appUrl()}/settings/billing`,
-    });
+    const customerId = subscription.customerId;
+    const session = await viaProvider(() =>
+      payments.createPortal({ customerId, returnUrl: `${appUrl()}/settings/billing` }),
+    );
 
     return { url: session.url };
   }),
@@ -293,6 +307,24 @@ function isLive(subscription: Subscription | undefined): boolean {
  * держит вебхук, а лишний поход в сеть на каждый клик — это ещё один
  * способ уронить экран, когда провайдер моргнул.
  */
+/**
+ * Отказ провайдера — человеку понятной фразой, подробности — в журнал.
+ *
+ * Сырой ответ провайдера на экране агентства ничего ему не говорит, а
+ * показывает внутренности: идентификаторы запросов, коды, имена полей.
+ */
+async function viaProvider<T>(call: () => Promise<T>): Promise<T> {
+  try {
+    return await call();
+  } catch (error) {
+    console.error("[billing] payment provider call failed", error);
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message: `Our payment provider did not accept this change. Try again in a minute or write to ${SUPPORT_EMAIL}.`,
+    });
+  }
+}
+
 async function requireLiveSubscription(
   db: Database,
   agencyId: string,

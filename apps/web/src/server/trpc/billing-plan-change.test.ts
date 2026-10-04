@@ -206,6 +206,26 @@ describe("billing plan changes", () => {
     await expect(caller(agencyId).billing.cancel()).rejects.toThrow(/no live subscription/i);
   });
 
+  it("закрывающуюся подписку не двигают: сначала её надо оставить", async () => {
+    await giveSubscription({ cancelAtPeriodEnd: true });
+
+    await expect(caller(agencyId).billing.changePlan({ plan: "starter" })).rejects.toThrow(
+      /keep the subscription first/i,
+    );
+    expect(calls.changePlan).not.toHaveBeenCalled();
+  });
+
+  it("отказ провайдера — понятной фразой, без его сырого ответа", async () => {
+    await giveSubscription();
+    calls.changePlan.mockRejectedValueOnce(new Error('Creem responded 400: {"trace_id":"x"}'));
+    const quiet = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    const attempt = caller(agencyId).billing.changePlan({ plan: "scale" });
+    await expect(attempt).rejects.toThrow(/payment provider did not accept/i);
+    await expect(attempt).rejects.not.toThrow(/trace_id/);
+    quiet.mockRestore();
+  });
+
   it("агентство со сбоем платежа всё ещё может сменить тариф", async () => {
     await giveSubscription({ status: "past_due" });
 

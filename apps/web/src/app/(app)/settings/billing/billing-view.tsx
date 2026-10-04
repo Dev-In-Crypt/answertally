@@ -25,25 +25,43 @@ const PLAN_ORDER = ["starter", "growth", "scale"];
 const PENDING_NOTE =
   "The change is with our payment provider. This page updates as soon as it confirms.";
 
+/** Сколько ждать подтверждения провайдера, опрашивая экран. */
+const CONFIRM_WAIT_MS = 60_000;
+
+type SubscriptionSnapshot =
+  | { status: string | null; cancelAtPeriodEnd: boolean; entitlements: { plan: string } }
+  | undefined;
+
+function snapshotKey(data: SubscriptionSnapshot): string {
+  return data ? `${data.entitlements.plan}|${data.status}|${data.cancelAtPeriodEnd}` : "";
+}
+
 export function BillingView() {
-  const subscription = api.billing.subscription.useQuery();
   const [error, setError] = useState<string | null>(null);
-  const [pending, setPending] = useState<string | null>(null);
+  // Пока подтверждения нет, экран опрашивает сервер: вебхук приходит через
+  // секунды после нажатия, и без опроса страница так и показывала бы
+  // прежнее состояние.
+  const [waiting, setWaiting] = useState<{ key: string; until: number } | null>(null);
+  const isWaiting = (data: SubscriptionSnapshot) =>
+    waiting !== null && Date.now() < waiting.until && snapshotKey(data) === waiting.key;
+
+  const subscription = api.billing.subscription.useQuery(undefined, {
+    refetchInterval: (query) => (isWaiting(query.state.data) ? 2_000 : false),
+  });
 
   function begin() {
     setError(null);
-    setPending(null);
+    setWaiting(null);
   }
 
   function onError(mutationError: { message: string }) {
-    setPending(null);
+    setWaiting(null);
     setError(mutationError.message);
   }
 
   const afterProviderChange = {
     onSuccess: () => {
-      setPending(PENDING_NOTE);
-      void subscription.refetch();
+      setWaiting({ key: snapshotKey(subscription.data), until: Date.now() + CONFIRM_WAIT_MS });
     },
     onError,
   };
@@ -120,9 +138,9 @@ export function BillingView() {
         </p>
       )}
 
-      {pending && (
+      {isWaiting(data) && (
         <p data-testid="change-pending" className="text-sm text-muted-foreground">
-          {pending}
+          {PENDING_NOTE}
         </p>
       )}
 
@@ -163,7 +181,8 @@ export function BillingView() {
                 {plan.aiCheckAllowance.toLocaleString("en-US")} checks
               </span>
 
-              {data.paymentsConfigured && !current && (
+              {/* Закрывающуюся подписку провайдер не двигает: сначала «Keep». */}
+              {data.paymentsConfigured && !current && !data.cancelAtPeriodEnd && (
                 <button
                   type="button"
                   data-testid={`choose-${plan.id}`}
@@ -202,6 +221,7 @@ export function BillingView() {
             <>
               <p className="text-sm text-muted-foreground">
                 This subscription ends when the current period closes. Nothing is lost until then.
+                To change the plan, keep the subscription first.
               </p>
               <button
                 type="button"
