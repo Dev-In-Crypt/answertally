@@ -70,7 +70,7 @@ export default function PrivacyPage() {
           </tr>
           <tr>
             <td>Card details</td>
-            <td>We never receive them — they are entered on Stripe</td>
+            <td>We never receive them — they are entered on Creem, our merchant of record</td>
             <td>Not held by us at all</td>
           </tr>
           <tr>

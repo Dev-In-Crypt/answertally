@@ -97,6 +97,8 @@ export {
   WEBHOOK_TOLERANCE_SECONDS,
 } from "./billing/stripe";
 export type { StripeEvent, StripePaymentProviderConfig, StripePrices } from "./billing/stripe";
+export { CreemPaymentProvider } from "./billing/creem";
+export type { CreemPaymentProviderConfig, CreemProducts } from "./billing/creem";
 export { createPaymentProvider } from "./billing/provider";
 export * from "./import/csv";
 export * from "./prompts/generate";

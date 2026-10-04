@@ -472,7 +472,7 @@ export async function hmacSha256Hex(secret: string, payload: string): Promise<st
 }
 
 /** Сравнение за постоянное время: длина ответа не должна подсказывать подпись. */
-function timingSafeEqual(a: string, b: string): boolean {
+export function timingSafeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) {
     return false;
   }

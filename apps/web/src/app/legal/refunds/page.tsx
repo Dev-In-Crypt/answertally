@@ -42,7 +42,10 @@ export default function RefundsPage() {
       <h2>How billing works</h2>
       <ul>
         <li>Plans are monthly and paid in advance. The month starts when you subscribe.</li>
-        <li>Payment is taken by Stripe. We never see or hold your card.</li>
+        <li>
+          Plans are sold through Creem, our merchant of record: Creem takes the payment, adds sales
+          tax where it applies and issues the invoice. We never see or hold your card.
+        </li>
         <li>
           Moving up a plan takes effect at once, and you pay the difference for the rest of the
           month immediately — the new limits are available the same day.

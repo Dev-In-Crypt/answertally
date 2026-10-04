@@ -59,10 +59,11 @@ const ASSISTANT_ROWS: Row[] = [
 /** Остальное: платежи, почта, сбор ошибок. */
 const SERVICE_ROWS: Row[] = [
   {
-    name: "Stripe",
-    purpose: "Takes payment for plans",
-    data: "Billing contact and payment details, which are entered on Stripe and never reach us",
-    where: "United States and Ireland",
+    name: "Creem (Armitage Labs OÜ)",
+    purpose:
+      "Sells the plans to you as merchant of record: takes payment, charges sales tax and issues invoices",
+    data: "Billing contact and payment details, which are entered on Creem and never reach us",
+    where: "Estonia (European Union)",
   },
   {
     name: "Resend",
