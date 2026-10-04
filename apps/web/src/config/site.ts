@@ -19,7 +19,7 @@ export interface SalesContact {
 function readContact(): SalesContact | null {
   const email = process.env.NEXT_PUBLIC_SALES_EMAIL?.trim();
   const url = process.env.NEXT_PUBLIC_SALES_URL?.trim();
-  const label = process.env.NEXT_PUBLIC_SALES_LABEL?.trim() || "Talk to the founder";
+  const label = process.env.NEXT_PUBLIC_SALES_LABEL?.trim() || "Talk to our team";
 
   if (url) return { label, href: url };
   if (email) return { label, href: `mailto:${email}` };

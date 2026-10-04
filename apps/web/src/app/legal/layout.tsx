@@ -50,18 +50,13 @@ export default function LegalLayout({ children }: { children: React.ReactNode })
                 Support and questions about these terms:{" "}
                 <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.
               </p>
-              {LEGAL_ENTITY ? (
+              {/* Реквизиты появятся, когда будут; до того говорим от лица команды. */}
+              {LEGAL_ENTITY && (
                 <p>
                   {LEGAL_ENTITY.name}
                   {LEGAL_ENTITY.registration ? `, ${LEGAL_ENTITY.registration}` : ""}.{" "}
                   {LEGAL_ENTITY.address}.{" "}
                   <a href={`mailto:${LEGAL_ENTITY.contactEmail}`}>{LEGAL_ENTITY.contactEmail}</a>
-                </p>
-              ) : (
-                <p data-testid="legal-entity-missing">
-                  The operating company and its registered address are not published yet. Until they
-                  are, treat these pages as a statement of how the product behaves rather than as a
-                  contract you can sign.
                 </p>
               )}
             </footer>

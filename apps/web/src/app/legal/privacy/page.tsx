@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 };
 
 export default function PrivacyPage() {
-  const us = LEGAL_ENTITY?.name ?? "the operator of Answertally";
+  const us = LEGAL_ENTITY?.name ?? "the Answertally team";
 
   return (
     <>

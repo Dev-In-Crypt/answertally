@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { LEGAL_ENTITY } from "@/config/legal";
+import { SUPPORT_EMAIL } from "@/config/site";
 
 /**
  * Условия использования.
@@ -25,7 +26,7 @@ export const metadata: Metadata = {
 };
 
 export default function TermsPage() {
-  const us = LEGAL_ENTITY?.name ?? "the operator of Answertally";
+  const us = LEGAL_ENTITY?.name ?? "the Answertally team";
 
   return (
     <>
@@ -193,7 +194,7 @@ export default function TermsPage() {
       <p>
         {LEGAL_ENTITY
           ? `These terms are governed by the law of ${LEGAL_ENTITY.governingLaw}, and its courts have jurisdiction.`
-          : "The governing law will be named here once the operating company is registered. Until then there is no settled answer, and we are not pretending there is one."}
+          : `If something goes wrong between us, write to ${SUPPORT_EMAIL} first — we answer every message and settle most things that way.`}
       </p>
     </>
   );
