@@ -82,6 +82,8 @@ test("clusters and prompts can be managed by hand", async ({ page }) => {
   await expect(page.getByTestId("clusters-list")).toContainText("how much does AcmeCRM cost");
   await expect(page.getByTestId("clusters-list")).toContainText("1 prompts");
 
+  // Удаление уносит измеренные ответы, поэтому спрашивает подтверждение.
+  page.once("dialog", (dialog) => void dialog.accept());
   await page.getByLabel("Delete prompt how much does AcmeCRM cost").click();
   await expect(page.getByTestId("clusters-list")).toContainText("0 prompts");
 });

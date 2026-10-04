@@ -113,7 +113,7 @@ describe("canAddClient", () => {
     const decision = canAddClient(entitlementsFor(null, NOW), PLAN_LIMITS.starter.clientLimit);
 
     expect(decision.allowed).toBe(false);
-    expect(decision.message).toContain("starter");
+    expect(decision.message).toContain("Starter");
     expect(decision.message).toMatch(/upgrade/i);
   });
 
@@ -138,7 +138,7 @@ describe("canSwitchToPlan", () => {
     const decision = canSwitchToPlan(starter, PLAN_LIMITS.starter.clientLimit + 2);
 
     expect(decision.allowed).toBe(false);
-    expect(decision.message).toContain("starter");
+    expect(decision.message).toContain("Starter");
   });
 
   it("отказ называет, скольких убрать", () => {

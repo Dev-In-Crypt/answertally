@@ -1,5 +1,37 @@
 import { describe, expect, it } from "vitest";
-import { groupByCluster, parseCsvLine, parsePromptCsv } from "./csv";
+import {
+  decodeCsvBytes,
+  groupByCluster,
+  normalizePromptText,
+  parseCsvLine,
+  parsePromptCsv,
+} from "./csv";
+
+describe("decodeCsvBytes", () => {
+  it("UTF-8 читается как есть", () => {
+    expect(decodeCsvBytes(new TextEncoder().encode("What’s"))).toBe("What’s");
+  });
+
+  it("ANSI-выгрузка Excel (cp1252) не превращается в «�»", () => {
+    // «What’s» в cp1252: апостроф — одиночный байт 0x92.
+    const bytes = new Uint8Array([0x57, 0x68, 0x61, 0x74, 0x92, 0x73]);
+    expect(decodeCsvBytes(bytes)).toBe("What’s");
+  });
+
+  it("кириллица в cp1251", () => {
+    // «Привет, CRM» в cp1251.
+    const bytes = new Uint8Array([
+      0xcf, 0xf0, 0xe8, 0xe2, 0xe5, 0xf2, 0x2c, 0x20, 0x43, 0x52, 0x4d,
+    ]);
+    expect(decodeCsvBytes(bytes)).toBe("Привет, CRM");
+  });
+});
+
+describe("normalizePromptText", () => {
+  it("регистр и пробелы не делают вопрос другим", () => {
+    expect(normalizePromptText("  Best   CRM\nfor startups ")).toBe("best crm for startups");
+  });
+});
 
 describe("parseCsvLine", () => {
   const cases: [string, string[]][] = [
@@ -122,6 +154,43 @@ describe("parsePromptCsv", () => {
 
   it("пустой файл не роняет импорт", () => {
     expect(parsePromptCsv("").errors[0]).toContain("empty");
+  });
+
+  it("европейский Excel: разделитель «;»", () => {
+    const csv = "cluster;intent;prompt;is_control\nA;other;best CRM, for real;1";
+    const result = parsePromptCsv(csv);
+
+    expect(result.errors).toEqual([]);
+    expect(result.rows[0]).toMatchObject({
+      cluster: "A",
+      prompt: "best CRM, for real",
+      isControl: true,
+    });
+  });
+
+  it("ячейка с переносом строки (Alt+Enter) — один вопрос, номера строк по таблице", () => {
+    const csv = [
+      "cluster,intent,prompt,is_control",
+      'A,other,"best CRM',
+      'for startups",0',
+      "",
+      ",other,p,0",
+    ].join("\n");
+    const result = parsePromptCsv(csv);
+
+    expect(result.rows).toHaveLength(1);
+    expect(result.rows[0]?.prompt).toBe("best CRM for startups");
+    // Пустая строка 3 таблицы считается, многострочная ячейка — одна строка.
+    expect(result.errors).toEqual(["Line 4: cluster and prompt cannot be empty."]);
+  });
+
+  it("один вопрос в двух кластерах — дубль", () => {
+    const csv = "cluster,intent,prompt,is_control\nA,other,Best  CRM,0\nB,other,best crm,0";
+    expect(parsePromptCsv(csv).rows).toHaveLength(1);
+  });
+
+  it("отказ по заголовку показывает, что прочитано в первой строке", () => {
+    expect(parsePromptCsv("A,other,p,0").errors[0]).toContain("A, other, p, 0");
   });
 
   it("колонки могут идти в любом порядке", () => {

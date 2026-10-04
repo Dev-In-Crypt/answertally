@@ -7,8 +7,17 @@ import { PageHeader } from "@/components/page-header";
 import { ClientForm } from "../../client-form";
 import { buttonClass } from "@/components/ui/button";
 
-export default function EditClientPage({ params }: { params: Promise<{ id: string }> }) {
+export default function EditClientPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ return?: string }>;
+}) {
   const { id } = use(params);
+  // Из онбординга сюда приходят поправить имена — и туда же возвращаются.
+  // Принимается только известное значение, а не произвольный адрес.
+  const fromOnboarding = use(searchParams).return === "onboarding";
   const router = useRouter();
   const utils = api.useUtils();
 
@@ -17,7 +26,7 @@ export default function EditClientPage({ params }: { params: Promise<{ id: strin
   const update = api.clients.update.useMutation({
     onSuccess: async () => {
       await Promise.all([utils.clients.list.invalidate(), utils.clients.get.invalidate({ id })]);
-      router.push("/clients");
+      router.push(fromOnboarding ? `/clients/${id}/onboarding` : "/clients");
       router.refresh();
     },
   });
@@ -46,6 +55,8 @@ export default function EditClientPage({ params }: { params: Promise<{ id: strin
     );
   }
 
+  const clientName = client.data.name;
+
   return (
     <>
       <PageHeader
@@ -54,14 +65,28 @@ export default function EditClientPage({ params }: { params: Promise<{ id: strin
         action={
           <button
             type="button"
-            onClick={() => remove.mutate({ id })}
+            onClick={() => {
+              // Удаление каскадом стирает всю историю клиента, отменить его нельзя.
+              if (
+                window.confirm(
+                  `Delete ${clientName}? All of its measurements, reports, report links, actions and history will be permanently removed. This cannot be undone.`,
+                )
+              ) {
+                remove.mutate({ id });
+              }
+            }}
             disabled={remove.isPending}
             className={buttonClass("outline", "lg")}
           >
-            Delete
+            {remove.isPending ? "Deleting…" : "Delete client"}
           </button>
         }
       />
+      {remove.error && (
+        <p role="alert" className="mb-4 text-sm text-destructive">
+          {remove.error.message}
+        </p>
+      )}
       <ClientForm
         initial={{
           name: client.data.name,
@@ -79,7 +104,8 @@ export default function EditClientPage({ params }: { params: Promise<{ id: strin
             id,
             name: values.name,
             domain: values.domain,
-            industry: values.industry || undefined,
+            // Пустое поле — явный null: отсутствующий ключ значит «не трогать».
+            industry: values.industry || null,
             brandNames: values.brandNames,
             competitorNames: values.competitorNames,
             status: values.isProspect ? "prospect" : "active",

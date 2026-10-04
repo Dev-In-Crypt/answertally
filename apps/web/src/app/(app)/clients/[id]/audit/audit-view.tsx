@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { api } from "@/trpc/react";
 import { EmptyState } from "@/components/page-header";
 import { buttonClass } from "@/components/ui/button";
+import { SUPPORT_EMAIL } from "@/config/site";
 import { MessageSquare } from "lucide-react";
 
 /**
@@ -17,18 +18,32 @@ import { MessageSquare } from "lucide-react";
  */
 
 const STEPS = [
-  { key: "measure", label: "Asking the assistants", detail: "All three platforms, three samples per prompt" },
+  { key: "measure", label: "Asking the assistants", detail: "Several samples per prompt" },
   { key: "parse", label: "Reading the answers", detail: "Brand and competitor mentions, cited links" },
   { key: "classify", label: "Classifying the sources", detail: "Which kind of site each citation came from" },
   { key: "aggregate", label: "Working out visibility", detail: "Share of answers, weekly window" },
 ] as const;
 
-type Phase = "idle" | "running" | "done" | "error";
+type Phase = "idle" | "running" | "done" | "error" | "stalled";
+
+/**
+ * Сколько ждать прогон, прежде чем перестать крутить индикатор.
+ *
+ * Не дошедший до воркера за десять минут — воркер стоит или очередь забита;
+ * идущий дольше трёх четвертей часа — больше самого крупного аудита при
+ * лимитах провайдеров. Экран тогда говорит, где смотреть, а не крутится вечно.
+ */
+const PENDING_LIMIT_MS = 10 * 60 * 1000;
+const RUNNING_LIMIT_MS = 45 * 60 * 1000;
+
+const linkClass = "text-primary underline-offset-4 hover:underline";
 
 export function AuditView({ clientId }: { clientId: string }) {
   const router = useRouter();
   const utils = api.useUtils();
   const prompts = api.prompts.list.useQuery({ clientId });
+  const plan = api.runs.auditPlan.useQuery({ clientId });
+  const runs = api.runs.list.useQuery({ clientId });
   const [phase, setPhase] = useState<Phase>("idle");
   /** Прогон, который выполняет воркер (живой режим); null — выполнен сразу. */
   const [queuedRunId, setQueuedRunId] = useState<string | null>(null);
@@ -36,10 +51,26 @@ export function AuditView({ clientId }: { clientId: string }) {
   async function refresh(): Promise<void> {
     await Promise.all([
       utils.runs.list.invalidate({ clientId }),
+      utils.runs.auditPlan.invalidate({ clientId }),
       utils.diagnosis.sourceGraph.invalidate({ clientId }),
       utils.measurement.visibility.invalidate({ clientId }),
     ]);
   }
+
+  /**
+   * Идущий замер клиента подхватывается и после перезагрузки страницы.
+   * Раньше прогресс жил только в состоянии компонента: вернувшись на экран,
+   * человек видел активную кнопку и запускал второй платный аудит.
+   */
+  const inFlight = runs.data?.find(
+    (run) => run.adaptersMode === "live" && (run.status === "pending" || run.status === "running"),
+  );
+  useEffect(() => {
+    if (inFlight && queuedRunId === null && phase === "idle") {
+      setQueuedRunId(inFlight.id);
+      setPhase("running");
+    }
+  }, [inFlight, queuedRunId, phase]);
 
   const audit = api.runs.startAudit.useMutation({
     onMutate: () => setPhase("running"),
@@ -55,15 +86,18 @@ export function AuditView({ clientId }: { clientId: string }) {
         return;
       }
       await refresh();
-      setPhase("done");
+      setPhase(result.outcome?.status === "failed" ? "error" : "done");
     },
-    onError: () => setPhase("error"),
+    onError: () => {
+      setPhase("error");
+      void utils.runs.auditPlan.invalidate({ clientId });
+    },
   });
 
   const queuedRun = api.runs.get.useQuery(
     { id: queuedRunId ?? "" },
     {
-      enabled: queuedRunId !== null,
+      enabled: queuedRunId !== null && phase === "running",
       refetchInterval: (query) => {
         const status = query.state.data?.status;
         return status === "done" || status === "failed" ? false : 5000;
@@ -71,16 +105,32 @@ export function AuditView({ clientId }: { clientId: string }) {
     },
   );
 
+  const status = queuedRun.data?.status;
+  const startedAt = queuedRun.data?.startedAt;
+
   useEffect(() => {
-    const status = queuedRun.data?.status;
     if (status === "done") {
       void refresh().then(() => setPhase("done"));
     } else if (status === "failed") {
-      setPhase("error");
+      void refresh().then(() => setPhase("error"));
     }
     // Зависимость — только статус: refresh лишь сбрасывает кэш запросов
     // клиента, и перезапускать эффект из-за новой ссылки на него незачем.
-  }, [queuedRun.data?.status]);
+  }, [status]);
+
+  // Крутилка не вечная: прогон, застрявший в очереди или идущий дольше
+  // разумного, и потерянная связь с сервером переводят экран в «долго».
+  useEffect(() => {
+    if (phase !== "running" || !startedAt || (status !== "pending" && status !== "running")) return;
+    const limit = status === "pending" ? PENDING_LIMIT_MS : RUNNING_LIMIT_MS;
+    const left = new Date(startedAt).getTime() + limit - Date.now();
+    const timer = setTimeout(() => setPhase("stalled"), Math.max(0, left));
+    return () => clearTimeout(timer);
+  }, [phase, status, startedAt]);
+
+  useEffect(() => {
+    if (queuedRun.isError && phase === "running") setPhase("stalled");
+  }, [queuedRun.isError, phase]);
 
   // Дойдя до конца, экран сам ведёт к диагностике: аудит не должен
   // заканчиваться вопросом «а дальше куда».
@@ -116,28 +166,82 @@ export function AuditView({ clientId }: { clientId: string }) {
     );
   }
 
+  // «Долго» — прогон всё ещё идёт: второй нажатием не запустить (сервер
+  // ответит CONFLICT), поэтому кнопка закрыта, как и во время прогона.
+  const running = audit.isPending || phase === "running" || phase === "stalled";
+  // Отказ известен до клика: о нём говорится заранее, а не после нажатия.
+  // После упавшего прогона тоже — повтор, на который не хватит проверок,
+  // кнопкой не предлагается.
+  const refusal =
+    phase === "idle" || (phase === "error" && !audit.error)
+      ? (plan.data?.refusal ?? null)
+      : null;
+  const measureLink = (
+    <Link href={`/clients/${clientId}/measure`} className={linkClass}>
+      measure screen
+    </Link>
+  );
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center gap-3">
         <button
           type="button"
           data-testid="run-audit"
-          disabled={audit.isPending || phase === "running"}
+          disabled={running || refusal !== null}
           onClick={() => audit.mutate({ clientId })}
           className={buttonClass("primary", "lg")}
         >
-          {audit.isPending || phase === "running" ? "Running audit…" : "Run audit"}
+          {running ? "Running audit…" : "Run audit"}
         </button>
         <span className="text-sm text-muted-foreground">
-          <span className="metric">{promptCount}</span> prompts × 3 platforms × 3 samples. Repeated
-          samples are what makes the number readable at all — one answer is not a measurement.
+          {plan.data ? (
+            <>
+              <span className="metric">{plan.data.promptCount}</span> prompts ×{" "}
+              <span className="metric">{plan.data.assistants.length}</span> assistants ×{" "}
+              <span className="metric">{plan.data.samplesPerPrompt}</span> samples ={" "}
+              <span className="metric">{plan.data.checks}</span> AI checks.
+            </>
+          ) : (
+            <>
+              <span className="metric">{promptCount}</span> prompts, several samples each.
+            </>
+          )}{" "}
+          Repeated samples are what makes the number readable at all — one answer is not a
+          measurement.
         </span>
       </div>
+
+      {refusal && (
+        <p data-testid="audit-refusal" className="text-sm text-muted-foreground">
+          {refusal}{" "}
+          <Link href="/settings/billing" className={linkClass}>
+            See plans and usage
+          </Link>
+          .
+        </p>
+      )}
 
       {phase === "error" && (
         <p role="alert" data-testid="form-error" className="text-sm text-destructive">
           {audit.error?.message ??
-            "The audit could not be completed. Some answers did not come back; open the measure screen to see the run and try again."}
+            queuedRun.data?.note ??
+            "The audit could not be completed."}{" "}
+          {audit.error ? (
+            audit.error.data?.code === "FORBIDDEN" && (
+              <Link href="/settings/billing" className={linkClass}>
+                See plans and usage.
+              </Link>
+            )
+          ) : (
+            <>
+              The run is listed on the {measureLink}. If this keeps happening, write to{" "}
+              <a href={`mailto:${SUPPORT_EMAIL}`} className={linkClass}>
+                {SUPPORT_EMAIL}
+              </a>
+              .
+            </>
+          )}
         </p>
       )}
 
@@ -149,9 +253,22 @@ export function AuditView({ clientId }: { clientId: string }) {
         </p>
       )}
 
+      {phase === "stalled" && (
+        <p data-testid="audit-stalled" className="text-sm text-muted-foreground">
+          This audit is taking longer than usual. It keeps going in the background — its status is
+          on the {measureLink}, and the results appear on the opportunities screen when it
+          finishes.
+        </p>
+      )}
+
       <ol data-testid="audit-steps" className="flex flex-col gap-2">
         {STEPS.map((step) => {
-          const state = phase === "idle" ? "waiting" : phase === "running" ? "running" : "done";
+          // Отказ, сбой и «долго» — не «все шаги пройдены».
+          const state = phase === "running" ? "running" : phase === "done" ? "done" : "waiting";
+          const detail =
+            step.key === "measure" && plan.data
+              ? `${plan.data.assistants.join(", ")} — ${plan.data.samplesPerPrompt} samples per prompt`
+              : step.detail;
           return (
             <li
               key={step.key}
@@ -171,7 +288,7 @@ export function AuditView({ clientId }: { clientId: string }) {
               />
               <span className="flex flex-col gap-0.5">
                 <span className="text-sm font-medium">{step.label}</span>
-                <span className="text-sm text-muted-foreground">{step.detail}</span>
+                <span className="text-sm text-muted-foreground">{detail}</span>
               </span>
             </li>
           );
@@ -181,13 +298,13 @@ export function AuditView({ clientId }: { clientId: string }) {
       {phase === "done" && (
         <p data-testid="audit-done" className="text-sm">
           Audit complete —{" "}
-          <Link
-            href={`/clients/${clientId}/opportunities`}
-            className="text-primary underline-offset-4 hover:underline"
-          >
+          <Link href={`/clients/${clientId}/opportunities`} className={linkClass}>
             open the opportunities
           </Link>
           .
+          {queuedRun.data?.note && (
+            <span className="text-muted-foreground"> {queuedRun.data.note}</span>
+          )}
         </p>
       )}
     </div>

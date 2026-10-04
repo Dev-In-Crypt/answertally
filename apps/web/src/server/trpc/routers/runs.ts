@@ -1,6 +1,13 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { parseAdaptersMode, PLATFORM_IDS, type AdaptersMode, type PlanId } from "@repo/core";
+import {
+  MIN_SAMPLES_PER_CELL,
+  parseAdaptersMode,
+  PLATFORM_IDS,
+  platformLabel,
+  type AdaptersMode,
+  type PlanId,
+} from "@repo/core";
 import {
   capacityOptions,
   isCadence,
@@ -14,7 +21,12 @@ import {
   plannedChecksForRun,
   platformsForRun,
 } from "@repo/core/config/measurement";
-import { completeRun, startRunIfAllowed } from "@repo/pipeline";
+import {
+  completeRun,
+  measurementAllowedForAgency,
+  RUN_IN_FLIGHT_MESSAGE,
+  startRunIfAllowed,
+} from "@repo/pipeline";
 import {
   getClientById,
   getRunById,
@@ -26,6 +38,7 @@ import {
   listResponsesForPrompt,
   listRecentRuns,
   logActivity,
+  setScheduleOutcome,
   upsertRunSchedule,
   type Run,
 } from "@repo/db";
@@ -79,7 +92,9 @@ async function startMeasuredRun(
   if (!run) {
     // Причина отдаётся как есть: человек должен понять, что делать дальше,
     // а не гадать над кодом ошибки.
-    throw new TRPCError({ code: "FORBIDDEN", message: decision.message });
+    // Идущий замер — не вопрос тарифа: экран не должен звать на страницу оплаты.
+    const code = decision.message === RUN_IN_FLIGHT_MESSAGE ? "CONFLICT" : "FORBIDDEN";
+    throw new TRPCError({ code, message: decision.message });
   }
   return run;
 }
@@ -187,6 +202,17 @@ export const runsRouter = router({
        * стоит заранее, чтобы ограничение было решением, а не доработкой.
        */
       const entitlements = await entitlementsForAgency(ctx.db, ctx.user.agencyId);
+
+      // Без оплаты расписание не запустится ни разу (воркер откажет каждому
+      // сроку), а форма говорила «Saved». Выключить старое — можно.
+      if (input.active && !entitlements.paying) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            "Scheduled checks need a paid plan. Pick one under Settings → Billing — the free audit runs from the Run audit page.",
+        });
+      }
+
       const prompts = await listActivePromptsForClient(ctx.db, input.clientId);
 
       const refusal = refuseSchedule(capabilitiesForAgency(entitlements), {
@@ -200,7 +226,49 @@ export const runsRouter = router({
       }
 
       const { clientId, ...values } = input;
-      return upsertRunSchedule(ctx.db, clientId, values);
+      const saved = await upsertRunSchedule(ctx.db, clientId, values);
+      // Причина прошлого пропуска относится к прежней настройке: новая
+      // проверится на ближайшем сроке и, если что, получит свою.
+      await setScheduleOutcome(ctx.db, saved.id, { skipReason: null, at: new Date() });
+      return { ...saved, skipReason: null, skippedAt: null };
+    }),
+
+  /**
+   * Что спросит аудит и пройдёт ли он — до нажатия.
+   *
+   * Экран аудита писал «все три платформы», а бесплатный аудит спрашивает
+   * две, и об отказе по размеру человек узнавал только после клика. Отказ
+   * считается той же функцией, что и при старте.
+   */
+  auditPlan: protectedProcedure
+    .input(z.object({ clientId: z.uuid() }))
+    .query(async ({ ctx, input }) => {
+      const client = await getClientById(ctx.db, input.clientId);
+      assertTenant(client, ctx.user.agencyId);
+
+      const [entitlements, prompts] = await Promise.all([
+        entitlementsForAgency(ctx.db, ctx.user.agencyId),
+        listActivePromptsForClient(ctx.db, input.clientId),
+      ]);
+      const capabilities = capabilitiesForAgency(entitlements);
+      const assistants = platformsForRun(capabilities, null);
+      const checks = plannedChecksForRun(capabilities, prompts.length, null);
+      const decision =
+        prompts.length > 0
+          ? await measurementAllowedForAgency(ctx.db, ctx.user.agencyId, {
+              trigger: "manual",
+              checksPlanned: checks,
+            })
+          : null;
+
+      return {
+        assistants: assistants.map(platformLabel),
+        // Без расписания прогон берёт минимум выборок на ячейку — как и подсчёт выше.
+        samplesPerPrompt: MIN_SAMPLES_PER_CELL,
+        promptCount: prompts.length,
+        checks,
+        refusal: decision && !decision.allowed ? decision.message : null,
+      };
     }),
 
   list: protectedProcedure.input(z.object({ clientId: z.uuid() })).query(async ({ ctx, input }) => {
@@ -234,17 +302,19 @@ export const runsRouter = router({
       const client = cluster ? await getClientById(ctx.db, cluster.clientId) : undefined;
       assertTenant(client, ctx.user.agencyId);
 
-      const rows = await listResponsesForPrompt(ctx.db, input.promptId, input.limit);
+      // На одну строку больше лимита — чтобы честно сказать, что старше есть ещё.
+      const rows = await listResponsesForPrompt(ctx.db, input.promptId, input.limit + 1);
 
       return {
         prompt: { id: prompt.id, text: prompt.text, isControl: prompt.isControl },
         // Словарь отдаётся вместе с ответами: подсветка на клиенте должна
         // использовать те же имена, что и парсер.
         dictionary: {
-          brandNames: client.brandNames.length > 0 ? client.brandNames : [],
+          brandNames: client.brandNames.length > 0 ? client.brandNames : [client.name],
           competitorNames: client.competitorNames,
         },
-        responses: rows,
+        responses: rows.slice(0, input.limit),
+        hasMore: rows.length > input.limit,
       };
     }),
 

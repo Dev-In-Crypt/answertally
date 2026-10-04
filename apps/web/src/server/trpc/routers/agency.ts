@@ -5,7 +5,9 @@ import { TRPCError } from "@trpc/server";
 import {
   createInvitation,
   deactivateUser,
+  findUserByCanonicalEmail,
   getUserById,
+  refreshInvitation,
   revokeInvitation,
   setUserRole,
   getAgencyById,
@@ -14,11 +16,23 @@ import {
   listUsersByAgency,
   updateAgency,
 } from "@repo/db";
-import { inviteEmail } from "@repo/core";
+import { canonicalEmail, inviteEmail } from "@repo/core";
 import { protectedProcedure, roleProcedure, router, publicProcedure } from "../trpc";
 import { appUrl, getEmailSender } from "../../email";
+import { hit } from "../../rate-limit";
 
 const INVITE_TTL_DAYS = 7;
+
+/**
+ * Проверок адреса на приглашение в сутки на агентство. Отказ говорит, что у
+ * ящика уже есть аккаунт, и без счёта приглашение стало бы бесплатным
+ * перебором чужих адресов — то, что регистрация как раз скрывает. Не меньше
+ * суточной квоты писем платного агентства, чтобы не упираться раньше неё.
+ */
+const INVITE_LOOKUPS_PER_DAY = 50;
+
+/** Участник ушёл раньше, чем до него дошёл запрос, — второй администратор успел первым. */
+const MEMBER_GONE = "This person is no longer in the workspace. The list is refreshed.";
 
 export const agencyRouter = router({
   get: protectedProcedure.query(async ({ ctx }) => {
@@ -78,7 +92,7 @@ export const agencyRouter = router({
     .mutation(async ({ ctx, input }) => {
       const target = await getUserById(ctx.db, input.userId);
       if (!target || target.agencyId !== ctx.user.agencyId || target.deactivatedAt) {
-        throw new TRPCError({ code: "NOT_FOUND" });
+        throw new TRPCError({ code: "NOT_FOUND", message: MEMBER_GONE });
       }
       if (target.id === ctx.user.id || target.role === "owner") {
         throw new TRPCError({
@@ -99,7 +113,7 @@ export const agencyRouter = router({
     .mutation(async ({ ctx, input }) => {
       const target = await getUserById(ctx.db, input.userId);
       if (!target || target.agencyId !== ctx.user.agencyId || target.deactivatedAt) {
-        throw new TRPCError({ code: "NOT_FOUND" });
+        throw new TRPCError({ code: "NOT_FOUND", message: MEMBER_GONE });
       }
       if (target.id === ctx.user.id || target.role === "owner") {
         throw new TRPCError({ code: "FORBIDDEN", message: "The owner's role does not change." });
@@ -118,18 +132,58 @@ export const agencyRouter = router({
   invite: roleProcedure("admin")
     .input(z.object({ email: z.email(), role: z.enum(["admin", "member"]).default("member") }))
     .mutation(async ({ ctx, input }) => {
+      // Better Auth хранит почту пользователя в нижнем регистре.
+      const email = input.email.toLowerCase();
+
+      /**
+       * Аккаунт принадлежит одному агентству, и приглашение на занятый ящик
+       * вело в тупик: письмо уходило, квота тратилась, а приглашённый видел
+       * «ask your teammate to invite a different address». Говорим это тому,
+       * кто приглашает, — до письма. Исключение — убранный участник с тем же
+       * адресом: его возвращает вход (`reactivateByInvitation`).
+       */
+      if (!(await hit(`invite-lookup:${ctx.user.agencyId}`, INVITE_LOOKUPS_PER_DAY, 24 * 60 * 60))) {
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+          message: "That is a lot of invitations for one day. Try again tomorrow.",
+        });
+      }
+      const existing = await findUserByCanonicalEmail(ctx.db, canonicalEmail(email));
+      if (existing && !(existing.deactivatedAt && existing.email.toLowerCase() === email)) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          // Чужой адрес в другом написании не называем: это уже не наш участник.
+          message:
+            existing.agencyId !== ctx.user.agencyId
+              ? `${email} already has its own Answertally workspace, and an account belongs to one workspace. Invite a different address.`
+              : existing.deactivatedAt
+                ? `This person was in your workspace as ${existing.email}. Invite that address to bring them back.`
+                : `${existing.email} is already on your team.`,
+        });
+      }
+
       await assertMayInvite(ctx.db, ctx.user.agencyId);
-      const token = randomBytes(24).toString("hex");
       const expiresAt = new Date(Date.now() + INVITE_TTL_DAYS * 24 * 60 * 60 * 1000);
 
-      const invitation = await createInvitation(ctx.db, {
-        agencyId: ctx.user.agencyId,
-        // Better Auth хранит почту пользователя в нижнем регистре.
-        email: input.email.toLowerCase(),
-        role: input.role,
-        token,
-        expiresAt,
-      });
+      // Повтор на адрес, который уже ждёт, освежает то же приглашение.
+      const pending = (await listInvitationsByAgency(ctx.db, ctx.user.agencyId)).find(
+        (invite) => invite.email.toLowerCase() === email && invite.expiresAt.getTime() > Date.now(),
+      );
+      const invitation = pending
+        ? await refreshInvitation(ctx.db, pending.id, ctx.user.agencyId, {
+            role: input.role,
+            expiresAt,
+          })
+        : await createInvitation(ctx.db, {
+            agencyId: ctx.user.agencyId,
+            email,
+            role: input.role,
+            token: randomBytes(24).toString("hex"),
+            expiresAt,
+          });
+      const token = invitation.token;
+      // Абсолютная: её копируют в Slack и почту, где путь без домена мёртв.
+      const inviteUrl = `${appUrl()}/invite/${token}`;
 
       const agency = await getAgencyById(ctx.db, ctx.user.agencyId);
 
@@ -145,7 +199,7 @@ export const agencyRouter = router({
             to: input.email,
             agencyName: agency?.name ?? "your agency",
             role: input.role,
-            inviteUrl: `${appUrl()}/invite/${token}`,
+            inviteUrl,
             invitedByName: ctx.user.name,
             // Отвечают приглашённые тому, кто позвал, а не адресу отправки.
             invitedByEmail: ctx.user.email,
@@ -156,7 +210,7 @@ export const agencyRouter = router({
         console.error(`[invite] delivery failed for ${input.email}`, error);
       }
 
-      return { id: invitation.id, token, expiresAt, delivered };
+      return { id: invitation.id, token, inviteUrl, expiresAt, delivered };
     }),
 
   /** Публичная проверка приглашения — нужна на /invite/[token] до регистрации. */

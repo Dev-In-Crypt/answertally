@@ -114,11 +114,12 @@ export function DecisionFeed() {
    * Сбой не должен выглядеть как «все дела закрыты» — это тот же соблазн, что
    * уже ловили в таблице портфеля: пустой список из ошибки читается как самая
    * спокойная новость, а на деле человек просто не увидел, что его ждёт.
+   * Упавшее фоновое обновление уже загруженную ленту не стирает.
    */
-  if (portfolio.error) {
+  if (portfolio.error && !portfolio.data) {
     return (
       <Card dashed className="text-sm text-muted-foreground">
-        The feed could not be loaded: {portfolio.error.message}
+        The feed could not be loaded. {portfolio.error.message}
       </Card>
     );
   }
@@ -286,10 +287,10 @@ export function DashboardRail() {
           <span className="flex items-baseline justify-between gap-3 text-muted-foreground">
             Under the sample floor
             <span className="metric font-medium text-foreground">
-              {portfolio.error ? "—" : underFloor}
+              {portfolio.data ? underFloor : "—"}
             </span>
           </span>
-          {underFloor > 0 && !portfolio.error && (
+          {underFloor > 0 && (
             <span className="text-xs text-muted-foreground">{MEASUREMENT_COPY.underFloor}</span>
           )}
         </div>

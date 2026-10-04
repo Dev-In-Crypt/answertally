@@ -3,17 +3,18 @@ import {
   claimPendingRun,
   getAgencyIdForRun,
   failStaleRuns,
-  finishRun,
+  finishRunWithNote,
   getRunById,
   getRunSchedule,
   listActivePromptsForClient,
   listPendingRuns,
   releaseRun,
+  setRunNote,
 } from "@repo/db";
 import type { Database } from "@repo/db";
-import type { AdaptersMode } from "@repo/core";
+import { liveAdapterPlatforms, type AdaptersMode } from "@repo/core";
 import { capabilitiesForAgency, platformsForRun } from "@repo/core/config/measurement";
-import { entitlementsForAgency, planRunJobs } from "@repo/pipeline";
+import { entitlementsForAgency, NO_ACTIVE_PROMPTS_NOTE, planRunJobs } from "@repo/pipeline";
 import { QUEUE_NAMES, runsQueueName, type FinalizeJobData, type RunJobData } from "./queues";
 
 /**
@@ -27,6 +28,13 @@ const JOB_RETENTION = {
   removeOnComplete: { age: 24 * 60 * 60 },
   removeOnFail: { age: 7 * 24 * 60 * 60 },
 };
+
+/** Сколько раз пробуется сборка прогона, прежде чем он считается упавшим. */
+export const FINALIZE_ATTEMPTS = 3;
+
+/** Пояснение к прогону, сборка которого не удалась ни с одной попытки. */
+export const FINALIZE_FAILED_NOTE =
+  "The answers came back, but working out the results failed. The answers are saved; results update with the next check.";
 
 /**
  * Ставит задачи прогона в очереди платформ и вешает на них сборку.
@@ -66,11 +74,16 @@ export async function enqueueRun(
   const agencyId = await getAgencyIdForRun(db, runId);
   if (!agencyId) {
     // Клиент удалён вместе с агентством — спрашивать не для кого.
-    await finishRun(db, runId, "failed");
+    await finishRunWithNote(db, runId, "failed", "The client no longer exists.");
     return 0;
   }
   const entitlements = await entitlementsForAgency(db, agencyId);
-  const platforms = platformsForRun(capabilitiesForAgency(entitlements), schedule?.platforms);
+  const allowed = platformsForRun(capabilitiesForAgency(entitlements), schedule?.platforms);
+  // Ассистент без ключа на сервере не спрашивается: раньше каждая его задача
+  // падала, и любой прогон с ним выглядел сбоем. Об этом говорит пояснение.
+  const available = run.adaptersMode === "live" ? new Set(liveAdapterPlatforms()) : null;
+  const platforms = available ? allowed.filter((p) => available.has(p)) : allowed;
+  const unavailable = allowed.filter((p) => !platforms.includes(p));
   const samples = schedule?.samplesPerPrompt ?? 3;
 
   const prompts = await listActivePromptsForClient(db, clientId);
@@ -79,7 +92,14 @@ export async function enqueueRun(
   if (jobs.length === 0) {
     // Спрашивать нечего — прогон закрывается, а не висит в ожидании: иначе
     // подбор брал бы его снова каждые несколько секунд.
-    await finishRun(db, runId, "failed");
+    await finishRunWithNote(
+      db,
+      runId,
+      "failed",
+      prompts.length === 0
+        ? NO_ACTIVE_PROMPTS_NOTE
+        : "None of this run's assistants are available right now, so nothing was asked and no checks were used.",
+    );
     return 0;
   }
 
@@ -87,8 +107,22 @@ export async function enqueueRun(
   // проходит до пятнадцати секунд, и раньше за них можно было загрузить
   // тысячи вопросов и поднять выборки до десяти — воркер ставил всё, что
   // находил. Прогон без размера создан до появления поля.
-  if (!entitlements.active || (run.plannedChecks !== null && jobs.length > run.plannedChecks)) {
-    await finishRun(db, runId, "failed");
+  if (!entitlements.active) {
+    await finishRunWithNote(
+      db,
+      runId,
+      "failed",
+      "The subscription is not active, so nothing was asked. Renew it under Settings → Billing.",
+    );
+    return 0;
+  }
+  if (run.plannedChecks !== null && jobs.length > run.plannedChecks) {
+    await finishRunWithNote(
+      db,
+      runId,
+      "failed",
+      "Prompts were added after this check started, so it stopped before asking anything. Start it again to include them.",
+    );
     return 0;
   }
 
@@ -100,8 +134,11 @@ export async function enqueueRun(
     await flow.add({
       name: "finalize",
       queueName: QUEUE_NAMES.finalize,
-      data: { runId, clientId, expected: jobs.length } satisfies FinalizeJobData,
-      opts: JOB_RETENTION,
+      data: { runId, clientId, expected: jobs.length, unavailable } satisfies FinalizeJobData,
+      // Сборка повторяется: её шаги идемпотентны, а статус прогона ставится
+      // последним. Без повторов сбой базы посреди свёртки оставлял прогон
+      // без цифр до следующего замера через две недели.
+      opts: { ...JOB_RETENTION, attempts: FINALIZE_ATTEMPTS, backoff: { type: "exponential", delay: 30_000 } },
       children: jobs.map((job) => ({
         name: `${job.platform}-${job.sampleIndex}`,
         queueName: runsQueueName(job.platform),
@@ -149,6 +186,13 @@ export async function pickUpPendingRuns(
 ): Promise<PendingPickup> {
   const cutoff = new Date(now.getTime() - PENDING_RUN_MAX_AGE_MS);
   const expiredRuns = await failStaleRuns(db, mode, cutoff);
+  for (const runId of expiredRuns) {
+    await setRunNote(
+      db,
+      runId,
+      "This check did not finish within a day and was closed. Any answers that came back are kept.",
+    );
+  }
 
   const pending = await listPendingRuns(db, mode, cutoff);
   const result: PendingPickup = { queuedRuns: 0, queuedJobs: 0, failedRuns: [], expiredRuns };

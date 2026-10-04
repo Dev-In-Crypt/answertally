@@ -74,6 +74,20 @@ describe("домен клиента нормализуется на входе",
     expect(updated?.domain).toBe("agenciapisto.com");
   });
 
+  it("отрасль стирается явным null, а без ключа остаётся", async () => {
+    const client = await caller(agencyId).clients.create({
+      name: "Pisto",
+      domain: "agenciapisto.com",
+      industry: "Marketing agency",
+    });
+
+    const untouched = await caller(agencyId).clients.update({ id: client.id, name: "Pisto 2" });
+    expect(untouched?.industry).toBe("Marketing agency");
+
+    const cleared = await caller(agencyId).clients.update({ id: client.id, industry: null });
+    expect(cleared?.industry).toBeNull();
+  });
+
   it("строка без точки отклоняется с понятным сообщением", async () => {
     await expect(
       caller(agencyId).clients.create({

@@ -4,9 +4,11 @@ import {
   billingPeriod,
   billingPeriodBounds,
   canSwitchToPlan,
+  FREE_CHECK_ALLOWANCE,
   PLAN_LIMITS,
   sumCostUsd,
   usageStatus,
+  type Entitlements,
   type PaymentProvider,
   type PlanId,
 } from "@repo/core";
@@ -14,6 +16,7 @@ import {
   countClientsByAgency,
   countFixtureAnswers,
   getAgencyById,
+  getLifetimeAiChecks,
   getSubscriptionByAgency,
   getUsageCounter,
   listCostsByClientAndPlatform,
@@ -60,10 +63,22 @@ export const billingRouter = router({
       getSubscriptionByAgency(ctx.db, ctx.user.agencyId),
       countClientsByAgency(ctx.db, ctx.user.agencyId),
     ]);
+    const live = isLive(subscription);
+    const currentPrice = PLAN_LIMITS[entitlements.plan].priceUsd;
 
     return {
       entitlements,
       clientsUsed,
+      aiChecks: await checksFor(
+        ctx.db,
+        ctx.user.agencyId,
+        entitlements,
+        billingPeriod(),
+        entitlements.aiCheckAllowance,
+      ),
+      // Платёжные кнопки — только у владельца: остальным сервер всё равно
+      // откажет, и экран говорит это заранее, а не после нажатия.
+      canManage: ctx.user.role === "owner",
       paymentsConfigured: getPaymentProvider().configured,
       status: subscription?.status ?? null,
       currentPeriodEnd: subscription?.currentPeriodEnd ?? null,
@@ -76,8 +91,19 @@ export const billingRouter = router({
        * checkout у платящего агентства завёл бы вторую подписку и второй
        * счёт за тот же продукт.
        */
-      hasLiveSubscription: isLive(subscription),
-      plans: (Object.keys(PLAN_LIMITS) as PlanId[]).map((id) => ({ id, ...PLAN_LIMITS[id] })),
+      hasLiveSubscription: live,
+      plans: (Object.keys(PLAN_LIMITS) as PlanId[]).map((id) => ({
+        id,
+        ...PLAN_LIMITS[id],
+        /** Сколько провайдер спишет сразу при повышении — оценка для подтверждения. */
+        estimatedChargeNowUsd: live
+          ? estimateUpgradeChargeUsd(
+              currentPrice,
+              PLAN_LIMITS[id].priceUsd,
+              subscription?.currentPeriodEnd ?? null,
+            )
+          : null,
+      })),
     };
   }),
 
@@ -132,6 +158,8 @@ export const billingRouter = router({
         return { plan: input.plan, changed: false };
       }
 
+      refuseWhilePastDue(subscription);
+
       // Провайдер не меняет тариф подписки, которая уже закрывается.
       if (subscription.cancelAtPeriodEnd) {
         throw new TRPCError({
@@ -175,6 +203,7 @@ export const billingRouter = router({
   cancel: roleProcedure("owner").mutation(async ({ ctx }) => {
     const payments = requirePayments();
     const subscription = await requireLiveSubscription(ctx.db, ctx.user.agencyId);
+    refuseWhilePastDue(subscription);
 
     await viaProvider(() =>
       payments.setCancelAtPeriodEnd({
@@ -201,7 +230,11 @@ export const billingRouter = router({
     return { cancelAtPeriodEnd: false };
   }),
 
-  /** Карта, счета и отмена — на стороне провайдера: продукт не хранит платёжные данные. */
+  /**
+   * Карта и счета — на стороне провайдера: продукт не хранит платёжные данные.
+   * Отменять туда не посылаем: в портале отмена мгновенная, а наша — в конце
+   * оплаченного периода.
+   */
   portal: roleProcedure("owner").mutation(async ({ ctx }) => {
     const payments = getPaymentProvider();
     const subscription = await getSubscriptionByAgency(ctx.db, ctx.user.agencyId);
@@ -226,15 +259,21 @@ export const billingRouter = router({
     .query(async ({ ctx, input }) => {
       const period = input?.period ?? billingPeriod();
 
-      const [agency, counter, clientsUsed] = await Promise.all([
+      const [agency, entitlements, clientsUsed] = await Promise.all([
         getAgencyById(ctx.db, ctx.user.agencyId),
-        getUsageCounter(ctx.db, ctx.user.agencyId, period),
+        entitlementsForAgency(ctx.db, ctx.user.agencyId),
         countClientsByAgency(ctx.db, ctx.user.agencyId),
       ]);
 
       const plan = agency?.plan ?? "starter";
       const limits = PLAN_LIMITS[plan];
-      const checks = usageStatus(counter?.aiChecksUsed ?? 0, limits.aiCheckAllowance);
+      const checks = await checksFor(
+        ctx.db,
+        ctx.user.agencyId,
+        entitlements,
+        period,
+        limits.aiCheckAllowance,
+      );
 
       return {
         period,
@@ -298,6 +337,66 @@ export const billingRouter = router({
 
 function isLive(subscription: Subscription | undefined): boolean {
   return Boolean(subscription?.subscriptionId) && LIVE_STATUSES.has(subscription?.status ?? "");
+}
+
+/**
+ * Расход проверок — по тому же правилу, что и проверка при старте прогона.
+ *
+ * Неплательщик меряет бесплатный аудит: за всё время, против
+ * `FREE_CHECK_ALLOWANCE`. Показывать ему месячный лимит starter значило
+ * обещать проверки, в которых прогон ему потом откажет.
+ */
+async function checksFor(
+  db: Database,
+  agencyId: string,
+  entitlements: Entitlements,
+  period: string,
+  paidAllowance: number,
+) {
+  if (!entitlements.paying && entitlements.active) {
+    const used = await getLifetimeAiChecks(db, agencyId);
+    return { ...usageStatus(used, FREE_CHECK_ALLOWANCE), free: true };
+  }
+  const counter = await getUsageCounter(db, agencyId, period);
+  return { ...usageStatus(counter?.aiChecksUsed ?? 0, paidAllowance), free: false };
+}
+
+/**
+ * Сколько провайдер спишет сразу при повышении: разница цен × доля периода,
+ * которая ещё впереди. Оценка — точную сумму (с налогом) считает провайдер.
+ *
+ * Период месячный: начало — тот же день месяцем раньше, а если такого дня
+ * нет (31-е), последний день прошлого месяца.
+ */
+export function estimateUpgradeChargeUsd(
+  fromPriceUsd: number,
+  toPriceUsd: number,
+  periodEnd: Date | null,
+  now: Date = new Date(),
+): number | null {
+  if (!periodEnd || toPriceUsd <= fromPriceUsd) return null;
+
+  const start = new Date(periodEnd);
+  start.setUTCMonth(start.getUTCMonth() - 1);
+  if (start.getUTCDate() !== periodEnd.getUTCDate()) start.setUTCDate(0);
+
+  const total = periodEnd.getTime() - start.getTime();
+  const left = Math.min(1, Math.max(0, (periodEnd.getTime() - now.getTime()) / total));
+  return Math.round((toPriceUsd - fromPriceUsd) * left * 100) / 100;
+}
+
+/**
+ * Пока платёж просрочен, провайдер не двигает подписку (`subscription_not_active`),
+ * и «попробуйте через минуту» тут не поможет: сначала карта.
+ */
+function refuseWhilePastDue(subscription: Subscription): void {
+  if (subscription.status === "past_due") {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message:
+        "The last payment did not go through. Update the card in Manage billing first — plan changes and cancelling are available once the account is paid up.",
+    });
+  }
 }
 
 /**

@@ -62,6 +62,30 @@ describe("parseTrafficCsv", () => {
     expect(parseTrafficCsv("").rows).toEqual([]);
     expect(parseTrafficCsv("").errors).toHaveLength(1);
   });
+
+  it("выгрузка GA4 как есть: шапка «#…», пустые строки, «Session source / medium»", () => {
+    const ga4 = [
+      "# ----------------------------------------",
+      "# Traffic acquisition: Session source / medium",
+      "# Start date: 20260801",
+      "# ----------------------------------------",
+      "",
+      "Date,Session source / medium,Sessions,Engaged sessions",
+      "20260801,chatgpt.com / referral,7,5",
+      "20260801,google / organic,300,200",
+    ].join("\n");
+    const result = parseTrafficCsv(ga4);
+
+    expect(result.errors).toEqual([]);
+    expect(result.rows[0]).toMatchObject({ assistant: "chatgpt", sessions: 7 });
+    expect(result.skippedReferrers).toEqual(["google"]);
+  });
+
+  it("без колонки даты отказ показывает прочитанную первую строку", () => {
+    const error = parseTrafficCsv("Session source,Sessions\nchatgpt.com,5").errors[0];
+    expect(error).toContain("Date as a dimension");
+    expect(error).toContain("Session source, Sessions");
+  });
 });
 
 describe("summariseTraffic", () => {

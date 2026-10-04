@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { authClient } from "@/lib/auth-client";
+import { authClient, settled } from "@/lib/auth-client";
+import { authErrorMessage } from "@/lib/auth-client-messages";
 import { buttonClass } from "@/components/ui/button";
 import { controlClass } from "@/components/ui/field";
 import { cn } from "@/lib/utils";
@@ -17,15 +18,17 @@ export function ForgotPasswordForm() {
     setError(null);
     setPending(true);
 
-    const result = await authClient.requestPasswordReset({
-      email,
-      redirectTo: "/reset-password",
-    });
+    const result = await settled(
+      authClient.requestPasswordReset({
+        email,
+        redirectTo: "/reset-password",
+      }),
+    );
 
     setPending(false);
 
     if (result.error) {
-      setError(result.error.message ?? "Something went wrong. Please try again.");
+      setError(authErrorMessage(result.error));
       return;
     }
 
@@ -61,7 +64,7 @@ export function ForgotPasswordForm() {
       </label>
 
       {error && (
-        <p data-testid="form-error" className="text-sm text-destructive">
+        <p role="alert" data-testid="form-error" className="text-sm text-destructive">
           {error}
         </p>
       )}

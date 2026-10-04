@@ -24,6 +24,13 @@ import { ResaleCalculator } from "@/components/marketing/resale-calculator";
  * в утверждённом, того нет и на странице.
  */
 
+/**
+ * Рендер на каждый запрос, как у главной: признак оплаты читается из env
+ * рантайма. При пререндере он запекался из окружения сборки, где ключа
+ * провайдера нет, и страница говорила «оплаты картой нет», когда она была.
+ */
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Pricing · Answertally",
   description: `Three plans, billed per client account with your whole team included: ${PLANS.map((p) => `${p.name} ${usd(p.priceUsd)}`).join(", ")} a month, about ${usd(PER_CLIENT_MIN)}–${usd(PER_CLIENT_MAX)} per client.`,
@@ -284,11 +291,8 @@ export default function PricingPage() {
             </li>
             <li className="card">
               <span className="num">2</span>
-              <h3>Pick the plan with us</h3>
-              <p>
-                Plans are agreed directly rather than through a checkout: say how many clients you
-                plan to measure, and the matching plan is set up.
-              </p>
+              <h3>{buying.stepPickTitle}</h3>
+              <p>{buying.stepPick}</p>
               {SALES_CONTACT && (
                 <p style={{ marginTop: 10 }}>
                   <TalkOrAudit />
@@ -298,7 +302,7 @@ export default function PricingPage() {
             <li className="card">
               <span className="num">3</span>
               <h3>Billing is set up</h3>
-              <p>Billing is set up with us directly, and the plan’s limits apply from then on.</p>
+              <p>{buying.stepBilling}</p>
             </li>
           </ol>
         </div>

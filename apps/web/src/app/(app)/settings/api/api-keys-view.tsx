@@ -26,13 +26,14 @@ const ENDPOINTS = [
   { method: "GET", path: "/api/v1/reports", what: "Reports and their status" },
 ] as const;
 
-export function ApiKeysView() {
+export function ApiKeysView({ canManage }: { canManage: boolean }) {
   const utils = api.useUtils();
   const keys = api.apiKeys.list.useQuery();
 
   const [name, setName] = useState("");
   const [issued, setIssued] = useState<{ prefix: string; token: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [revokeError, setRevokeError] = useState<string | null>(null);
 
   const create = api.apiKeys.create.useMutation({
     onSuccess: async (data) => {
@@ -44,68 +45,83 @@ export function ApiKeysView() {
   });
 
   const revoke = api.apiKeys.revoke.useMutation({
+    onMutate: () => setRevokeError(null),
     onSuccess: async () => {
       await utils.apiKeys.list.invalidate();
     },
-    onError: (mutationError) => setError(mutationError.message),
+    onError: (mutationError) => setRevokeError(mutationError.message),
   });
 
   const rows = keys.data ?? [];
 
   return (
     <div className="flex flex-col gap-6">
-      <section className="flex flex-col gap-3 rounded-lg border p-4">
-        <h2 className="text-base font-medium">Create a key</h2>
+      {!canManage && (
         <p className="text-sm text-muted-foreground">
-          The key is shown once, right after it is created. We store only a hash of it, so a
-          second look is impossible — keep it somewhere safe or create a new one.
+          Only admins and the owner can create or revoke keys.
         </p>
+      )}
 
-        <div className="flex flex-wrap items-end gap-2">
-          <label className="flex flex-1 flex-col gap-1.5">
-            <span className="text-sm font-medium">What is it for</span>
-            <input
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder="Looker Studio"
-              className={cn(controlClass, "h-10 px-3")}
-            />
-          </label>
-          <button
-            type="button"
-            data-testid="create-api-key"
-            disabled={!name || create.isPending}
-            onClick={() => {
-              setError(null);
-              create.mutate({ name });
-            }}
-            className={buttonClass("primary", "lg")}
-          >
-            Create key
-          </button>
-        </div>
-
-        {issued && (
-          <div
-            data-testid="issued-key"
-            className="flex flex-col gap-1.5 rounded-md border border-dashed p-3"
-          >
-            <span className="text-sm font-medium">Copy it now — this is the only time.</span>
-            <code className="metric break-all text-sm">{issued.token}</code>
-          </div>
-        )}
-
-        {error && (
-          <p data-testid="form-error" className="text-sm text-destructive">
-            {error}
+      {canManage && (
+        <section className="flex flex-col gap-3 rounded-lg border p-4">
+          <h2 className="text-base font-medium">Create a key</h2>
+          <p className="text-sm text-muted-foreground">
+            The key is shown once, right after it is created. We store only a hash of it, so a
+            second look is impossible — keep it somewhere safe or create a new one.
           </p>
-        )}
-      </section>
+
+          <div className="flex flex-wrap items-end gap-2">
+            <label className="flex flex-1 flex-col gap-1.5">
+              <span className="text-sm font-medium">What is it for</span>
+              <input
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                placeholder="Looker Studio"
+                className={cn(controlClass, "h-10 px-3")}
+              />
+            </label>
+            <button
+              type="button"
+              data-testid="create-api-key"
+              disabled={!name || create.isPending}
+              onClick={() => {
+                setError(null);
+                create.mutate({ name });
+              }}
+              className={buttonClass("primary", "lg")}
+            >
+              Create key
+            </button>
+          </div>
+
+          {issued && (
+            <div
+              data-testid="issued-key"
+              className="flex flex-col gap-1.5 rounded-md border border-dashed p-3"
+            >
+              <span className="text-sm font-medium">Copy it now — this is the only time.</span>
+              <code className="metric break-all text-sm">{issued.token}</code>
+            </div>
+          )}
+
+          {error && (
+            <p role="alert" data-testid="form-error" className="text-sm text-destructive">
+              {error}
+            </p>
+          )}
+        </section>
+      )}
 
       <section className="flex flex-col gap-3">
         <h2 className="text-base font-medium">Keys</h2>
 
-        {rows.length === 0 ? (
+        {keys.isLoading ? (
+          <p className="text-sm text-muted-foreground">Loading keys…</p>
+        ) : keys.error ? (
+          <p role="alert" className="text-sm text-destructive">
+            The keys did not load. Reload the page to try again.
+          </p>
+        ) : rows.length === 0 ? (
           <p className="text-sm text-muted-foreground">No keys yet.</p>
         ) : (
           <table data-testid="api-keys" className="w-full text-sm">
@@ -119,7 +135,10 @@ export function ApiKeysView() {
             </thead>
             <tbody>
               {rows.map((key) => (
-                <tr key={key.id} className={cn("border-b last:border-0", key.revokedAt && "opacity-50")}>
+                <tr
+                  key={key.id}
+                  className={cn("border-b last:border-0", key.revokedAt && "opacity-50")}
+                >
                   <td className="py-2">{key.name}</td>
                   <td className="metric py-2">cw_live_{key.prefix}…</td>
                   <td className="metric py-2 text-muted-foreground">
@@ -128,21 +147,38 @@ export function ApiKeysView() {
                   <td className="py-2 text-right">
                     {key.revokedAt ? (
                       <span className="text-muted-foreground">revoked</span>
-                    ) : (
+                    ) : canManage ? (
                       <button
                         type="button"
                         data-testid={`revoke-${key.id}`}
-                        onClick={() => revoke.mutate({ id: key.id })}
+                        onClick={() => {
+                          // Отзыв навсегда: всё, что читает данные этим ключом,
+                          // перестаёт работать в ту же секунду.
+                          if (
+                            window.confirm(
+                              `Revoke "${key.name}"? Anything using this key stops working, and this cannot be undone.`,
+                            )
+                          ) {
+                            revoke.mutate({ id: key.id });
+                          }
+                        }}
+                        disabled={revoke.isPending}
                         className={buttonClass("outline", "sm")}
                       >
                         Revoke
                       </button>
-                    )}
+                    ) : null}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+        )}
+
+        {revokeError && (
+          <p role="alert" className="text-sm text-destructive">
+            {revokeError}
+          </p>
         )}
       </section>
 

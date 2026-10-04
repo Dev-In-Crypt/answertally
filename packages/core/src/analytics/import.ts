@@ -1,4 +1,4 @@
-import { parseCsvLine } from "../import/csv";
+import { firstRowPreview, parseCsvRecords } from "../import/csv";
 import { classifyReferrer, type TrafficRow } from "./referrers";
 
 /**
@@ -35,21 +35,33 @@ function parseDay(value: string): Date | null {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
-export function parseTrafficCsv(input: string): TrafficImportResult {
-  // BOM в начале выгрузки: его добавляют и Excel, и GA4. Без снятия первая
-  // колонка заголовка перестаёт совпадать по имени. Проверка кодом, а не
-  // литералом: сам символ в исходнике невидим.
-  const withoutBom = input.charCodeAt(0) === 0xfeff ? input.slice(1) : input;
-  const text = withoutBom.replace(/\r\n/g, "\n");
-  const lines = text.split("\n").filter((line) => line.trim() !== "");
+/**
+ * Как GA4 называет колонку источника в разных отчётах. «source / medium»
+ * приходит одной ячейкой — источник берётся до « / ».
+ */
+const SOURCE_COLUMNS = new Set([
+  "source",
+  "referrer",
+  "page referrer",
+  "source / medium",
+  "session source",
+  "session source / medium",
+  "first user source",
+  "first user source / medium",
+]);
 
-  if (lines.length === 0) {
+export function parseTrafficCsv(input: string): TrafficImportResult {
+  // BOM снимает разбор записей; строки «#…» — шапка, которой GA4 начинает
+  // каждую выгрузку, без их пропуска заголовком считалась первая из них.
+  const [first, ...records] = parseCsvRecords(input, { skipComments: true });
+
+  if (!first) {
     return { rows: [], errors: ["The file is empty."], skippedReferrers: [] };
   }
 
-  const header = parseCsvLine(lines[0] ?? "").map((column) => column.trim().toLowerCase());
+  const header = first.cells.map((column) => column.trim().toLowerCase());
   const dateIdx = header.indexOf("date");
-  const sourceIdx = header.findIndex((column) => column === "source" || column === "referrer");
+  const sourceIdx = header.findIndex((column) => SOURCE_COLUMNS.has(column));
   const sessionsIdx = header.findIndex(
     (column) => column === "sessions" || column === "visits",
   );
@@ -57,7 +69,9 @@ export function parseTrafficCsv(input: string): TrafficImportResult {
   if (dateIdx === -1 || sourceIdx === -1 || sessionsIdx === -1) {
     return {
       rows: [],
-      errors: ["Missing header row. Expected columns: date, source, sessions."],
+      errors: [
+        `Missing header row. Expected columns: date, source, sessions (in GA4, add Date as a dimension before exporting). The first row reads: ${firstRowPreview(first.cells)}`,
+      ],
       skippedReferrers: [],
     };
   }
@@ -69,17 +83,14 @@ export function parseTrafficCsv(input: string): TrafficImportResult {
   // medium в GA4) — они складываются, а не перетирают друг друга.
   const totals = new Map<string, TrafficRow>();
 
-  for (let i = 1; i < lines.length; i++) {
-    const lineNumber = i + 1;
-    const values = parseCsvLine(lines[i] ?? "");
-
+  for (const { line: lineNumber, cells: values } of records) {
     const day = parseDay(values[dateIdx] ?? "");
     if (!day) {
       errors.push(`Line ${lineNumber}: date is not a date (expected 2026-08-13 or 20260813).`);
       continue;
     }
 
-    const source = (values[sourceIdx] ?? "").trim();
+    const source = (values[sourceIdx] ?? "").split(" / ")[0]?.trim() ?? "";
     if (source === "") {
       errors.push(`Line ${lineNumber}: source is empty.`);
       continue;

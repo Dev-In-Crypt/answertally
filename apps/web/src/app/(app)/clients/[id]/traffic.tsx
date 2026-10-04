@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ASSISTANTS, MEASUREMENT_COPY, platformLabel } from "@repo/core";
+import { ASSISTANTS, decodeCsvBytes, MEASUREMENT_COPY, platformLabel } from "@repo/core";
 import { api } from "@/trpc/react";
 import { FileInput } from "@/components/ui/file-input";
 
@@ -27,12 +27,6 @@ export function TrafficCard({
   const utils = api.useUtils();
   const [result, setResult] = useState<{ imported: number; skipped: string[] } | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
-  /**
-   * Поле пересоздаётся после каждого импорта. Пока в нём лежит тот же файл,
-   * повторный выбор того же файла событие не вызывает — а именно так и
-   * импортируют: выгрузили заново, поправили, отдали ещё раз.
-   */
-  const [pickerKey, setPickerKey] = useState(0);
 
   const summary = api.analytics.summary.useQuery({ clientId });
 
@@ -50,8 +44,18 @@ export function TrafficCard({
 
     setErrors([]);
     setResult(null);
-    importTraffic.mutate({ clientId, csv: await file.text() });
-    setPickerKey((key) => key + 1);
+    // Байты, а не file.text(): ANSI-выгрузка Excel иначе портит буквы.
+    const csv = decodeCsvBytes(new Uint8Array(await file.arrayBuffer()));
+    // Те же границы, что у сервера, но словами, а не отказом валидации.
+    if (csv.trim() === "") {
+      setErrors(["The file is empty."]);
+    } else if (csv.length > 2_000_000) {
+      setErrors([
+        "The file is over 2 MB. Export a shorter date range and import the parts one by one.",
+      ]);
+    } else {
+      importTraffic.mutate({ clientId, csv });
+    }
   }
 
   const data = summary.data;
@@ -106,7 +110,8 @@ export function TrafficCard({
       ) : (
         <p data-testid="traffic-empty" className="text-sm text-muted-foreground">
           No referred sessions imported yet. Export the referral report from the client&apos;s
-          analytics and drop it here — columns: date, source, sessions.
+          analytics and drop it here — columns: date, source, sessions. A GA4 CSV download works as
+          is, once Date is added as a dimension.
         </p>
       )}
 
@@ -114,7 +119,6 @@ export function TrafficCard({
       <p className="text-xs text-muted-foreground">{MEASUREMENT_COPY.trafficUndercount}</p>
 
       <FileInput
-        key={pickerKey}
         label="Import a referral export"
         accept=".csv,text/csv"
         onSelect={(file) => void handleFile(file)}

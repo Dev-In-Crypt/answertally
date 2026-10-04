@@ -1,8 +1,11 @@
 "use client";
 
+import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { signIn, signUp } from "@/lib/auth-client";
+import { settled, signIn, signUp } from "@/lib/auth-client";
+import { authErrorMessage } from "@/lib/auth-client-messages";
+import { SUPPORT_EMAIL } from "@/config/site";
 import { buttonClass } from "@/components/ui/button";
 import { controlClass } from "@/components/ui/field";
 import { cn } from "@/lib/utils";
@@ -13,11 +16,14 @@ export function AuthForm({
   mode,
   lockedEmail,
   inviteToken,
+  next = "/dashboard",
 }: {
   mode: Mode;
   lockedEmail?: string;
   /** Токен приглашения: без него регистрация заводит своё агентство. */
   inviteToken?: string;
+  /** Куда вести после входа — уже проверенный `safeNextPath` путь. */
+  next?: string;
 }) {
   const router = useRouter();
   const [name, setName] = useState("");
@@ -35,18 +41,28 @@ export function AuthForm({
     setError(null);
     setPending(true);
 
-    // Куда вести после ссылки из письма: сервер впускает по ней сразу.
-    const callbackURL = "/dashboard";
+    /**
+     * Куда вести после ссылки из письма: сервер впускает по ней сразу.
+     *
+     * Через страницу входа, а не прямо на панель: просроченная ссылка
+     * возвращает сюда `?error=`, а панель без сессии отправляла на вход и
+     * теряла его — человек видел голую форму без объяснений. Вошедшего
+     * страница входа сама ведёт дальше.
+     */
+    const callbackURL =
+      next === "/dashboard" ? "/login" : `/login?next=${encodeURIComponent(next)}`;
     const result =
       mode === "signup"
-        ? await signUp.email({
-            email,
-            password,
-            name,
-            callbackURL,
-            ...(inviteToken ? { inviteToken } : {}),
-          })
-        : await signIn.email({ email, password, callbackURL });
+        ? await settled(
+            signUp.email({
+              email,
+              password,
+              name,
+              callbackURL,
+              ...(inviteToken ? { inviteToken } : {}),
+            }),
+          )
+        : await settled(signIn.email({ email, password, callbackURL }));
 
     setPending(false);
 
@@ -59,7 +75,7 @@ export function AuthForm({
     }
 
     if (result.error) {
-      setError(result.error.message ?? "Something went wrong. Please try again.");
+      setError(authErrorMessage(result.error, mode === "signup" ? "signup" : "other"));
       return;
     }
 
@@ -74,7 +90,7 @@ export function AuthForm({
       return;
     }
 
-    router.push("/dashboard");
+    router.push(next as Route);
     router.refresh();
   }
 
@@ -85,13 +101,15 @@ export function AuthForm({
         <p className="text-sm text-muted-foreground">
           {resent
             ? "This address is not confirmed yet. We sent a fresh link to "
-            : "We sent a link to "}
-          <span className="font-medium">{awaitingEmail}</span>. Open it to finish setting up the
-          account — the link signs you in.
+            : "We sent an email to "}
+          <span className="font-medium">{awaitingEmail}</span>. Open the link in it to continue.
         </p>
+        {/* Сервер не говорит, ушло ли письмо (и не должен: иначе регистрация
+            выдавала бы, есть ли аккаунт), поэтому выход назван всегда. */}
         <p className="text-sm text-muted-foreground">
-          Nothing arrived? Check the spam folder, or sign in again with the same email and password
-          — we will send a new link. Each link works for an hour.
+          Nothing arrived in a few minutes? Check the spam folder, or sign in again with the same
+          email and password — we will send a new link. Each link works for an hour. Still nothing?
+          Write to {SUPPORT_EMAIL}.
         </p>
       </div>
     );

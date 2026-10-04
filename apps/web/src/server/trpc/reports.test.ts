@@ -151,7 +151,10 @@ describe("reports.generate", () => {
         note: "Numbers for the quarter.",
       });
 
-      expect(result.sent).toBe(true);
+      // Режим без транспорта письмо только записывает — «отправлено» было бы
+      // неправдой: интерфейс скажет «не ушло» и покажет ссылку.
+      expect(result.sent).toBe(false);
+      expect(result.delivered).toBe(false);
 
       const message = mailbox.lastTo("finance@ledgerbrook.test");
       expect(message?.text).toContain(`/r/${result.token}`);
@@ -165,6 +168,74 @@ describe("reports.generate", () => {
     } finally {
       setEmailSender(null);
     }
+  });
+
+  it("«отправлено» — только когда транспорт принял письмо", async () => {
+    await upsertSubscription(db, {
+      agencyId,
+      customerId: `cus_${agencyId.slice(0, 8)}`,
+      subscriptionId: `sub_${agencyId.slice(0, 8)}`,
+      plan: "starter",
+      status: "active",
+      currentPeriodEnd: new Date("2099-01-01T00:00:00.000Z"),
+      cancelAtPeriodEnd: false,
+    });
+
+    try {
+      const report = await generate();
+
+      setEmailSender({ send: () => Promise.resolve({ id: "accepted-1" }) });
+      const accepted = await caller(agencyId).reports.send({
+        reportId: report.id,
+        to: "finance@ledgerbrook.test",
+      });
+      expect(accepted.delivered).toBe(true);
+
+      setEmailSender({ send: () => Promise.reject(new Error("Resend 503")) });
+      const failed = await caller(agencyId).reports.send({
+        reportId: report.id,
+        to: "finance@ledgerbrook.test",
+      });
+      // Отказ не съедает ссылку: она возвращается, и агентство отдаст её само.
+      expect(failed.delivered).toBe(false);
+      expect(failed.token).toBe(accepted.token);
+    } finally {
+      setEmailSender(null);
+    }
+  });
+
+  it("без измеренной недели отчёт не собирается", async () => {
+    // Иначе клиент прочитал бы «0%, up from 0%» как результат.
+    await expect(
+      caller(agencyId).reports.generate({
+        clientId,
+        periodStart: "2025-01-01T00:00:00.000Z",
+        periodEnd: "2025-01-31T00:00:00.000Z",
+      }),
+    ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
+  });
+
+  it("«ждёт согласования» — только отчёт с живой ссылкой, по строке на отчёт", async () => {
+    const report = await generate();
+    const api = caller(agencyId);
+    const row = async () =>
+      (await api.reports.listForAgency()).filter((entry) => entry.id === report.id);
+
+    // Только сгенерирован — клиенту нечего согласовывать.
+    expect((await row())[0]?.awaitingApproval).toBe(false);
+
+    await api.reports.share({ reportId: report.id });
+    expect((await row())[0]?.awaitingApproval).toBe(true);
+
+    // Отозванная ссылка согласования не принесёт; статус возвращается в черновик.
+    await api.reports.revokeShare({ reportId: report.id });
+    expect((await row())[0]?.awaitingApproval).toBe(false);
+    expect((await row())[0]?.status).toBe("draft");
+
+    // Новая ссылка не даёт второй строки.
+    await api.reports.share({ reportId: report.id });
+    expect(await row()).toHaveLength(1);
+    expect((await row())[0]?.awaitingApproval).toBe(true);
   });
 
   it("ссылка на отчёт живёт 90 дней и отзывается", async () => {

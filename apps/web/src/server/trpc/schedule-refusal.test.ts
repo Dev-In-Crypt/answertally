@@ -8,6 +8,7 @@ import {
   createPromptCluster,
   deleteAgency,
   getScheduleForClient,
+  upsertSubscription,
 } from "@repo/db";
 import type { Database } from "@repo/db";
 import type * as CapacityModule from "@repo/core/adapters/capacity";
@@ -63,6 +64,16 @@ describe("роутер расписания и отказ тарифа", () => {
   beforeAll(async () => {
     const agency = await createAgency(db, { name: "Refusal Agency", clientLimit: 10 });
     agencyId = agency.id;
+    // Расписание — платная часть: без подписки роутер откажет раньше политики.
+    await upsertSubscription(db, {
+      agencyId,
+      customerId: `cus_${agencyId.slice(0, 8)}`,
+      subscriptionId: `sub_${agencyId.slice(0, 8)}`,
+      plan: "starter",
+      status: "active",
+      currentPeriodEnd: new Date("2099-01-01T00:00:00.000Z"),
+      cancelAtPeriodEnd: false,
+    });
 
     const client = await createClient(db, {
       agencyId,
@@ -104,7 +115,7 @@ describe("роутер расписания и отказ тарифа", () => {
     });
 
     expect(refuseSchedule).toHaveBeenCalledTimes(1);
-    expect(refuseSchedule).toHaveBeenCalledWith(capabilitiesForAgency({ plan, paying: false }), {
+    expect(refuseSchedule).toHaveBeenCalledWith(capabilitiesForAgency({ plan, paying: true }), {
       cadence: "biweekly",
       assistants: ["chatgpt", "perplexity"],
       // Количество вопросов роутер считает сам — форма его не присылает.
@@ -162,5 +173,29 @@ describe("роутер расписания и отказ тарифа", () => {
     expect(after?.platforms).toEqual(before?.platforms);
     expect(after?.samplesPerPrompt).toBe(before?.samplesPerPrompt);
     expect(after?.active).toBe(before?.active);
+  });
+
+  it("бесплатный аккаунт не сохраняет расписание, которое никогда не запустится", async () => {
+    // Воркер отказывает каждому сроку без оплаты, а форма говорила «Saved».
+    const free = await createAgency(db, { name: "Free Schedule Agency", clientLimit: 3 });
+    try {
+      const client = await createClient(db, {
+        agencyId: free.id,
+        name: "Free Client",
+        domain: "free-schedule.test",
+      });
+      await expect(
+        caller(free.id).runs.saveSchedule({
+          clientId: client.id,
+          cadence: "biweekly",
+          platforms: ["chatgpt"],
+          samplesPerPrompt: 3,
+          active: true,
+        }),
+      ).rejects.toThrow(/Settings → Billing/);
+      expect(await getScheduleForClient(db, client.id)).toBeUndefined();
+    } finally {
+      await deleteAgency(db, free.id);
+    }
   });
 });

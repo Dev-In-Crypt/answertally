@@ -10,9 +10,17 @@ import { GrokAdapter } from "./grok";
  *
  * Вызывается приложениями явно, а не при импорте пакета: импорт `@repo/core`
  * не должен сам по себе означать готовность ходить в сеть и тратить деньги.
- * Платформа без ключа просто не регистрируется — прогон по ней упадёт с
- * понятной ошибкой из реестра, а не молча отдаст пустое измерение.
+ * Платформа без ключа просто не регистрируется. Прогон её не спрашивает
+ * (`liveAdapterPlatforms`) и пишет об этом в пояснении: раньше каждая её
+ * задача падала, и любой прогон с Grok по умолчанию выглядел сбоем.
  */
+let registeredPlatforms: readonly string[] = [];
+
+/** Платформы, для которых в этом процессе подключён живой адаптер. */
+export function liveAdapterPlatforms(): readonly string[] {
+  return registeredPlatforms;
+}
+
 export function registerLiveAdapters(env: NodeJS.ProcessEnv = process.env): string[] {
   const registered: string[] = [];
 
@@ -98,5 +106,6 @@ export function registerLiveAdapters(env: NodeJS.ProcessEnv = process.env): stri
     registered.push("grok");
   }
 
+  registeredPlatforms = registered;
   return registered;
 }

@@ -21,11 +21,16 @@ export const FREE_INVITES_PER_DAY = 5;
 
 const DAY_SECONDS = 24 * 60 * 60;
 
-async function spendDailyQuota(agencyId: string): Promise<void> {
+/**
+ * Счёт идёт по попыткам, а не по доставленным письмам, поэтому текст говорит
+ * про лимит, а не «отправили 50». Подсказка своя у каждого вызова: у
+ * приглашения, в отличие от отчёта, ссылки на этот момент ещё нет.
+ */
+async function spendDailyQuota(agencyId: string, hint: string): Promise<void> {
   if (!(await hit(`agency-email:${agencyId}`, PAID_EMAILS_PER_DAY, DAY_SECONDS))) {
     throw new TRPCError({
       code: "TOO_MANY_REQUESTS",
-      message: `Your workspace has sent ${PAID_EMAILS_PER_DAY} emails today. Copy the link and send it yourself, or try tomorrow.`,
+      message: `Your workspace has reached today's limit of ${PAID_EMAILS_PER_DAY} emails. ${hint}`,
     });
   }
 }
@@ -39,7 +44,7 @@ export async function assertMaySendReport(db: Database, agencyId: string): Promi
       message: "Sending reports by email starts with a plan. Copy the client link and send it yourself.",
     });
   }
-  await spendDailyQuota(agencyId);
+  await spendDailyQuota(agencyId, "Copy the client link and send it yourself, or try again tomorrow.");
 }
 
 /** Приглашение: до оплаты — не больше трёх в ожидании, после — суточная квота. */
@@ -51,7 +56,7 @@ export async function assertMayInvite(db: Database, agencyId: string): Promise<v
     if (live.length >= FREE_PENDING_INVITES) {
       throw new TRPCError({
         code: "FORBIDDEN",
-        message: `Up to ${FREE_PENDING_INVITES} invitations can wait at once before a plan. Wait for one to be accepted or to expire.`,
+        message: `Up to ${FREE_PENDING_INVITES} invitations can wait at once before a plan. Revoke one you no longer need, or wait for one to be accepted.`,
       });
     }
     // Отзыв освобождает место в ожидании, и «пригласить — отозвать —
@@ -64,5 +69,5 @@ export async function assertMayInvite(db: Database, agencyId: string): Promise<v
     }
     return;
   }
-  await spendDailyQuota(agencyId);
+  await spendDailyQuota(agencyId, "Try again tomorrow.");
 }

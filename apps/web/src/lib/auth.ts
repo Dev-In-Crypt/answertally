@@ -3,9 +3,11 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { APIError } from "better-auth/api";
 import {
   canonicalEmail,
+  EMAIL_COPY,
   isDisposableEmail,
   passwordResetEmail,
   verifyEmailEmail,
+  type EmailMessage,
 } from "@repo/core";
 import { requiresEmailVerification } from "@/lib/email-verification";
 import {
@@ -13,6 +15,7 @@ import {
   agencies,
   claimInvitation,
   findUserByCanonicalEmail,
+  getInvitationByToken,
   getUserById,
   reactivateByInvitation,
   sessions,
@@ -20,7 +23,7 @@ import {
   verifications,
 } from "@repo/db";
 import { db } from "@/server/db";
-import { getEmailSender } from "@/server/email";
+import { appUrl, getEmailSender } from "@/server/email";
 import { hit } from "@/server/rate-limit";
 
 
@@ -70,10 +73,94 @@ export const SIGNUP_RATE_LIMIT = { window: 3600, max: 3 } as const;
  */
 export const AUTH_EMAILS_PER_ADDRESS_PER_DAY = 10;
 
-async function mayMailAddress(kind: "reset" | "verify", email: string): Promise<boolean> {
+async function mayMailAddress(
+  kind: "reset" | "verify" | "exists",
+  email: string,
+): Promise<boolean> {
   // Счётчики раздельные: иначе пять чужих запросов сброса закрывали бы
   // человеку и письмо подтверждения.
   return hit(`auth-mail:${kind}:${email.toLowerCase()}`, AUTH_EMAILS_PER_ADDRESS_PER_DAY, 24 * 60 * 60);
+}
+
+/** Сколько регистрация и вход ждут почту, прежде чем ответить человеку. */
+const AUTH_EMAIL_WAIT_MS = 5000;
+
+/**
+ * Отправить письмо входа, но не держать форму дольше нескольких секунд.
+ *
+ * Транспорт повторяет попытки (до трёх по 15 секунд), и при сбое Resend
+ * кнопка «Create account» висела почти минуту, а потом всё равно говорила
+ * «письмо отправлено»: Better Auth глотает ошибку отправки. Ответ формы от
+ * исхода письма не зависит — так же, как и раньше, — но больше не ждёт его;
+ * отправка доживает своё в фоне, отказ уходит в журнал.
+ */
+async function sendAuthEmail(message: EmailMessage): Promise<void> {
+  const sending = getEmailSender()
+    .send(message)
+    .catch((error: unknown) => console.error("[auth] email delivery failed", error));
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  await Promise.race([
+    sending,
+    new Promise<void>((resolve) => {
+      timer = setTimeout(resolve, AUTH_EMAIL_WAIT_MS);
+    }),
+  ]);
+  clearTimeout(timer);
+}
+
+/**
+ * Письмо тому, на чей адрес пытаются завести второй аккаунт.
+ *
+ * Регистрация на занятый адрес отвечает так же, как на свободный — иначе
+ * форма выдавала бы, у кого есть аккаунт. Но без письма человек, забывший,
+ * что уже регистрировался, ждал ссылку, которая не придёт, и пароль,
+ * придуманный заново, не подходил. Письмо называет оба выхода.
+ */
+function existingAccountEmail(to: string): EmailMessage {
+  const base = appUrl();
+  const lines = [
+    `Someone tried to create a new ${EMAIL_COPY.productName} account with this address, but it already has one.`,
+    `Sign in: ${base}/login`,
+    `Forgot the password? Set a new one: ${base}/forgot-password`,
+    "If it was not you, ignore this email — nothing changed in your account.",
+  ];
+  return {
+    to,
+    subject: `You already have an ${EMAIL_COPY.productName} account`,
+    text: lines.join("\n\n"),
+    html: [
+      `<p>${lines[0]}</p>`,
+      `<p><a href="${base}/login">Sign in</a></p>`,
+      `<p>Forgot the password? <a href="${base}/forgot-password">Set a new one</a></p>`,
+      `<p>${lines[3]}</p>`,
+    ].join("\n"),
+  };
+}
+
+/**
+ * Регистрация по живому приглашению на тот адрес, которому оно выписано.
+ *
+ * Такую регистрацию лимит по IP не считает: команда агентства принимает
+ * приглашения из одного офиса, за одним адресом, и четвёртый сотрудник
+ * упирался в «слишком много попыток» на час. Обойти лимит этим нельзя:
+ * приглашение одноразовое, адрес в нём задан, а сами приглашения
+ * ограничены квотой агентства.
+ */
+export async function isInviteSignUp(request: Request): Promise<boolean> {
+  try {
+    const body = (await request.clone().json()) as { email?: unknown };
+    const token = inviteTokenFrom(body);
+    if (!token || typeof body.email !== "string") return false;
+    const invitation = await getInvitationByToken(db, token);
+    return Boolean(
+      invitation &&
+      !invitation.accepted &&
+      invitation.expiresAt.getTime() > Date.now() &&
+      invitation.email.toLowerCase() === body.email.trim().toLowerCase(),
+    );
+  } catch {
+    return false;
+  }
 }
 
 export const auth = betterAuth({
@@ -104,7 +191,13 @@ export const auth = betterAuth({
      */
     sendResetPassword: async ({ user, url }) => {
       if (!(await mayMailAddress("reset", user.email))) return;
-      await getEmailSender().send(passwordResetEmail({ to: user.email, resetUrl: url }));
+      await sendAuthEmail(passwordResetEmail({ to: user.email, resetUrl: url }));
+    },
+    // Ответ формы остаётся тем же, что и для нового адреса; письмо — только
+    // владельцу ящика.
+    onExistingUserSignUp: async ({ user }) => {
+      if (!(await mayMailAddress("exists", user.email))) return;
+      await sendAuthEmail(existingAccountEmail(user.email));
     },
     // Сброс пароля выкидывает все остальные входы: иначе укравший сессию
     // оставался внутри и после того, как владелец сменил пароль.
@@ -130,7 +223,7 @@ export const auth = betterAuth({
      */
     sendVerificationEmail: async ({ user, url }) => {
       if (!(await mayMailAddress("verify", user.email))) return;
-      await getEmailSender().send(verifyEmailEmail({ to: user.email, verifyUrl: url }));
+      await sendAuthEmail(verifyEmailEmail({ to: user.email, verifyUrl: url }));
     },
   },
   user: {
@@ -152,7 +245,10 @@ export const auth = betterAuth({
   // и упирается в него — там он отключается явным флагом окружения.
   rateLimit: {
     enabled: process.env.DISABLE_RATE_LIMIT !== "true",
-    customRules: { "/sign-up/*": SIGNUP_RATE_LIMIT },
+    customRules: {
+      "/sign-up/*": async (request) =>
+        (await isInviteSignUp(request)) ? false : SIGNUP_RATE_LIMIT,
+    },
     /**
      * Счёт — в Redis через общий счётчик, а не в памяти процесса: память
      * обнулялась каждым деплоем, и лимит регистраций сбрасывался вместе с

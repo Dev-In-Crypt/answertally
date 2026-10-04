@@ -36,6 +36,15 @@ export function PlanPanel({ clientId }: { clientId: string }) {
 
       {open && plan.isPending && <p className="text-sm text-muted-foreground">Building…</p>}
 
+      {open && plan.error && (
+        <p role="alert" className="text-sm text-destructive">
+          The plan could not be built. {plan.error.message}{" "}
+          <button type="button" className="underline" onClick={() => plan.refetch()}>
+            Try again
+          </button>
+        </p>
+      )}
+
       {open && plan.data && plan.data.length === 0 && (
         <p className="text-sm text-muted-foreground">
           Nothing to plan yet. A plan is only worth writing once there are measured gaps to put in

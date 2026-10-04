@@ -1,7 +1,13 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { averageVisibility, estimateExperiment, formatEstimate, planExperiment } from "@repo/core";
-import type { SnapshotPoint } from "@repo/core";
+import {
+  averageVisibility,
+  estimateExperiment,
+  experimentSnapshots,
+  formatEstimate,
+  planExperiment,
+  startOfIsoWeek,
+} from "@repo/core";
 import {
   addExperimentEvent,
   createExperiment,
@@ -9,6 +15,7 @@ import {
   getClientById,
   getExperimentByAction,
   getExperimentById,
+  listActions,
   listAllSnapshots,
   listExperimentEvents,
   listExperiments,
@@ -23,7 +30,14 @@ export const experimentsRouter = router({
     .query(async ({ ctx, input }) => {
       const client = await getClientById(ctx.db, input.clientId);
       assertTenant(client, ctx.user.agencyId);
-      return listExperiments(ctx.db, input.clientId);
+      const [rows, actions] = await Promise.all([
+        listExperiments(ctx.db, input.clientId),
+        listActions(ctx.db, input.clientId),
+      ]);
+      // Название действия — единственное, чем эксперименты отличаются в списке:
+      // три эксперимента одной недели иначе выглядят одинаково.
+      const titles = new Map(actions.map((action) => [action.id, action.title]));
+      return rows.map((row) => ({ ...row, actionTitle: titles.get(row.actionId) ?? null }));
     }),
 
   get: protectedProcedure.input(z.object({ id: z.uuid() })).query(async ({ ctx, input }) => {
@@ -40,12 +54,7 @@ export const experimentsRouter = router({
       listAllSnapshots(ctx.db, experiment.clientId),
     ]);
 
-    const snapshots: SnapshotPoint[] = snapshotRows.map((row) => ({
-      clusterId: row.clusterId,
-      periodStart: row.periodStart,
-      clientVisibilityPct: Number(row.clientVisibilityPct),
-      sampleCount: row.sampleCount,
-    }));
+    const snapshots = experimentSnapshots(snapshotRows);
 
     const baselineWindow = { start: experiment.baselineStart, end: experiment.baselineEnd };
     // «После» — открытый интервал: ограничивать его текущим моментом нельзя
@@ -76,8 +85,17 @@ export const experimentsRouter = router({
       hasNewCitation: events.some((event) => event.type === "first_new_citation"),
     });
 
-    /** Ряды для графика: лечёная и контрольная группы по неделям. */
-    const weeks = [...new Set(snapshots.map((point) => point.periodStart.toISOString()))].sort();
+    /**
+     * Ряды для графика: лечёная и контрольная группы по неделям.
+     *
+     * Ось — начала ISO-недель, поэтому дата действия тоже приводится к своей
+     * неделе и всегда есть среди категорий: иначе пунктир «до/после» пропадает
+     * у любого действия, завершённого не в понедельник.
+     */
+    const actionWeek = startOfIsoWeek(experiment.actionDate).toISOString();
+    const weeks = [
+      ...new Set([...snapshots.map((point) => point.periodStart.toISOString()), actionWeek]),
+    ].sort();
     const series = weeks.map((week) => {
       const weekStart = new Date(week);
       const forGroup = (clusterIds: string[]): number | null => {
@@ -110,6 +128,7 @@ export const experimentsRouter = router({
       events,
       estimate,
       series,
+      actionWeek: actionWeek.slice(0, 10),
       formattedEstimate: formatEstimate(estimate),
       /**
        * Обе группы целиком: до, после и на скольких ответах.
@@ -174,12 +193,7 @@ export const experimentsRouter = router({
         listAllSnapshots(ctx.db, action.clientId),
       ]);
 
-      const snapshots: SnapshotPoint[] = snapshotRows.map((row) => ({
-        clusterId: row.clusterId,
-        periodStart: row.periodStart,
-        clientVisibilityPct: Number(row.clientVisibilityPct),
-        sampleCount: row.sampleCount,
-      }));
+      const snapshots = experimentSnapshots(snapshotRows);
 
       // Если действие не привязано к кластерам, лечим весь набор как treatment:
       // это слабее, но честнее, чем выбрать кластер за агентство.

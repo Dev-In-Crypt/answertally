@@ -4,6 +4,7 @@ import {
   BASELINE_WINDOW_DAYS,
   baselineWindow,
   EXPERIMENT_WARNINGS,
+  experimentSnapshots,
   planExperiment,
 } from "./baseline";
 import type { SnapshotPoint } from "./baseline";
@@ -157,5 +158,37 @@ describe("planExperiment", () => {
     const days = (plan.window.end.getTime() - plan.window.start.getTime()) / (24 * 60 * 60 * 1000);
 
     expect(days).toBe(BASELINE_WINDOW_DAYS);
+  });
+});
+
+describe("experimentSnapshots", () => {
+  const week = new Date("2026-08-10T00:00:00Z");
+  const row = (clusterId: string | null, platform: string | null) => ({
+    clusterId,
+    platform,
+    periodStart: week,
+    clientVisibilityPct: "50.0",
+    sampleCount: 3,
+  });
+
+  it("берёт только свёртку кластера по всем платформам — ответы не удваиваются", () => {
+    // Одна неделя, один кластер, две платформы по 3 ответа = 6 ответов.
+    const rows = [
+      row("treatment", "chatgpt"),
+      row("treatment", "perplexity"),
+      { ...row("treatment", null), sampleCount: 6 },
+      row(null, "chatgpt"),
+      { ...row(null, null), sampleCount: 6 },
+    ];
+
+    const points = experimentSnapshots(rows);
+    expect(points).toHaveLength(1);
+    expect(points[0]?.clientVisibilityPct).toBe(50);
+
+    const result = averageVisibility(points, ["treatment"], baselineWindow(ACTION_DATE));
+    expect(result.samples).toBe(6);
+    // Одна неделя — один срез: тонкий baseline остаётся тонким.
+    expect(result.snapshots).toBe(1);
+    expect(result.sufficient).toBe(false);
   });
 });

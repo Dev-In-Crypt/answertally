@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { MEASUREMENT_COPY, type Platform } from "@repo/core";
+import { useEffect, useRef, useState } from "react";
+import { MEASUREMENT_COPY, MIN_SAMPLES_PER_CELL, platformLabel, type Platform } from "@repo/core";
 import { estimateSchedule, type Cadence } from "@repo/core/adapters/capacity";
 import { api } from "@/trpc/react";
 import { buttonClass } from "@/components/ui/button";
@@ -12,10 +12,50 @@ function cadenceLabelOf(options: { id: string; label: string }[], cadence: Caden
   return options.find((option) => option.id === cadence)?.label ?? cadence;
 }
 
+/** Статус прогона словами. */
+const RUN_STATUS_LABELS: Record<string, string> = {
+  pending: "waiting to start",
+  running: "running",
+  done: "done",
+  failed: "failed",
+};
+
+/**
+ * Статус с пояснением: причину итога (почему упал, сколько ответов не
+ * дошло) прогон пишет в `note` готовой фразой. Без неё «failed» без
+ * продолжения читался бы как поломка экрана — тогда общая фраза.
+ */
+function runStatusText(run: { status: string; note: string | null }): string {
+  const label = RUN_STATUS_LABELS[run.status] ?? run.status;
+  if (run.note) return `${label} — ${run.note}`;
+  return run.status === "failed" ? `${label} — not every answer was recorded` : label;
+}
+
+const RUN_TRIGGER_LABELS: Record<string, string> = {
+  manual: "Run now",
+  scheduled: "scheduled",
+};
+
+/** Через сколько ожидание старта перестаёт быть обычным. */
+const SLOW_START_MS = 2 * 60 * 1000;
+
 export function SchedulePanel({ clientId }: { clientId: string }) {
   const utils = api.useUtils();
   const schedule = api.runs.schedule.useQuery({ clientId });
-  const runs = api.runs.list.useQuery({ clientId });
+  /**
+   * Список и есть источник статуса: опрашивается, пока в нём есть идущий
+   * прогон, и замолкает, когда идущих нет. Раньше опрашивался один прогон,
+   * а список под ним оставался «pending» до перезагрузки страницы.
+   */
+  const runs = api.runs.list.useQuery(
+    { clientId },
+    {
+      refetchInterval: (query) =>
+        query.state.data?.some((run) => run.status === "pending" || run.status === "running")
+          ? 2000
+          : false,
+    },
+  );
   /**
    * Что тариф разрешает измерять и сколько проверок в месяц он даёт. Форма не
    * знает ни одного тарифа по имени: и список частот, и список ассистентов
@@ -23,20 +63,19 @@ export function SchedulePanel({ clientId }: { clientId: string }) {
    */
   const capacity = api.runs.capacity.useQuery({ clientId });
 
-  const [activeRunId, setActiveRunId] = useState<string | null>(null);
+  const latestRun = runs.data?.[0];
+  const inFlight = runs.data?.find((run) => run.status === "pending" || run.status === "running");
 
-  // Пока прогон не завершён — опрашиваем статус. В mock-режиме он завершается
-  // до первого опроса, в live будет реально «running».
-  const activeRun = api.runs.get.useQuery(
-    { id: activeRunId ?? "" },
-    {
-      enabled: activeRunId !== null,
-      refetchInterval: (query) => {
-        const status = query.state.data?.status;
-        return status === "done" || status === "failed" ? false : 1000;
-      },
-    },
-  );
+  // Прогон закончился — обновляется всё, что из него считается: видимость,
+  // возможности, расход лимита. Без этого цифры на соседних вкладках
+  // оставались прежними до перезагрузки.
+  const hadInFlight = useRef(false);
+  useEffect(() => {
+    if (hadInFlight.current && !inFlight) {
+      void utils.invalidate();
+    }
+    hadInFlight.current = inFlight !== undefined;
+  }, [inFlight, utils]);
 
   /**
    * По умолчанию раз в две недели: ассистенты меняют ответы неделями, а
@@ -53,7 +92,14 @@ export function SchedulePanel({ clientId }: { clientId: string }) {
    * экране. Умолчание знает только тариф, и оно приходит с ёмкостью.
    */
   const [platforms, setPlatforms] = useState<Platform[]>([]);
-  const [samples, setSamples] = useState(3);
+  /**
+   * Строкой, а не числом: очищенное поле становилось нулём, уходило на
+   * сервер, и в ответ приходил сырой отказ валидации. Граница та же, что у
+   * сервера, — целое от 1 до 10, — и проверяется до отправки.
+   */
+  const [samplesInput, setSamplesInput] = useState(String(MIN_SAMPLES_PER_CELL));
+  const samples = Number(samplesInput);
+  const samplesValid = Number.isInteger(samples) && samples >= 1 && samples <= 10;
   const [error, setError] = useState<string | null>(null);
 
   const saved = schedule.data;
@@ -73,7 +119,7 @@ export function SchedulePanel({ clientId }: { clientId: string }) {
 
     if (saved) {
       setCadence(saved.cadence);
-      setSamples(saved.samplesPerPrompt);
+      setSamplesInput(String(saved.samplesPerPrompt));
       setPlatforms(saved.platforms as Platform[]);
       setHydrated(true);
       return;
@@ -95,13 +141,31 @@ export function SchedulePanel({ clientId }: { clientId: string }) {
   });
 
   const trigger = api.runs.triggerManual.useMutation({
-    onSuccess: async (result) => {
+    onSuccess: async () => {
       setError(null);
-      setActiveRunId(result.runId);
-      await Promise.all([utils.runs.list.invalidate({ clientId })]);
+      // В mock-режиме прогон уже завершён, в live — только поставлен: в обоих
+      // случаях список и цифры перечитываются, дальше ведёт опрос списка.
+      await utils.invalidate();
     },
     onError: (e) => setError(e.message),
   });
+
+  /**
+   * «Run now» берёт сохранённое расписание (без него — умолчание тарифа), а
+   * не то, что сейчас в форме. Если форма отличается, кнопка ждёт сохранения:
+   * иначе измерялось и списывалось бы не то, что показано на экране.
+   */
+  const baseline: { platforms: readonly string[]; samples: number } | null = saved
+    ? { platforms: saved.platforms, samples: saved.samplesPerPrompt }
+    : capacity.data
+      ? { platforms: capacity.data.defaultAssistants, samples: MIN_SAMPLES_PER_CELL }
+      : null;
+  const unsaved =
+    hydrated &&
+    baseline !== null &&
+    (samples !== baseline.samples ||
+      platforms.length !== baseline.platforms.length ||
+      platforms.some((platform) => !baseline.platforms.includes(platform)));
 
   function togglePlatform(platform: Platform): void {
     setPlatforms((current) =>
@@ -169,7 +233,7 @@ export function SchedulePanel({ clientId }: { clientId: string }) {
     : platforms;
 
   const estimate =
-    options && measuredPlatforms.length > 0 && options.promptCount > 0
+    options && measuredPlatforms.length > 0 && options.promptCount > 0 && samplesValid
       ? estimateSchedule({
           plan: options.plan,
           prompts: options.promptCount,
@@ -211,8 +275,10 @@ export function SchedulePanel({ clientId }: { clientId: string }) {
             type="number"
             min={1}
             max={10}
-            value={samples}
-            onChange={(e) => setSamples(Number(e.target.value))}
+            step={1}
+            value={samplesInput}
+            onChange={(e) => setSamplesInput(e.target.value)}
+            aria-invalid={!samplesValid}
             className={`${inputClass} w-24`}
           />
         </label>
@@ -272,24 +338,62 @@ export function SchedulePanel({ clientId }: { clientId: string }) {
 
         <button
           type="button"
-          disabled={platforms.length === 0 || save.isPending}
+          disabled={platforms.length === 0 || !samplesValid || save.isPending}
           onClick={() =>
             save.mutate({ clientId, cadence, platforms, samplesPerPrompt: samples, active: true })
           }
           className={buttonClass("outline", "lg")}
         >
-          {save.isPending ? "Saving…" : "Save schedule"}
+          {save.isPending
+            ? "Saving…"
+            : saved && !saved.active
+              ? "Save and resume"
+              : "Save schedule"}
         </button>
 
+        {/*
+          Пока прогон по клиенту идёт, второй не запускается: в live кнопка
+          возвращалась через секунду, а прогон шёл минутами, и повторное
+          нажатие удваивало расход проверок.
+        */}
         <button
           type="button"
-          disabled={trigger.isPending}
+          disabled={trigger.isPending || inFlight !== undefined || unsaved}
           onClick={() => trigger.mutate({ clientId })}
           className={buttonClass("primary", "lg")}
         >
-          {trigger.isPending ? "Running…" : "Run now"}
+          {trigger.isPending || inFlight ? "Running…" : "Run now"}
         </button>
+
+        {saved?.active && (
+          <button
+            type="button"
+            disabled={save.isPending}
+            onClick={() =>
+              save.mutate({
+                clientId,
+                cadence: saved.cadence,
+                platforms: saved.platforms as Platform[],
+                samplesPerPrompt: saved.samplesPerPrompt,
+                active: false,
+              })
+            }
+            className={buttonClass("ghost", "lg")}
+          >
+            Pause schedule
+          </button>
+        )}
       </div>
+
+      {!samplesValid && (
+        <p className="text-sm text-destructive">Samples per prompt: a whole number from 1 to 10.</p>
+      )}
+
+      {unsaved && !inFlight && (
+        <p data-testid="run-now-unsaved" className="text-sm text-muted-foreground">
+          Run now uses the saved settings. Save the schedule to run with what is shown here.
+        </p>
+      )}
 
       {/*
         Полной фразой и отдельной строкой, а не только плашкой у галочки.
@@ -377,8 +481,9 @@ export function SchedulePanel({ clientId }: { clientId: string }) {
 
       {saved && (
         <p data-testid="schedule-summary" className="text-sm text-muted-foreground">
-          Saved: {saved.cadence}, {saved.samplesPerPrompt} samples per prompt,{" "}
-          {saved.platforms.join(", ")}.
+          {saved.active ? "Saved" : "Paused — no scheduled checks run until you resume"}:{" "}
+          {cadenceLabelOf(cadenceOptions, saved.cadence).toLowerCase()}, {saved.samplesPerPrompt}{" "}
+          samples per prompt, {saved.platforms.map(platformLabel).join(", ")}.
         </p>
       )}
 
@@ -388,9 +493,18 @@ export function SchedulePanel({ clientId }: { clientId: string }) {
         </p>
       )}
 
-      {activeRunId && (
+      {latestRun && (
         <p data-testid="run-status" className="text-sm">
-          Latest run: <span className="font-medium">{activeRun.data?.status ?? "pending"}</span>
+          Latest run: <span className="font-medium">{runStatusText(latestRun)}</span>
+          {inFlight && (
+            <span className="text-muted-foreground">
+              {/* Часы — момент последнего опроса: он обновляется, пока прогон идёт. */}
+              {inFlight.status === "pending" &&
+              runs.dataUpdatedAt - new Date(inFlight.startedAt).getTime() > SLOW_START_MS
+                ? ". Still waiting to start — this usually takes seconds. Results appear here when it finishes."
+                : ". This can take a few minutes; you can leave this page."}
+            </span>
+          )}
         </p>
       )}
 
@@ -399,8 +513,8 @@ export function SchedulePanel({ clientId }: { clientId: string }) {
           {(runs.data ?? []).map((run) => (
             <li key={run.id} className="flex gap-3">
               <span className="metric">{new Date(run.startedAt).toLocaleString()}</span>
-              <span>{run.trigger}</span>
-              <span className="font-medium text-foreground">{run.status}</span>
+              <span>{RUN_TRIGGER_LABELS[run.trigger] ?? run.trigger}</span>
+              <span className="font-medium text-foreground">{runStatusText(run)}</span>
             </li>
           ))}
         </ul>

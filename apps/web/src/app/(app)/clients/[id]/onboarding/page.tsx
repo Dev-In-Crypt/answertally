@@ -77,7 +77,7 @@ export default function OnboardingPage({ params }: { params: Promise<{ id: strin
         </div>
 
         <Link
-          href={`/clients/${id}/settings`}
+          href={`/clients/${id}/settings?return=onboarding`}
           className="self-start text-sm font-medium text-primary underline-offset-4 hover:underline"
         >
           Edit names and competitors →

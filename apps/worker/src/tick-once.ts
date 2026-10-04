@@ -1,7 +1,7 @@
 import "./env";
 import { FlowProducer } from "bullmq";
 import { createDb } from "@repo/db";
-import { parseAdaptersMode } from "@repo/core";
+import { parseAdaptersMode, registerLiveAdapters } from "@repo/core";
 import { ADAPTERS_MODE_RAW } from "./env";
 import { createConnection } from "./queues";
 import { tickSchedules } from "./scheduler";
@@ -16,6 +16,9 @@ import { enqueueRun } from "./enqueue-run";
  */
 async function main(): Promise<void> {
   const mode = parseAdaptersMode(ADAPTERS_MODE_RAW);
+  // enqueueRun спрашивает только ассистентов с подключённым адаптером —
+  // без регистрации здесь каждый живой прогон закрывался бы «никто не доступен».
+  if (mode === "live") registerLiveAdapters();
   const connection = createConnection();
   const { db, close } = createDb();
   const flow = new FlowProducer({ connection });

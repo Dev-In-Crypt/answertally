@@ -99,6 +99,17 @@ test("PDF of another agency's report is not reachable", async ({ page, browser }
   await page.goto(page.url().replace(/\/onboarding$/, ""));
   const clientId = page.url().split("/").pop()!;
 
+  // Отчёт без единого замера не собирается: нужен хотя бы один прогон.
+  await page.goto(`/clients/${clientId}/measure`);
+  await page.getByLabel("Prompts CSV").setInputFiles({
+    name: "prompts.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from(CSV, "utf8"),
+  });
+  await expect(page.getByText(/Imported \d+ prompts/)).toBeVisible();
+  await page.getByRole("button", { name: "Run now" }).click();
+  await expect(page.getByTestId("run-status")).toContainText("done", { timeout: 30_000 });
+
   await page.goto(`/clients/${clientId}/reports`);
   await page.getByTestId("generate-report").click();
   await expect(page.getByTestId("reports-list").locator("li")).toHaveCount(1);

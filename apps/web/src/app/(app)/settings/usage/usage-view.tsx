@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { ASSISTANTS, billingPeriod } from "@repo/core";
 import { api } from "@/trpc/react";
 import { EmptyState } from "@/components/page-header";
+import { NotePanel } from "@/components/ui/note-panel";
 import { controlClass } from "@/components/ui/field";
 import { cn } from "@/lib/utils";
 import { Wallet } from "lucide-react";
@@ -41,6 +43,27 @@ export function UsageView() {
 
   const data = costs.data;
   const allowance = usage.data?.aiChecks;
+
+  // Разбор по клиентам — финансы всего агентства, member их не видит. Без
+  // этой ветки он получал прочерки и пустые таблицы, похожие на «ничего не потрачено».
+  if (costs.error) {
+    return costs.error.data?.code === "FORBIDDEN" ? (
+      <NotePanel title="Only the owner and admins see this breakdown" testId="usage-admin-only">
+        Where the checks went is visible to the agency owner and admins.{" "}
+        <Link href="/settings/billing" className="text-primary underline">
+          Plan and usage
+        </Link>{" "}
+        shows how much of the plan is used.
+      </NotePanel>
+    ) : (
+      <NotePanel title="Could not load usage" testId="form-error">
+        {costs.error.message}{" "}
+        <button type="button" className="underline" onClick={() => costs.refetch()}>
+          Try again
+        </button>
+      </NotePanel>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -94,14 +117,28 @@ export function UsageView() {
                     allowance.overAllowance ? "text-destructive" : "text-muted-foreground",
                   )}
                 >
-                  {allowance.overAllowance ? "Above the " : "of the "}
-                  <span className="metric">{allowance.allowance.toLocaleString("en-US")}</span> this
-                  plan includes
+                  {/* Число выше — за выбранный месяц, а бесплатный аудит считается за всё
+                      время: рядом с месячным числом его остаток читался бы неверно. */}
+                  {allowance.free ? (
+                    <>
+                      <span className="metric">{allowance.used.toLocaleString("en-US")}</span> of
+                      the <span className="metric">{allowance.allowance.toLocaleString("en-US")}</span>{" "}
+                      free checks used in total
+                    </>
+                  ) : (
+                    <>
+                      {allowance.overAllowance ? "Above the " : "of the "}
+                      <span className="metric">{allowance.allowance.toLocaleString("en-US")}</span>{" "}
+                      this plan includes
+                    </>
+                  )}
                 </span>
               )}
             </div>
             <div className="flex flex-col gap-1 rounded-lg border p-5">
-              <span className="text-sm text-muted-foreground">Share of the plan</span>
+              <span className="text-sm text-muted-foreground">
+                {allowance?.free ? "Share of the free audit" : "Share of the plan"}
+              </span>
               <span
                 data-testid="usage-share"
                 className="metric text-3xl font-semibold tracking-tight"
@@ -109,8 +146,11 @@ export function UsageView() {
                 {allowance ? `${Math.round(allowance.ratio * 100)}%` : "—"}
               </span>
               <span className="text-sm text-muted-foreground">
-                {/* Лимит — потолок: так же сказано на странице тарифов. */}
-                At 100%, new checks wait until the 1st. Running ones always finish.
+                {/* Лимит — потолок: так же сказано на странице тарифов. Бесплатный
+                    аудит первого числа не обновляется — он один на аккаунт. */}
+                {allowance?.free
+                  ? "The free audit is one per account. At 100%, pick a plan to keep measuring."
+                  : "At 100%, new checks wait until the 1st. Running ones always finish."}
               </span>
             </div>
           </div>

@@ -1,6 +1,6 @@
 import { FlowProducer, Queue, Worker } from "bullmq";
-import { createDb } from "@repo/db";
-import { PLATFORMS, parseAdaptersMode, registerLiveAdapters } from "@repo/core";
+import { createDb, finishRunWithNote } from "@repo/db";
+import { measurableAssistants, PLATFORMS, parseAdaptersMode, registerLiveAdapters } from "@repo/core";
 import { ADAPTERS_MODE_RAW } from "./env";
 import {
   createConnection,
@@ -12,7 +12,7 @@ import {
   type RunJobData,
 } from "./queues";
 import { tickSchedules } from "./scheduler";
-import { enqueueRun, pickUpPendingRuns } from "./enqueue-run";
+import { enqueueRun, FINALIZE_FAILED_NOTE, pickUpPendingRuns } from "./enqueue-run";
 import { executeRunJob, finalizeRun } from "@repo/pipeline";
 import { errorReporter, logger } from "./observability";
 
@@ -33,6 +33,14 @@ async function main(): Promise<void> {
   if (mode === "live") {
     const platforms = registerLiveAdapters();
     logger.info("adapters.live_registered", { platforms });
+    // Ассистент без ключа прогоны пропускают с пояснением — но это решение
+    // оператора, а не норма: в лог как ошибка, чтобы его увидели при выкатке.
+    const missing = measurableAssistants()
+      .map((assistant) => assistant.id)
+      .filter((id) => !platforms.includes(id));
+    if (missing.length > 0) {
+      logger.error("adapters.live_missing", { missing });
+    }
   }
   const connection = createConnection();
   const { db, close: closeDb } = createDb();
@@ -49,12 +57,9 @@ async function main(): Promise<void> {
       const { started, skipped } = await tickSchedules(db, new Date(), mode);
 
       for (const schedule of skipped) {
-        // Молча пропущенный замер выглядит как «ничего не изменилось»
-        // спустя две недели. Причина пишется целиком — по ней видно, что
-        // делать: это отказ по подписке, а не сбой.
-        console.warn(
-          `[tick] schedule ${schedule.scheduleId} skipped for client ${schedule.clientId}: ${schedule.reason}`,
-        );
+        // Причину агентство видит на экране (она записана в расписание);
+        // здесь — для оператора.
+        logger.warn("scheduler.skipped", { ...schedule });
       }
 
       let queued = 0;
@@ -116,6 +121,17 @@ async function main(): Promise<void> {
     },
     { connection },
   );
+
+  // Сборка не удалась ни с одной попытки — прогон закрывается с причиной,
+  // а не висит «в процессе» сутки до закрытия по сроку.
+  finalizeWorker.on("failed", (job) => {
+    // Попытки берутся из самой задачи: поставленная до выкатки повторов не
+    // имеет, и её первый сбой — уже последний.
+    if (!job || job.attemptsMade < (job.opts.attempts ?? 1)) return;
+    void finishRunWithNote(db, job.data.runId, "failed", FINALIZE_FAILED_NOTE).catch((error) =>
+      errorReporter.captureError(error, { scope: "run.finalize_close", runId: job.data.runId }),
+    );
+  });
 
   // По воркеру на платформу: свой лимит частоты у каждого провайдера.
   const runWorkers = PLATFORMS.map(

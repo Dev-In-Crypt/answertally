@@ -8,7 +8,8 @@ import { db } from "@/server/db";
 
 export default async function SettingsPage() {
   const session = await auth.api.getSession({ headers: await headers() });
-  const agencyId = (session?.user as { agencyId?: string } | undefined)?.agencyId;
+  const user = session?.user as { agencyId?: string; role?: string } | undefined;
+  const agencyId = user?.agencyId;
 
   const agency = agencyId ? await getAgencyById(db, agencyId) : undefined;
 
@@ -32,6 +33,7 @@ export default async function SettingsPage() {
         initialName={agency?.name ?? ""}
         initialColor={agency?.brandColor ?? "#4f46e5"}
         initialLogoUrl={agency?.logoUrl ?? null}
+        canManage={user?.role === "owner" || user?.role === "admin"}
       />
     </>
   );

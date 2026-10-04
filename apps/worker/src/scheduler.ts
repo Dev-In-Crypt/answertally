@@ -7,14 +7,23 @@ import {
   getClientById,
   listActivePromptsForClient,
   listDueSchedules,
-  setScheduleNextRun,
+  setScheduleOutcome,
 } from "@repo/db";
 import type { Database } from "@repo/db";
-import { entitlementsForAgency, startRunIfAllowed } from "@repo/pipeline";
+import {
+  entitlementsForAgency,
+  measurementAllowedForAgency,
+  NO_ACTIVE_PROMPTS_NOTE,
+  RUN_IN_FLIGHT_MESSAGE,
+  startRunIfAllowed,
+} from "@repo/pipeline";
 
 export type Cadence = "daily" | "weekly" | "biweekly";
 
 const CADENCE_DAYS: Record<Cadence, number> = { daily: 1, weekly: 7, biweekly: 14 };
+
+/** Через сколько пропущенное расписание проверяется снова. */
+export const SKIP_RECHECK_MS = 24 * 60 * 60 * 1000;
 
 /** Чистый расчёт следующего запуска — тестируется без БД. */
 export function nextRunAfter(cadence: Cadence, from: Date): Date {
@@ -52,9 +61,13 @@ export interface TickOutcome {
  * — это один человек и один раз; расписание — это расход, который никто не
  * останавливает.
  *
- * Расписание при отказе не выключается и не сдвигается: оплата
- * возобновляется, и выключенное расписание пришлось бы заводить заново
- * вручную, по всем клиентам сразу. Созревшее расписание просто ждёт.
+ * Расписание при отказе не выключается: оплата возобновляется, и
+ * выключенное расписание пришлось бы заводить заново вручную, по всем
+ * клиентам сразу. Причина пропуска записывается в расписание (её видит
+ * агентство), а срок сдвигается на сутки: экран не показывает прошедшую
+ * дату, а возобновлённая оплата или новый месяц подхватываются за день.
+ * Без вопросов срок не сдвигается вовсе — первый замер начнётся в
+ * ближайший тик после того, как вопросы появятся.
  */
 export async function tickSchedules(
   db: Database,
@@ -65,15 +78,24 @@ export async function tickSchedules(
   const started: TickResult[] = [];
   const skipped: SkippedSchedule[] = [];
 
+  async function skip(
+    schedule: { id: string; clientId: string },
+    reason: string,
+    recheck: boolean = true,
+  ): Promise<void> {
+    skipped.push({ scheduleId: schedule.id, clientId: schedule.clientId, reason });
+    await setScheduleOutcome(db, schedule.id, {
+      skipReason: reason,
+      at: now,
+      ...(recheck ? { nextRunAt: new Date(now.getTime() + SKIP_RECHECK_MS) } : {}),
+    });
+  }
+
   for (const schedule of due) {
     const client = await getClientById(db, schedule.clientId);
     if (!client) {
       // Клиент удалён, а расписание осталось: измерять нечего.
-      skipped.push({
-        scheduleId: schedule.id,
-        clientId: schedule.clientId,
-        reason: "The client no longer exists.",
-      });
+      await skip(schedule, "The client no longer exists.");
       continue;
     }
 
@@ -85,15 +107,31 @@ export async function tickSchedules(
     // Частота, сохранённая на старшем тарифе, после понижения не действует:
     // ежедневный опрос — четырнадцатикратный расход против базового.
     if (!allowsCadence(entitlements.plan, schedule.cadence)) {
-      skipped.push({
-        scheduleId: schedule.id,
-        clientId: schedule.clientId,
-        reason: `The ${entitlements.plan} plan does not include ${schedule.cadence} checks. Pick another cadence or upgrade.`,
-      });
+      await skip(
+        schedule,
+        `The ${entitlements.plan} plan does not include ${schedule.cadence} checks. Pick another cadence on the measure screen, or upgrade under Settings → Billing.`,
+      );
       continue;
     }
 
     const prompts = await listActivePromptsForClient(db, schedule.clientId);
+    if (prompts.length === 0) {
+      // Раньше такой прогон создавался и закрывался failed каждый цикл —
+      // счётчик сбоев рос, а настоящая причина нигде не называлась. Отказ
+      // по подписке важнее: без неё и с вопросами ничего не начнётся.
+      const gate = await measurementAllowedForAgency(
+        db,
+        client.agencyId,
+        { trigger: "scheduled", checksPlanned: 0 },
+        now,
+      );
+      if (gate.allowed) {
+        await skip(schedule, NO_ACTIVE_PROMPTS_NOTE, false);
+      } else {
+        await skip(schedule, gate.message);
+      }
+      continue;
+    }
     const checksPlanned = plannedChecksForRun(
       capabilitiesForAgency(entitlements),
       prompts.length,
@@ -116,18 +154,22 @@ export async function tickSchedules(
       now,
     );
 
-    if (!run) {
-      skipped.push({
-        scheduleId: schedule.id,
-        clientId: schedule.clientId,
-        reason: decision.message,
-      });
+    // Замер клиента уже идёт (нажали «Run now» перед сроком) — он и есть
+    // замер этого цикла: второй по тем же вопросам был бы второй оплатой.
+    if (!run && decision.message !== RUN_IN_FLIGHT_MESSAGE) {
+      await skip(schedule, decision.message);
       continue;
     }
 
-    await setScheduleNextRun(db, schedule.id, nextRunAfter(schedule.cadence, now));
+    await setScheduleOutcome(db, schedule.id, {
+      skipReason: null,
+      at: now,
+      nextRunAt: nextRunAfter(schedule.cadence, now),
+    });
 
-    started.push({ scheduleId: schedule.id, runId: run.id, clientId: schedule.clientId });
+    if (run) {
+      started.push({ scheduleId: schedule.id, runId: run.id, clientId: schedule.clientId });
+    }
   }
 
   return { started, skipped };

@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { validateLogoUpload } from "@repo/core/storage/types";
 import { api } from "@/trpc/react";
 import { buttonClass } from "@/components/ui/button";
 import { controlClass } from "@/components/ui/field";
@@ -12,10 +13,16 @@ export function SettingsForm({
   initialName,
   initialColor,
   initialLogoUrl,
+  canManage,
 }: {
   initialName: string;
   initialColor: string;
   initialLogoUrl: string | null;
+  /**
+   * Админ или владелец. Участнику поля показываются только для чтения:
+   * раньше он правил их, жал «Save» и получал отказ сервера.
+   */
+  canManage: boolean;
 }) {
   const router = useRouter();
 
@@ -24,6 +31,13 @@ export function SettingsForm({
   const [logoUrl, setLogoUrl] = useState(initialLogoUrl);
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+
+  // Прежнее «Saved» рядом с новой ошибкой читалось как успех.
+  function fail(message: string) {
+    setStatus(null);
+    setError(message);
+  }
 
   const update = api.agency.update.useMutation({
     onSuccess: () => {
@@ -31,27 +45,53 @@ export function SettingsForm({
       setError(null);
       router.refresh();
     },
-    onError: (e) => setError(e.message),
+    onError: (e) => fail(e.message),
   });
 
   async function handleLogoChange(file: File | null) {
     if (!file) return;
 
     setError(null);
-    const body = new FormData();
-    body.append("file", file);
-
-    const response = await fetch("/api/upload/logo", { method: "POST", body });
-    const payload = (await response.json()) as { url?: string; error?: string };
-
-    if (!response.ok || !payload.url) {
-      setError(payload.error ?? "Upload failed");
+    setStatus(null);
+    // Проверка до отправки: файл больше 10 МБ прокси обрывает пустым 413,
+    // и до сервера с его понятным текстом дело не доходит.
+    const validation = validateLogoUpload(file.type, file.size);
+    if (!validation.ok) {
+      fail(validation.error ?? "Use a PNG, JPEG, WebP or SVG image under 2 MB.");
       return;
     }
 
-    setLogoUrl(`${payload.url}?v=${Date.now()}`);
-    setStatus("Logo updated");
-    router.refresh();
+    const body = new FormData();
+    body.append("file", file);
+
+    setUploading(true);
+    try {
+      const response = await fetch("/api/upload/logo", { method: "POST", body });
+      // Ответ не обязательно JSON: прокси и упавший сервер отвечают HTML или
+      // пустым телом, и разбор бросал исключение, которое никто не видел.
+      const payload = (await response.json().catch(() => ({}))) as {
+        url?: string;
+        error?: string;
+      };
+
+      if (!response.ok || !payload.url) {
+        fail(
+          payload.error ??
+            (response.status === 413
+              ? "Keep the logo under 2 MB."
+              : "The logo did not upload. Try again in a minute."),
+        );
+        return;
+      }
+
+      setLogoUrl(`${payload.url}?v=${Date.now()}`);
+      setStatus("Logo updated");
+      router.refresh();
+    } catch {
+      fail("Can't reach Answertally. Check your connection and try again.");
+    } finally {
+      setUploading(false);
+    }
   }
 
   return (
@@ -64,6 +104,9 @@ export function SettingsForm({
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
+            readOnly={!canManage}
+            required
+            maxLength={200}
             className={cn(controlClass, "h-10 px-3")}
           />
         </label>
@@ -79,6 +122,7 @@ export function SettingsForm({
               type="color"
               value={brandColor}
               onChange={(e) => setBrandColor(e.target.value)}
+              disabled={!canManage}
               className="h-10 w-16 cursor-pointer rounded-md border border-input bg-background"
             />
             <code data-testid="brand-color-value" className="text-sm text-muted-foreground">
@@ -100,29 +144,48 @@ export function SettingsForm({
           ) : (
             <p className="text-sm text-muted-foreground">No logo uploaded yet.</p>
           )}
-          <FileInput
-            label="Logo file"
-            accept="image/png,image/jpeg,image/webp,image/svg+xml"
-            onSelect={(file) => void handleLogoChange(file)}
-            testId="logo-file"
-          />
-        </div>
-
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => update.mutate({ name, brandColor })}
-            disabled={update.isPending}
-            className={buttonClass("primary", "lg")}
-          >
-            {update.isPending ? "Saving…" : "Save changes"}
-          </button>
-          {status && (
-            <span data-testid="settings-status" className="text-sm text-muted-foreground">
-              {status}
-            </span>
+          {canManage && (
+            <FileInput
+              label="Logo file"
+              accept="image/png,image/jpeg,image/webp,image/svg+xml"
+              onSelect={(file) => void handleLogoChange(file)}
+              disabled={uploading}
+              buttonText={uploading ? "Uploading…" : "Choose file"}
+              hint="PNG, JPEG, WebP or SVG, under 2 MB."
+              testId="logo-file"
+            />
           )}
         </div>
+
+        {canManage ? (
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                // Пустое имя сервер отклонил бы техническим текстом.
+                if (!name.trim()) {
+                  fail("Enter the agency name.");
+                  return;
+                }
+                setStatus(null);
+                update.mutate({ name: name.trim(), brandColor });
+              }}
+              disabled={update.isPending || uploading}
+              className={buttonClass("primary", "lg")}
+            >
+              {update.isPending ? "Saving…" : "Save changes"}
+            </button>
+            {status && (
+              <span data-testid="settings-status" className="text-sm text-muted-foreground">
+                {status}
+              </span>
+            )}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Only admins and the owner can change branding and invite teammates.
+          </p>
+        )}
 
         {error && (
           <p role="alert" data-testid="form-error" className="text-sm text-destructive">
@@ -131,36 +194,48 @@ export function SettingsForm({
         )}
       </section>
 
-      <TeamSection />
+      <TeamSection canManage={canManage} />
     </div>
   );
 }
 
-function TeamSection() {
+function TeamSection({ canManage }: { canManage: boolean }) {
   const members = api.agency.members.useQuery();
   const invites = api.agency.invites.useQuery();
   const [email, setEmail] = useState("");
   const [invited, setInvited] = useState<{ link: string; delivered: boolean } | null>(null);
+  /**
+   * Ошибка последнего действия со списком. Раньше бралась первая из трёх
+   * мутаций, и старый отказ висел и после успешного действия.
+   */
+  const [teamError, setTeamError] = useState<string | null>(null);
+
+  /**
+   * Список перечитывается и после отказа: чаще всего отказ значит, что его
+   * уже поменял кто-то другой, и старая строка звала бы повторить то же.
+   */
+  const teamAction = {
+    onMutate: () => setTeamError(null),
+    onError: (e: { message: string }) => setTeamError(e.message),
+    onSettled: () => {
+      void members.refetch();
+      void invites.refetch();
+    },
+  };
 
   const invite = api.agency.invite.useMutation({
+    onMutate: () => setInvited(null),
     onSuccess: (data) => {
-      setInvited({ link: `/invite/${data.token}`, delivered: data.delivered });
+      setInvited({ link: data.inviteUrl, delivered: data.delivered });
       setEmail("");
       void invites.refetch();
     },
   });
   // Ушедший сотрудник не должен сохранять доступ к клиентам агентства.
-  const removeMember = api.agency.removeMember.useMutation({
-    onSuccess: () => void members.refetch(),
-  });
-  const changeRole = api.agency.changeRole.useMutation({
-    onSuccess: () => void members.refetch(),
-  });
-  const revokeInvite = api.agency.revokeInvite.useMutation({
-    onSuccess: () => void invites.refetch(),
-  });
+  const removeMember = api.agency.removeMember.useMutation(teamAction);
+  const changeRole = api.agency.changeRole.useMutation(teamAction);
+  const revokeInvite = api.agency.revokeInvite.useMutation(teamAction);
   const myRole = members.data?.find((member) => member.isYou)?.role;
-  const teamError = removeMember.error ?? changeRole.error ?? revokeInvite.error;
 
   return (
     <section className="flex flex-col gap-4">
@@ -217,35 +292,52 @@ function TeamSection() {
         ))}
       </ul>
 
-      {teamError && (
-        <p data-testid="team-error" className="text-sm text-destructive">
-          {teamError.message}
+      {/* Без строки пустой список читался как «в команде никого». */}
+      {(members.error || invites.error) && (
+        <p role="alert" className="text-sm text-destructive">
+          The team list did not load. Reload the page to try again.
         </p>
       )}
 
-      <div className="flex items-end gap-2">
-        <label className="flex flex-1 flex-col gap-1.5">
-          <span className="text-sm font-medium">Invite a teammate</span>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="teammate@agency.com"
-            className={cn(controlClass, "h-10 px-3")}
-          />
-        </label>
-        <button
-          type="button"
-          onClick={() => invite.mutate({ email, role: "member" })}
-          disabled={!email || invite.isPending}
-          className={buttonClass("outline", "lg")}
+      {teamError && (
+        <p role="alert" data-testid="team-error" className="text-sm text-destructive">
+          {teamError}
+        </p>
+      )}
+
+      {canManage && (
+        // Форма, а не кнопка с обработчиком: так браузер сам проверяет адрес
+        // (type=email) и не пускает к серверу строку без домена.
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            invite.mutate({ email: email.trim(), role: "member" });
+          }}
+          className="flex items-end gap-2"
         >
-          Send invite
-        </button>
-      </div>
+          <label className="flex flex-1 flex-col gap-1.5">
+            <span className="text-sm font-medium">Invite a teammate</span>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="teammate@agency.com"
+              className={cn(controlClass, "h-10 px-3")}
+            />
+          </label>
+          <button
+            type="submit"
+            disabled={!email || invite.isPending}
+            className={buttonClass("outline", "lg")}
+          >
+            {invite.isPending ? "Sending…" : "Send invite"}
+          </button>
+        </form>
+      )}
 
       {invite.error && (
-        <p data-testid="invite-error" className="text-sm text-destructive">
+        <p role="alert" data-testid="invite-error" className="text-sm text-destructive">
           {invite.error.message}
         </p>
       )}
@@ -254,8 +346,10 @@ function TeamSection() {
         // Ссылка показывается всегда, даже когда письмо ушло: почта может
         // задержаться или попасть в спам, а пригласить человека надо сейчас.
         <p data-testid="invite-link" className="text-sm text-muted-foreground">
-          {invited.delivered ? "Invitation sent. Direct link: " : "Share this link: "}
-          <code>{invited.link}</code>
+          {invited.delivered
+            ? "Invitation sent. Direct link: "
+            : "The email did not go out. Share this link: "}
+          <code className="select-all break-all">{invited.link}</code>
         </p>
       )}
 
@@ -264,7 +358,7 @@ function TeamSection() {
           {invites.data.map((pending) => (
             <li key={pending.id} className="flex items-center justify-between gap-3">
               <span>Invited: {pending.email}</span>
-              {myRole !== "member" && (
+              {canManage && (
                 <button
                   type="button"
                   onClick={() => revokeInvite.mutate({ id: pending.id })}

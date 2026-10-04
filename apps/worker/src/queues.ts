@@ -56,6 +56,8 @@ export interface FinalizeJobData {
    * набор промптов за время прогона изменился.
    */
   expected: number;
+  /** Ассистенты, которых прогон не спрашивал: на сервере нет их ключа. */
+  unavailable?: Platform[];
 }
 
 export interface ParseJobData {

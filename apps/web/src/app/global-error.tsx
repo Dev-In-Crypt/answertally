@@ -1,18 +1,27 @@
 "use client";
 
 import { useEffect } from "react";
-import { buttonClass } from "@/components/ui/button";
 import { reportClientError } from "@/components/client-error-reporting";
 
 /**
- * Последний рубеж: ошибка, до которой не добрался ни один локальный boundary.
+ * Последний рубеж: упал сам корневой layout, и обычный `error.tsx` не сработал.
  *
  * Экран объясняет, что случилось, вместо белой страницы, и отправляет ошибку
  * в Sentry, если клиентский DSN задан. Next требует здесь собственные html/body.
+ *
+ * Стили — только inline: этот экран подменяет корневой layout, и globals.css
+ * сюда не доезжает (известная регрессия Next, vercel/next.js#70553). Классы
+ * Tailwind дали бы голый текст Times на белом.
+ *
+ * Текст нейтральный, без имени продукта: экран видит и клиент агентства на
+ * `/r/<токен>` (инвариант 3).
  */
+
+// Нейтральный slate: индиго продукта на отчёте агентства — тоже след поставщика.
+const colors = { text: "#0f172a", muted: "#64748b" };
+
 export default function GlobalError({
   error,
-  reset,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
@@ -30,19 +39,58 @@ export default function GlobalError({
 
   return (
     <html lang="en">
-      <body className="antialiased">
-        <main className="mx-auto flex min-h-screen max-w-md flex-col items-start justify-center gap-4 px-6">
-          <h1 className="text-2xl font-semibold tracking-tight">Something went wrong</h1>
-          <p className="text-sm text-muted-foreground">
-            The page failed to load. Your data is untouched — nothing was saved or sent.
+      <body
+        style={{
+          margin: 0,
+          background: "#ffffff",
+          color: colors.text,
+          fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif",
+          WebkitFontSmoothing: "antialiased",
+        }}
+      >
+        <main
+          style={{
+            boxSizing: "border-box",
+            maxWidth: 448,
+            minHeight: "100vh",
+            margin: "0 auto",
+            padding: "0 24px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+            justifyContent: "center",
+            gap: 16,
+          }}
+        >
+          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 600, letterSpacing: "-0.01em" }}>
+            This page could not be loaded
+          </h1>
+          <p style={{ margin: 0, fontSize: 14, lineHeight: 1.5, color: colors.muted }}>
+            Something went wrong while opening it. Try again in a moment.
           </p>
           {error.digest && (
-            <p className="metric text-xs text-muted-foreground">Reference: {error.digest}</p>
+            <p style={{ margin: 0, fontSize: 12, color: colors.muted, fontVariantNumeric: "tabular-nums" }}>
+              Reference: {error.digest}
+            </p>
           )}
+          {/*
+            Перезагрузка, а не reset(): упал серверный layout, и перерисовка
+            на клиенте показала бы ту же ошибку.
+          */}
           <button
             type="button"
-            onClick={reset}
-            className={buttonClass("primary", "lg")}
+            onClick={() => window.location.reload()}
+            style={{
+              height: 40,
+              padding: "0 16px",
+              border: 0,
+              borderRadius: 8,
+              background: colors.text,
+              color: "#ffffff",
+              fontSize: 14,
+              fontWeight: 500,
+              cursor: "pointer",
+            }}
           >
             Try again
           </button>

@@ -10,13 +10,44 @@ import { controlClass, inputClass } from "@/components/ui/field";
 import { cn } from "@/lib/utils";
 import { FileText } from "lucide-react";
 
+const PDF_FAILED = "The PDF couldn't be generated right now. Try again in a few minutes.";
+
+export interface ProposalValues {
+  retainer: number;
+  effortMin: number;
+  effortMax: number;
+  hourlyCost: number;
+}
+
+/**
+ * Что не так с полями предложения — до отправки, человеческой фразой.
+ * Границы те же, что у схемы роутера: иначе отказ сервера приходил бы
+ * сырым списком ошибок валидации. Пустое поле даёт 0 — оно тоже ловится.
+ */
+export function proposalProblem(values: ProposalValues): string | null {
+  const { retainer, effortMin, effortMax, hourlyCost } = values;
+  if (![retainer, effortMin, effortMax, hourlyCost].every((n) => Number.isFinite(n) && n > 0)) {
+    return "Fill in every field with a number above zero.";
+  }
+  if (!Number.isInteger(retainer)) return "Enter the retainer in whole dollars.";
+  if (retainer > 1_000_000) return "The retainer can be at most $1,000,000 a month.";
+  if (effortMin > 1000 || effortMax > 1000) return "Effort can be at most 1,000 hours.";
+  if (hourlyCost > 10_000) return "Your cost can be at most $10,000 an hour.";
+  if (effortMin > effortMax) {
+    return "The effort range is inverted — the lower bound is above the upper one.";
+  }
+  return null;
+}
+
 export function ReportsView({ clientId }: { clientId: string }) {
   const utils = api.useUtils();
   const client = api.clients.get.useQuery({ id: clientId });
   const reports = api.reports.list.useQuery({ clientId });
   const [shareLinks, setShareLinks] = useState<Record<string, string>>({});
   const [sending, setSending] = useState<string | null>(null);
-  const [sentTo, setSentTo] = useState<Record<string, string>>({});
+  const [sentTo, setSentTo] = useState<Record<string, { to: string; delivered: boolean }>>({});
+  const [pdfBusy, setPdfBusy] = useState<string | null>(null);
+  const [pdfError, setPdfError] = useState<{ reportId: string; message: string } | null>(null);
 
   /**
    * Ссылку отсюда копируют и отдают клиенту, поэтому она должна быть
@@ -53,6 +84,40 @@ export function ReportsView({ clientId }: { clientId: string }) {
     },
   });
 
+  /**
+   * PDF скачивается запросом, а не переходом по ссылке: печать идёт до
+   * минуты, и отказ (лимит, сбой браузера, истёкшая сессия) уводил со
+   * страницы на голый текст ошибки. Здесь он остаётся строкой у кнопки.
+   */
+  async function downloadPdf(reportId: string) {
+    setPdfBusy(reportId);
+    setPdfError(null);
+    try {
+      const response = await fetch(`/api/reports/${reportId}/pdf`);
+      if (!response.ok) {
+        // Маршрут отвечает одной человеческой фразой; пустой ответ — общей.
+        const text = response.headers.get("content-type")?.startsWith("text/plain")
+          ? (await response.text()).trim()
+          : "";
+        setPdfError({ reportId, message: text || PDF_FAILED });
+        return;
+      }
+      const url = URL.createObjectURL(await response.blob());
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `report-${reportId}.pdf`;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch {
+      setPdfError({ reportId, message: PDF_FAILED });
+    } finally {
+      setPdfBusy(null);
+    }
+  }
+
+  // Сбой генерации, выдачи или отзыва ссылки не должен проходить молча.
+  const actionError = generate.error ?? share.error ?? revoke.error;
+
   const rows = reports.data ?? [];
 
   return (
@@ -71,6 +136,12 @@ export function ReportsView({ clientId }: { clientId: string }) {
           Covers the last 30 days. Numbers are frozen at generation time.
         </span>
       </div>
+
+      {actionError && (
+        <p role="alert" data-testid="report-action-error" className="text-sm text-destructive">
+          {actionError.message}
+        </p>
+      )}
 
       {client.data?.status === "prospect" && (
         <OpportunityForm
@@ -104,9 +175,17 @@ export function ReportsView({ clientId }: { clientId: string }) {
                     <a
                       href={`/api/reports/${report.id}/pdf`}
                       data-testid={`pdf-${report.id}`}
-                      className={buttonClass("outline", "md")}
+                      aria-disabled={pdfBusy !== null}
+                      onClick={(event) => {
+                        event.preventDefault();
+                        if (pdfBusy === null) void downloadPdf(report.id);
+                      }}
+                      className={cn(
+                        buttonClass("outline", "md"),
+                        pdfBusy !== null && "pointer-events-none opacity-60",
+                      )}
                     >
-                      Download PDF
+                      {pdfBusy === report.id ? "Preparing PDF…" : "Download PDF"}
                     </a>
                     <button
                       type="button"
@@ -128,21 +207,46 @@ export function ReportsView({ clientId }: { clientId: string }) {
                   </span>
                 </div>
 
+                {pdfBusy === report.id && (
+                  <p className="text-sm text-muted-foreground">
+                    Preparing the PDF — this can take up to a minute.
+                  </p>
+                )}
+                {pdfError?.reportId === report.id && (
+                  <p role="alert" className="text-sm text-destructive">
+                    {pdfError.message}
+                  </p>
+                )}
+
                 {sending === report.id && (
                   <SendReport
                     reportId={report.id}
-                    onSent={(to) => {
-                      setSentTo((current) => ({ ...current, [report.id]: to }));
+                    onSent={async (to, result) => {
+                      setSentTo((current) => ({
+                        ...current,
+                        [report.id]: { to, delivered: result.delivered },
+                      }));
+                      // Ссылка показывается в любом случае: не ушло письмо —
+                      // агентство отправит её само.
+                      setShareLinks((current) => ({ ...current, [report.id]: result.token }));
                       setSending(null);
+                      await utils.reports.list.invalidate({ clientId });
                     }}
                     onCancel={() => setSending(null)}
                   />
                 )}
 
-                {sentTo[report.id] && (
+                {sentTo[report.id]?.delivered && (
                   <p data-testid="send-done" className="text-sm text-muted-foreground">
-                    Sent to <span className="metric">{sentTo[report.id]}</span>. The client opens
-                    the report by link — no account needed, and approves it there.
+                    Sent to <span className="metric">{sentTo[report.id]?.to}</span>. The client
+                    opens the report by link — no account needed, and approves it there.
+                  </p>
+                )}
+                {sentTo[report.id]?.delivered === false && (
+                  <p role="alert" data-testid="send-failed" className="text-sm text-destructive">
+                    The email to <span className="metric">{sentTo[report.id]?.to}</span> didn&apos;t
+                    go out, so the client hasn&apos;t received anything. Copy the link below and
+                    send it yourself.
                   </p>
                 )}
 
@@ -206,8 +310,10 @@ function OpportunityForm({
     },
   });
 
+  const problem = proposalProblem({ retainer, effortMin, effortMax, hourlyCost });
+
   const margin =
-    retainer > 0
+    !problem
       ? {
           min: Math.round(((retainer - effortMax * hourlyCost) / retainer) * 1000) / 10,
           max: Math.round(((retainer - effortMin * hourlyCost) / retainer) * 1000) / 10,
@@ -228,6 +334,7 @@ function OpportunityForm({
           <input
             type="number"
             min={1}
+            step={1}
             aria-label="Retainer"
             value={retainer}
             onChange={(event) => setRetainer(Number(event.target.value))}
@@ -270,7 +377,7 @@ function OpportunityForm({
         <button
           type="button"
           data-testid="generate-opportunity"
-          disabled={generate.isPending || effortMin > effortMax}
+          disabled={generate.isPending || problem !== null}
           onClick={() =>
             generate.mutate({
               clientId,
@@ -292,9 +399,9 @@ function OpportunityForm({
         </p>
       )}
 
-      {effortMin > effortMax && (
+      {problem && (
         <p data-testid="form-error" className="text-sm text-destructive">
-          The effort range is inverted — the lower bound is above the upper one.
+          {problem}
         </p>
       )}
 
@@ -321,15 +428,15 @@ function SendReport({
 }: {
   reportId: string;
   /** Подтверждение показывает родитель: форма после отправки закрывается. */
-  onSent: (to: string) => void;
+  onSent: (to: string, result: { delivered: boolean; token: string }) => Promise<void> | void;
   onCancel: () => void;
 }) {
   const [to, setTo] = useState("");
   const [note, setNote] = useState("");
 
   const send = api.reports.send.useMutation({
-    onSuccess: (_result, variables) => {
-      onSent(variables.to);
+    onSuccess: async (result, variables) => {
+      await onSent(variables.to, result);
     },
   });
 

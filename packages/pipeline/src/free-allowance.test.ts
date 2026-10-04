@@ -13,7 +13,11 @@ import {
   incrementAiChecks,
   listRunsByClient,
 } from "@repo/db";
-import { measurementAllowedForAgency, startRunIfAllowed } from "./entitlements";
+import {
+  measurementAllowedForAgency,
+  RUN_IN_FLIGHT_MESSAGE,
+  startRunIfAllowed,
+} from "./entitlements";
 import { makePaying } from "./test-support";
 
 /**
@@ -113,6 +117,21 @@ describe("старт прогона под блокировкой", () => {
 
     expect(results.filter((r) => r.run).length).toBe(1);
     expect(await listRunsByClient(db, clientId)).toHaveLength(1);
+  });
+
+  it("второй живой прогон поверх идущего у того же клиента не начинается", async () => {
+    // Кнопка после перезагрузки снова активна: второй клик был второй оплатой.
+    await makePaying(db, agencyId, "starter");
+    const first = await startRunIfAllowed(db, agencyId, { ...live, clientId }, 18);
+    const second = await startRunIfAllowed(db, agencyId, { ...live, clientId }, 18);
+
+    expect(first.run).not.toBeNull();
+    expect(second.run).toBeNull();
+    expect(second.decision.message).toBe(RUN_IN_FLIGHT_MESSAGE);
+
+    // Закончился — следующий можно.
+    await finishRun(db, first.run!.id, "done");
+    expect((await startRunIfAllowed(db, agencyId, { ...live, clientId }, 18)).run).not.toBeNull();
   });
 
   it("размер прогона записывается в него", async () => {

@@ -46,6 +46,9 @@ export function FileInput({
     const file = event.target.files?.[0] ?? null;
     setName(file?.name ?? null);
     onSelect(file);
+    // Иначе повторный выбор того же файла событие не вызывает, а именно так
+    // и чинят: поправили файл на месте и выбрали его ещё раз.
+    event.target.value = "";
   }
 
   return (

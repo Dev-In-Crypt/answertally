@@ -15,10 +15,20 @@ export function ApproveForm({ token }: { token: string }) {
   const router = useRouter();
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
+  // Отозванную или истёкшую ссылку повтор не оживит: кнопку гасим и говорим,
+  // что делать, вместо бесконечного «попробуйте ещё раз».
+  const [linkGone, setLinkGone] = useState(false);
 
   const approve = api.publicReport.approve.useMutation({
     onSuccess: () => router.refresh(),
-    onError: () => setError("Could not record the approval. Please try again."),
+    onError: (failure) => {
+      if (failure.data?.code === "NOT_FOUND") {
+        setLinkGone(true);
+        setError("This link is no longer valid, so the approval wasn't recorded. Ask for a fresh link.");
+      } else {
+        setError("Could not record the approval. Please try again.");
+      }
+    },
   });
 
   return (
@@ -38,6 +48,7 @@ export function ApproveForm({ token }: { token: string }) {
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
+            maxLength={200}
             placeholder="Your name"
             aria-label="Your name"
             className={cn(controlClass, "h-10 px-3")}
@@ -46,7 +57,7 @@ export function ApproveForm({ token }: { token: string }) {
 
         <button
           type="submit"
-          disabled={!name.trim() || approve.isPending}
+          disabled={!name.trim() || approve.isPending || linkGone}
           className={buttonClass("primary", "lg")}
         >
           {approve.isPending ? "Recording…" : "Approve"}

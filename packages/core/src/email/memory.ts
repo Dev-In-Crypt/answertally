@@ -31,7 +31,7 @@ export class MemoryEmailSender implements EmailSender {
     // Старые письма вытесняются: нужен хвост, а не вся история процесса.
     if (this.sent.length > this.limit) this.sent.splice(0, this.sent.length - this.limit);
     this.log?.(message);
-    return Promise.resolve({ id: `memory-${this.counter}` });
+    return Promise.resolve({ id: `memory-${this.counter}`, logged: true });
   }
 
   /** Последнее письмо адресату — этим пользуются тесты. */

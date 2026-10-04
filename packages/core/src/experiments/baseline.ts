@@ -21,6 +21,34 @@ export interface SnapshotPoint {
   sampleCount: number;
 }
 
+/** Строка среза из БД — ровно те поля, что нужны эксперименту. */
+export interface SnapshotRowLike {
+  clusterId: string | null;
+  platform: string | null;
+  periodStart: Date;
+  clientVisibilityPct: string | number;
+  sampleCount: number;
+}
+
+/**
+ * Срезы для эксперимента: только «кластер × все платформы».
+ *
+ * Каждый ответ лежит и в строке кластер × платформа, и в свёртке по всем
+ * платформам. Возьми обе — ответы посчитаются дважды, неделя станет «двумя
+ * срезами», и уверенность вырастет на пустом месте. Единственный вход для
+ * всех мест, где эксперимент читает срезы.
+ */
+export function experimentSnapshots(rows: readonly SnapshotRowLike[]): SnapshotPoint[] {
+  return rows
+    .filter((row) => row.platform === null && row.clusterId !== null)
+    .map((row) => ({
+      clusterId: row.clusterId,
+      periodStart: row.periodStart,
+      clientVisibilityPct: Number(row.clientVisibilityPct),
+      sampleCount: row.sampleCount,
+    }));
+}
+
 export interface BaselineWindow {
   start: Date;
   end: Date;

@@ -3,14 +3,16 @@ import {
   createAgency,
   createClient,
   createDb,
+  createRun,
   deleteAgency,
+  getRunSchedule,
   listRunsByClient,
   setScheduleNextRun,
   upsertRunSchedule,
   upsertSubscription,
 } from "@repo/db";
-import { runSchedules } from "@repo/db/schema/measurement";
-import { nextRunAfter, tickSchedules } from "./scheduler";
+import { promptClusters, prompts, runSchedules } from "@repo/db/schema/measurement";
+import { nextRunAfter, SKIP_RECHECK_MS, tickSchedules } from "./scheduler";
 import { createConnection, createQueues } from "./queues";
 
 /** Verify T16. Требует поднятых Postgres и Redis. */
@@ -58,6 +60,14 @@ describe("tickSchedules", () => {
       domain: "tick.test",
     });
     clientId = client.id;
+
+    const cluster = (
+      await db
+        .insert(promptClusters)
+        .values({ clientId, name: "CRM comparison", intent: "comparison" })
+        .returning()
+    )[0]!;
+    await db.insert(prompts).values({ clusterId: cluster.id, text: "best CRM for startups" });
 
     const rows = await db
       .insert(runSchedules)
@@ -143,7 +153,7 @@ describe("tickSchedules", () => {
     expect(mine?.reason).toBeTruthy();
   });
 
-  it("расписание не сдвигается на отказе — оплата вернётся, заводить заново не придётся", async () => {
+  it("отказ записывается в расписание, срок — на сутки; оплата вернётся — замер пойдёт", async () => {
     const due = new Date(Date.now() - 1000);
     await setScheduleNextRun(db, scheduleId, due);
     await upsertSubscription(db, {
@@ -154,9 +164,15 @@ describe("tickSchedules", () => {
       currentPeriodEnd: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
     });
 
-    await tickSchedules(db, new Date());
+    const now = new Date();
+    await tickSchedules(db, now);
 
-    // Подписка восстановлена — следующий же тик берёт то же расписание.
+    // Причина видна агентству, а «Next run» не застревает в прошлом.
+    const skippedRow = await getRunSchedule(db, scheduleId);
+    expect(skippedRow?.skipReason).toBeTruthy();
+    expect(skippedRow?.nextRunAt?.getTime()).toBe(now.getTime() + SKIP_RECHECK_MS);
+
+    // Подписка восстановлена — проверка через сутки берёт то же расписание.
     await upsertSubscription(db, {
       agencyId,
       customerId: `cus_lapsed_${agencyId}`,
@@ -165,8 +181,39 @@ describe("tickSchedules", () => {
       currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     });
 
-    const { started } = await tickSchedules(db, new Date());
+    const { started } = await tickSchedules(db, new Date(now.getTime() + SKIP_RECHECK_MS));
     expect(started.filter((r) => r.scheduleId === scheduleId)).toHaveLength(1);
+    expect((await getRunSchedule(db, scheduleId))?.skipReason).toBeNull();
+  });
+
+  it("идущий ручной замер засчитывается за цикл — второй прогон не создаётся", async () => {
+    await createRun(db, { clientId, scheduleId: null, trigger: "manual", adaptersMode: "live" });
+    await setScheduleNextRun(db, scheduleId, new Date(Date.now() - 1000));
+
+    const now = new Date();
+    const { started, skipped } = await tickSchedules(db, now, "live");
+
+    expect(started.filter((r) => r.scheduleId === scheduleId)).toHaveLength(0);
+    expect(skipped.filter((s) => s.scheduleId === scheduleId)).toHaveLength(0);
+    expect(await listRunsByClient(db, clientId)).toHaveLength(1);
+    const row = await getRunSchedule(db, scheduleId);
+    expect(row?.nextRunAt?.getTime()).toBe(nextRunAfter("weekly", now).getTime());
+    expect(row?.skipReason).toBeNull();
+  });
+
+  it("без активных вопросов прогон не создаётся, а срок не сдвигается", async () => {
+    // Раньше каждый цикл давал прогон failed без причины.
+    await db.update(prompts).set({ active: false });
+    const due = new Date(Date.now() - 1000);
+    await setScheduleNextRun(db, scheduleId, due);
+
+    const { started, skipped } = await tickSchedules(db, new Date());
+
+    expect(started.filter((r) => r.scheduleId === scheduleId)).toHaveLength(0);
+    expect(await listRunsByClient(db, clientId)).toHaveLength(0);
+    expect(skipped.find((s) => s.scheduleId === scheduleId)?.reason).toMatch(/no active prompts/);
+    // Вопросы появятся — замер начнётся в ближайший тик, а не через сутки.
+    expect((await getRunSchedule(db, scheduleId))?.nextRunAt?.getTime()).toBe(due.getTime());
   });
 
   it("у бесплатного аккаунта расписание не запускается вовсе", async () => {

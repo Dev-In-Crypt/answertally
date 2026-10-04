@@ -2816,3 +2816,148 @@ export async function prunePaymentEvents(db: Database, before: Date): Promise<nu
     .returning({ eventId: paymentEvents.eventId });
   return rows.length;
 }
+
+/**
+ * Закрывает прогон вместе с пояснением для экрана.
+ *
+ * Отдельно от `finishRun`, потому что пояснение — не статус: упавший прогон
+ * без причины выглядел как сбой системы, а неполный «done» — как полный.
+ */
+export async function finishRunWithNote(
+  db: Database,
+  runId: string,
+  status: "done" | "failed",
+  note: string | null,
+): Promise<void> {
+  await db.update(runs).set({ status, note, finishedAt: new Date() }).where(eq(runs.id, runId));
+}
+
+/** Пояснение к уже закрытому прогону (например, закрытому по сроку). */
+export async function setRunNote(db: Database, runId: string, note: string): Promise<void> {
+  await db.update(runs).set({ note }).where(eq(runs.id, runId));
+}
+
+/**
+ * Идёт ли у клиента живой прогон, начатый за последние сутки.
+ *
+ * Второй прогон поверх идущего — это вторая оплата тех же вопросов.
+ * Сутки — тот же срок, после которого воркер закрывает забытые прогоны
+ * (`failStaleRuns`): зависший прогон не должен запирать клиента навсегда.
+ */
+export async function clientHasLiveRunInFlight(
+  db: Database,
+  clientId: string,
+  now: Date = new Date(),
+): Promise<boolean> {
+  const since = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const rows = await db
+    .select({ id: runs.id })
+    .from(runs)
+    .where(
+      and(
+        eq(runs.clientId, clientId),
+        eq(runs.adaptersMode, "live"),
+        inArray(runs.status, ["pending", "running"]),
+        gte(runs.startedAt, since),
+      ),
+    )
+    .limit(1);
+  return rows.length > 0;
+}
+
+/**
+ * Итог созревшего расписания: причина пропуска (или null — замер пошёл)
+ * и, если задан, следующий срок.
+ */
+export async function setScheduleOutcome(
+  db: Database,
+  scheduleId: string,
+  outcome: { skipReason: string | null; at: Date; nextRunAt?: Date },
+): Promise<void> {
+  await db
+    .update(runSchedules)
+    .set({
+      skipReason: outcome.skipReason,
+      skippedAt: outcome.skipReason ? outcome.at : null,
+      ...(outcome.nextRunAt ? { nextRunAt: outcome.nextRunAt } : {}),
+    })
+    .where(eq(runSchedules.id, scheduleId));
+}
+
+/**
+ * Все отчёты агентства, по строке на отчёт, и честный признак «ждёт клиента».
+ *
+ * Ждёт согласования только отчёт, который отправлен (status 'shared') и
+ * у которого есть живая неподтверждённая ссылка: отозванная или истёкшая
+ * ссылка согласования не принесёт — клиенту её не открыть. Повторно выданная
+ * ссылка не даёт второй строки: считается отчёт, а не его ссылки.
+ */
+export async function listAgencyReportsWithApproval(
+  db: Database,
+  agencyId: string,
+): Promise<AgencyReportRow[]> {
+  return db
+    .select({
+      id: reports.id,
+      clientId: reports.clientId,
+      clientName: clients.name,
+      periodStart: reports.periodStart,
+      periodEnd: reports.periodEnd,
+      status: reports.status,
+      createdAt: reports.createdAt,
+      awaitingApproval: sql<boolean>`(${reports.status} = 'shared' and exists (
+        select 1 from ${reportShares}
+        where ${reportShares.reportId} = ${reports.id}
+          and ${reportShares.approvedAt} is null
+          and (${reportShares.expiresAt} is null or ${reportShares.expiresAt} > now())
+      ))`,
+    })
+    .from(reports)
+    .innerJoin(clients, eq(clients.id, reports.clientId))
+    .where(eq(clients.agencyId, agencyId))
+    .orderBy(desc(reports.createdAt));
+}
+
+/**
+ * Подтверждение отчёта клиентом — с любой его ссылки, живой или отозванной:
+ * оно принадлежит отчёту (см. createReportShare). Нужно печати PDF, которая
+ * идёт без клиентской ссылки.
+ */
+export async function getReportApproval(
+  db: Database,
+  reportId: string,
+): Promise<{ at: Date; byName: string | null } | null> {
+  const [row] = await db
+    .select({ at: reportShares.approvedAt, byName: reportShares.approvedByName })
+    .from(reportShares)
+    .where(and(eq(reportShares.reportId, reportId), isNotNull(reportShares.approvedAt)))
+    .orderBy(desc(reportShares.approvedAt))
+    .limit(1);
+  return row?.at ? { at: row.at, byName: row.byName } : null;
+}
+
+/**
+ * Повторное приглашение на адрес, который уже ждёт: та же строка и тот же
+ * токен, новый срок и роль.
+ *
+ * Новая строка на каждый повтор давала два «Invited: bob@…», и после
+ * принятия одной вторая висела в ожидании неделю, занимая место в квоте.
+ * Токен прежний — ссылка из первого письма продолжает работать.
+ */
+export async function refreshInvitation(
+  db: Database,
+  id: string,
+  agencyId: string,
+  values: { role: string; expiresAt: Date },
+) {
+  const rows = await db
+    .update(invitations)
+    .set(values)
+    .where(and(eq(invitations.id, id), eq(invitations.agencyId, agencyId)))
+    .returning();
+  const refreshed = rows[0];
+  if (!refreshed) {
+    throw new Error("Failed to refresh invitation");
+  }
+  return refreshed;
+}

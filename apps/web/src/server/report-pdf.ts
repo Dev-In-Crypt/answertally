@@ -9,8 +9,12 @@ import { storage } from "@/server/storage";
  * одна правда, ценой запуска браузера.
  */
 
-export function reportPdfKey(reportId: string): string {
-  return `reports/${reportId}.pdf`;
+/**
+ * Ключ зависит от подтверждения: строка «Approved by … on …» появляется
+ * после печати, и PDF, напечатанный до неё, после согласования устаревает.
+ */
+export function reportPdfKey(reportId: string, approved = false): string {
+  return `reports/${reportId}${approved ? "-approved" : ""}.pdf`;
 }
 
 export interface PdfOptions {
@@ -92,10 +96,26 @@ async function render(options: PdfOptions): Promise<Uint8Array> {
   }
 }
 
-/** Рендерит и кладёт в хранилище, возвращая ключ. */
-export async function storeReportPdf(reportId: string, url: string): Promise<string> {
-  const bytes = await renderReportPdf({ url });
-  const key = reportPdfKey(reportId);
-  await storage.put(key, bytes, "application/pdf");
-  return key;
+/**
+ * Печати, которые идут прямо сейчас, по ключу PDF. Повторный клик, пока
+ * первая печать не закончилась, ждёт её, а не ставит в очередь вторую и не
+ * тратит часовой лимит.
+ */
+const inFlight = new Map<string, Promise<string>>();
+
+export function isPdfRendering(key: string): boolean {
+  return inFlight.has(key);
+}
+
+/** Рендерит и кладёт в хранилище под `key`, возвращая его. */
+export function storeReportPdf(key: string, url: string): Promise<string> {
+  let job = inFlight.get(key);
+  if (!job) {
+    job = renderReportPdf({ url })
+      .then((bytes) => storage.put(key, bytes, "application/pdf"))
+      .then(() => key)
+      .finally(() => inFlight.delete(key));
+    inFlight.set(key, job);
+  }
+  return job;
 }

@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { getAgencyById, getInvitationByToken, getUserByEmail } from "@repo/db";
+import { canonicalEmail } from "@repo/core";
+import { findUserByCanonicalEmail, getAgencyById, getInvitationByToken } from "@repo/db";
 import { AuthForm } from "@/components/auth-form";
 import { db } from "@/server/db";
 
@@ -31,21 +32,31 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
     );
   }
 
-  // Аккаунт на этот адрес уже есть — регистрация не пройдёт. Убранный из
+  // Аккаунт на этот ящик уже есть — регистрация не пройдёт. Убранный из
   // агентства участник возвращается входом: приглашение принимается при нём.
-  const existing = await getUserByEmail(db, email.toLowerCase());
+  // Поиск по ящику, а не по строке: a.b@gmail и ab@gmail — один аккаунт, и
+  // форма регистрации на такой вариант упиралась бы в отказ.
+  const existing = await findUserByCanonicalEmail(db, canonicalEmail(email));
+  const rejoining =
+    Boolean(existing?.deactivatedAt) && existing?.email.toLowerCase() === email.toLowerCase();
   if (existing) {
     return (
       <main className="mx-auto flex min-h-screen w-full max-w-sm flex-col justify-center gap-6 px-6">
         <div className="flex flex-col gap-1.5">
           <h1 className="text-xl font-semibold tracking-tight">Join {agencyName ?? "your team"}</h1>
           <p className="text-sm text-muted-foreground">
-            {existing.deactivatedAt
+            {rejoining
               ? "Sign in with your existing password to rejoin the workspace."
-              : "This email already has an account, and an account belongs to one workspace. Ask your teammate to invite a different address."}
+              : "This email already has an account, and an account belongs to one workspace. Ask your teammate to invite a different address, or sign in to your own workspace."}
           </p>
         </div>
-        {existing.deactivatedAt && <AuthForm mode="login" lockedEmail={email} />}
+        {rejoining ? (
+          <AuthForm mode="login" lockedEmail={email} />
+        ) : (
+          <Link href="/login" className="text-sm font-medium text-primary hover:underline">
+            Go to sign in
+          </Link>
+        )}
       </main>
     );
   }

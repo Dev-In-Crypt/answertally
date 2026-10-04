@@ -81,7 +81,9 @@ export function entitlementsFor(
       ...PLAN_LIMITS[DEFAULT_PLAN],
       active: true,
       paying: false,
-      reason: "No subscription yet — the starter limits apply.",
+      // Месячный лимит starter до оплаты не действует: неплательщика
+      // ограничивает бесплатный аудит (`canStartMeasurement`), о нём и речь.
+      reason: `No plan yet — the free audit applies: one brand, up to ${FREE_CHECK_ALLOWANCE} AI checks in total.`,
     };
   }
 
@@ -158,6 +160,15 @@ export function entitlementsFor(
   }
 }
 
+/** Числа и тарифы в отказах — как на экране: «4,000», «Starter», а не «4000», «starter». */
+function count(value: number): string {
+  return value.toLocaleString("en-US");
+}
+
+function planLabel(plan: PlanId): string {
+  return plan.charAt(0).toUpperCase() + plan.slice(1);
+}
+
 export interface LimitDecision {
   allowed: boolean;
   /** Текст для интерфейса: человек должен понять, что делать дальше. */
@@ -173,7 +184,7 @@ export function canAddClient(entitlements: Entitlements, currentClients: number)
   if (currentClients >= entitlements.clientLimit) {
     return {
       allowed: false,
-      message: `The ${entitlements.plan} plan covers ${entitlements.clientLimit} clients. Upgrade to add more.`,
+      message: `The ${planLabel(entitlements.plan)} plan covers ${entitlements.clientLimit} clients. Upgrade to add more.`,
     };
   }
 
@@ -202,7 +213,7 @@ export function canSwitchToPlan(
   const extra = currentClients - target.clientLimit;
   return {
     allowed: false,
-    message: `The ${target.plan} plan covers ${target.clientLimit} clients and you have ${currentClients}. Archive ${extra} ${extra === 1 ? "client" : "clients"} first — switching would not remove them, and we will not measure more clients than the plan covers.`,
+    message: `The ${planLabel(target.plan)} plan covers ${target.clientLimit} clients and you have ${currentClients}. Archive ${extra} ${extra === 1 ? "client" : "clients"} first — switching would not remove them, and we will not measure more clients than the plan covers.`,
   };
 }
 
@@ -290,8 +301,8 @@ export function canStartMeasurement(
         allowed: false,
         message:
           left === 0
-            ? `This month's ${entitlements.aiCheckAllowance} AI checks are used up. Measuring resumes on the 1st, or write to us to raise the allowance.`
-            : `This run needs ${checksPlanned} AI checks and ${left} of this month's ${entitlements.aiCheckAllowance} are left. Measure fewer questions or assistants, or write to us to raise the allowance.`,
+            ? `This month's ${count(entitlements.aiCheckAllowance)} AI checks are used up. Measuring resumes on the 1st, or write to us to raise the allowance.`
+            : `This run needs ${count(checksPlanned)} AI checks and ${count(left)} of this month's ${count(entitlements.aiCheckAllowance)} are left. Measure fewer questions or assistants, or write to us to raise the allowance.`,
       };
     }
     return { allowed: true, message: "" };

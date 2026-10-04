@@ -105,6 +105,10 @@ describe("prompts.generate / saveGenerated", () => {
 
     const clusters = await listPromptClusters(db, clientId);
     expect(clusters).toHaveLength(first.createdClusters);
+
+    // Повторное сохранение не удваивает вопросы, а называет пропущенные.
+    expect(second).toMatchObject({ createdPrompts: 0, alreadyTracked: 8 });
+    expect(await listPromptsByClient(db, clientId)).toHaveLength(8);
   });
 
   it("контрольные промпты сохраняются как контрольные", async () => {
@@ -151,6 +155,18 @@ describe("потолок вопросов на клиента", () => {
       caller(agencyId).prompts.importCsv({ clientId, csv: csvOf(101) }),
     ).rejects.toThrow(/up to 100 active prompts/);
     expect(await listPromptsByClient(db, clientId)).toHaveLength(0);
+  });
+
+  it("повторный импорт исправленного файла добавляет только новое", async () => {
+    await caller(agencyId).prompts.importCsv({ clientId, csv: csvOf(60) });
+    // Тот же файл плюс строка: дубли не съедают потолок и не удваиваются.
+    const again = await caller(agencyId).prompts.importCsv({
+      clientId,
+      csv: `${csvOf(60)}\nCluster,other,  QUESTION 0 ,false\nCluster,other,brand new,false`,
+    });
+
+    expect(again).toMatchObject({ createdPrompts: 1, alreadyTracked: 60 });
+    expect(await listPromptsByClient(db, clientId)).toHaveLength(61);
   });
 
   it("сотый вопрос добавляется, сто первый — нет", async () => {

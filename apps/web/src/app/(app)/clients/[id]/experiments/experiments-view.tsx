@@ -17,6 +17,7 @@ import { EmptyState } from "@/components/page-header";
 import { ConfidenceBadge, type ConfidenceLevel } from "@/components/ui/stat";
 import { NotePanel } from "@/components/ui/note-panel";
 import { SkeletonCards } from "@/components/ui/skeleton";
+import { buttonClass } from "@/components/ui/button";
 import { FlaskConical } from "lucide-react";
 
 /** Строка группы. Прочерк вместо числа — там, где выборка его не набрала. */
@@ -64,6 +65,32 @@ const EVENT_LABELS: Record<string, string> = {
   note: "Note",
 };
 
+const STATUS_LABELS: Record<string, string> = {
+  collecting: "Collecting answers",
+  ready: "Ready to read",
+};
+
+/** Сбой загрузки — не «пусто»: пустое состояние было бы неправдой о данных. */
+function LoadError({
+  what,
+  error,
+  retry,
+}: {
+  what: string;
+  error: { message: string };
+  retry: () => void;
+}) {
+  return (
+    <div role="alert" className="flex flex-col items-start gap-3 rounded-lg border border-dashed p-8">
+      <h2 className="text-base font-medium">{what} could not be loaded</h2>
+      <p className="max-w-prose text-sm text-muted-foreground">{error.message}</p>
+      <button type="button" onClick={retry} className={buttonClass("outline", "lg")}>
+        Try again
+      </button>
+    </div>
+  );
+}
+
 export function ExperimentsView({ clientId }: { clientId: string }) {
   const experiments = api.experiments.list.useQuery({ clientId });
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -73,6 +100,12 @@ export function ExperimentsView({ clientId }: { clientId: string }) {
 
   if (experiments.isPending) {
     return <SkeletonCards count={3} />;
+  }
+
+  if (experiments.error) {
+    return (
+      <LoadError what="Experiments" error={experiments.error} retry={() => experiments.refetch()} />
+    );
   }
 
   if (rows.length === 0) {
@@ -97,10 +130,11 @@ export function ExperimentsView({ clientId }: { clientId: string }) {
                 row.id === activeId ? "bg-accent" : "hover:bg-accent/50"
               }`}
             >
+              <span className="block font-medium">{row.actionTitle ?? "Action"}</span>
               <span className="metric block text-muted-foreground">
-                {new Date(row.actionDate).toLocaleDateString()}
+                {new Date(row.actionDate).toLocaleDateString()} ·{" "}
+                {STATUS_LABELS[row.status] ?? row.status}
               </span>
-              <span className="text-muted-foreground">{row.status}</span>
             </button>
           </li>
         ))}
@@ -117,13 +151,23 @@ function ExperimentDetail({ experimentId }: { experimentId: string }) {
   if (detail.isPending) {
     return <SkeletonCards count={3} />;
   }
+  if (detail.error) {
+    return <LoadError what="This experiment" error={detail.error} retry={() => detail.refetch()} />;
+  }
   if (!detail.data) {
     return <p className="text-sm text-muted-foreground">Nothing to show.</p>;
   }
 
-  const { experiment, events, estimate, series, formattedEstimate, groups, baselineWindow } =
-    detail.data;
-  const actionWeek = new Date(experiment.actionDate).toISOString().slice(0, 10);
+  const {
+    experiment,
+    events,
+    estimate,
+    series,
+    actionWeek,
+    formattedEstimate,
+    groups,
+    baselineWindow,
+  } = detail.data;
 
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-4">

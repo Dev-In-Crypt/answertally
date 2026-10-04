@@ -6,6 +6,7 @@ import {
   type LimitDecision,
 } from "@repo/core";
 import {
+  clientHasLiveRunInFlight,
   countClientsByAgency,
   countRunsInFlight,
   createRun,
@@ -97,6 +98,10 @@ export async function measurementAllowedForAgency(
   return canStartMeasurement(entitlements, used, run.checksPlanned ?? 0, context);
 }
 
+/** Отказ, когда у клиента уже идёт замер. */
+export const RUN_IN_FLIGHT_MESSAGE =
+  "A check is already running for this client. Its results appear when it finishes, usually within a few minutes.";
+
 export interface StartRunResult {
   decision: LimitDecision;
   run: Run | null;
@@ -159,9 +164,16 @@ async function afterDowngradeOrFarming(
 ): Promise<string | null> {
   const entitlements = await entitlementsForAgency(db, agencyId, now);
 
+  // Второй прогон поверх идущего — вторая оплата тех же вопросов: кнопка
+  // после перезагрузки страницы снова активна, а расписание может созреть
+  // посреди ручного замера.
+  if (values.adaptersMode === "live" && (await clientHasLiveRunInFlight(db, values.clientId, now))) {
+    return RUN_IN_FLIGHT_MESSAGE;
+  }
+
   const clients = await countClientsByAgency(db, agencyId);
   if (clients > entitlements.clientLimit) {
-    return `The workspace has ${clients} clients and the ${entitlements.plan} plan covers ${entitlements.clientLimit}. Remove clients or upgrade to keep measuring.`;
+    return `The workspace has ${clients} clients and the ${entitlements.plan} plan covers ${entitlements.clientLimit}. Remove clients, or upgrade under Settings → Billing, to keep measuring.`;
   }
 
   if (values.adaptersMode === "live" && !entitlements.paying) {
@@ -169,7 +181,7 @@ async function afterDowngradeOrFarming(
     if (client && (await domainMeasuredElsewhere(db, client.domain, agencyId))) {
       // Текст общий: назвать «другое агентство» значило бы сказать
       // постороннему, что этот бренд у кого-то на платформе есть.
-      return `${client.domain} has already had its free audit. Pick a plan to measure it, or audit a different brand.`;
+      return `${client.domain} has already had its free audit. Pick a plan under Settings → Billing to measure it, or audit a different brand.`;
     }
   }
 

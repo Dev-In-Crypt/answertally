@@ -3,6 +3,7 @@ import { buildRecommendations, diagnose, suggestCompetitors } from "@repo/core";
 import { getClientById, listCitationFacts } from "@repo/db";
 import { assertTenant, protectedProcedure, router } from "../trpc";
 import { clientSources, toCitationFacts } from "../../sources";
+import { competitorNameFromDomain } from "../../competitor-name";
 
 export const diagnosisRouter = router({
   /** Граф источников кластера: распределение типов, влиятельные площадки, вывод. */
@@ -51,9 +52,21 @@ export const diagnosisRouter = router({
 
       const rows = await listCitationFacts(ctx.db, input.clientId);
 
+      const tracked = client.competitorNames.map((name) =>
+        name.toLowerCase().replace(/\s+/g, ""),
+      );
+      // Имя считается здесь, одно на экран и на «уже отслеживается»: иначе
+      // добавленный «Hubspot» с blog.hubspot.com снова предлагался бы как новинка.
       return suggestCompetitors(
         rows.map((row) => ({ domain: row.domain, sourceType: row.sourceType })),
         { clientDomain: client.domain, trackedNames: client.competitorNames },
-      );
+      ).map((row) => {
+        const name = competitorNameFromDomain(row.domain);
+        return {
+          ...row,
+          name,
+          alreadyTracked: row.alreadyTracked || tracked.includes(name.toLowerCase()),
+        };
+      });
     }),
 });

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { DEFAULT_GENERATED_PROMPT_COUNT, GENERATED_PROMPT_RANGE } from "@repo/core";
 import type { GeneratedPrompt } from "@repo/core";
+import { PROMPT_TEXT_MAX } from "@repo/core/config/measurement";
 import { api } from "@/trpc/react";
 import { buttonClass } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/field";
@@ -26,9 +27,16 @@ export function GeneratePrompts({
   onSaved: () => Promise<void>;
 }) {
   const [industryInput, setIndustryInput] = useState(industry ?? "");
-  const [count, setCount] = useState(DEFAULT_GENERATED_PROMPT_COUNT);
+  // Строкой: очищенное поле иначе становилось нулём и уходило на сервер.
+  const [countInput, setCountInput] = useState(String(DEFAULT_GENERATED_PROMPT_COUNT));
   const [draft, setDraft] = useState<GeneratedPrompt[] | null>(null);
   const [summary, setSummary] = useState<string | null>(null);
+
+  const count = Number(countInput);
+  const countValid =
+    Number.isInteger(count) &&
+    count >= GENERATED_PROMPT_RANGE.min &&
+    count <= GENERATED_PROMPT_RANGE.max;
 
   const generate = api.prompts.generate.useMutation({
     onSuccess: (result) => {
@@ -41,11 +49,16 @@ export function GeneratePrompts({
     onSuccess: async (result) => {
       setDraft(null);
       setSummary(
-        `Saved ${result.createdPrompts} prompts into ${result.createdClusters} new clusters.`,
+        `Saved ${result.createdPrompts} prompts into ${result.createdClusters} new clusters.` +
+          (result.alreadyTracked > 0
+            ? ` ${result.alreadyTracked} were already tracked for this client and skipped.`
+            : ""),
       );
       await onSaved();
     },
   });
+  // Отказ сервера (потолок вопросов, генератор) — словами под кнопками.
+  const error = generate.error ?? save.error;
 
   function editPrompt(index: number, text: string) {
     setDraft((current) =>
@@ -83,15 +96,16 @@ export function GeneratePrompts({
             type="number"
             min={GENERATED_PROMPT_RANGE.min}
             max={GENERATED_PROMPT_RANGE.max}
-            value={count}
-            onChange={(event) => setCount(Number(event.target.value))}
+            value={countInput}
+            onChange={(event) => setCountInput(event.target.value)}
+            aria-invalid={!countValid}
             className={`${inputClass} w-24`}
           />
         </label>
         <button
           type="button"
           data-testid="generate-prompts"
-          disabled={generate.isPending}
+          disabled={generate.isPending || !countValid}
           onClick={() =>
             generate.mutate({
               clientId,
@@ -105,9 +119,22 @@ export function GeneratePrompts({
         </button>
       </div>
 
+      {!countValid && (
+        <p className="text-sm text-destructive">
+          How many: a whole number from {GENERATED_PROMPT_RANGE.min} to{" "}
+          {GENERATED_PROMPT_RANGE.max}.
+        </p>
+      )}
+
       {summary && (
         <p data-testid="generate-summary" className="text-sm text-muted-foreground">
           {summary}
+        </p>
+      )}
+
+      {error && (
+        <p role="alert" className="text-sm text-destructive">
+          {error.message}
         </p>
       )}
 
@@ -126,6 +153,7 @@ export function GeneratePrompts({
               <li key={`${prompt.cluster}-${index}`} className="flex items-center gap-2">
                 <input
                   value={prompt.text}
+                  maxLength={PROMPT_TEXT_MAX}
                   aria-label={`Prompt ${index + 1}`}
                   onChange={(event) => editPrompt(index, event.target.value)}
                   className={`${inputClass} min-w-0 flex-1`}
@@ -154,7 +182,7 @@ export function GeneratePrompts({
             <button
               type="button"
               data-testid="save-generated"
-              disabled={save.isPending || draft.length === 0}
+              disabled={save.isPending || draft.every((prompt) => prompt.text.trim() === "")}
               onClick={() =>
                 save.mutate({
                   clientId,
@@ -163,7 +191,9 @@ export function GeneratePrompts({
               }
               className={buttonClass("primary", "lg")}
             >
-              {save.isPending ? "Saving…" : `Save ${draft.length} prompts`}
+              {save.isPending
+                ? "Saving…"
+                : `Save ${draft.filter((prompt) => prompt.text.trim().length > 0).length} prompts`}
             </button>
             <button
               type="button"

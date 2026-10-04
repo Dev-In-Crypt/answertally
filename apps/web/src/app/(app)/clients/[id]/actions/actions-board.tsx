@@ -96,18 +96,56 @@ export function ActionsBoard({ clientId }: { clientId: string }) {
     },
   });
 
-  function moveTo(action: ActionRow, status: Status): void {
-    update.mutate({ id: action.id, status });
+  /** Открыть/закрыть панель: ошибка и причина отказа прошлого действия не переезжают в следующее. */
+  function select(row: ActionRow | null): void {
+    update.reset();
+    setDropReason("");
+    setSelected(row);
+  }
 
-    // Завершение действия — момент, когда его ещё можно честно связать
-    // с последующим изменением. Позже baseline уже не восстановить.
-    if (status === "done" && action.status !== "done") {
-      setExperimentPrompt(action);
-    }
+  function moveTo(action: ActionRow, status: Status): void {
+    update.mutate(
+      { id: action.id, status },
+      {
+        // Завершение действия — момент, когда его ещё можно честно связать
+        // с последующим изменением. Позже baseline уже не восстановить.
+        // Диалог открывается только после того, как сервер записал дату
+        // завершения: раньше эксперименту не от чего отсчитывать.
+        onSuccess: () => {
+          if (status === "done" && action.status !== "done") {
+            createExperiment.reset();
+            setExperimentWarnings([]);
+            setExperimentPrompt(action);
+          }
+        },
+      },
+    );
   }
 
   if (actions.isPending) {
     return <SkeletonCards count={3} />;
+  }
+
+  // Сбой загрузки — не «действий нет»: пустое состояние зовёт завести их
+  // заново, и агентство продублирует то, что уже есть.
+  if (actions.error) {
+    return (
+      <div
+        role="alert"
+        data-testid="form-error"
+        className="flex flex-col items-start gap-3 rounded-lg border border-dashed p-8"
+      >
+        <h2 className="text-base font-medium">Actions could not be loaded</h2>
+        <p className="max-w-prose text-sm text-muted-foreground">{actions.error.message}</p>
+        <button
+          type="button"
+          onClick={() => actions.refetch()}
+          className={buttonClass("outline", "lg")}
+        >
+          Try again
+        </button>
+      </div>
+    );
   }
 
   const rows = (actions.data ?? []) as ActionRow[];
@@ -149,7 +187,18 @@ export function ActionsBoard({ clientId }: { clientId: string }) {
 
   return (
     <>
-      <div className="mb-3 flex justify-end">{addButton}</div>
+      <div className="mb-3 flex items-start justify-between gap-3">
+        {/* Отказ сервера виден там, где нажали: карточка просто осталась бы
+            в своей колонке, и было бы непонятно почему. */}
+        {update.error && !selected ? (
+          <p role="alert" data-testid="update-error" className="text-sm text-destructive">
+            {update.error.message}
+          </p>
+        ) : (
+          <span />
+        )}
+        {addButton}
+      </div>
 
       {adding && (
         <NewActionDialog
@@ -208,7 +257,7 @@ export function ActionsBoard({ clientId }: { clientId: string }) {
                     </span>
                     <button
                       type="button"
-                      onClick={() => setSelected(row)}
+                      onClick={() => select(row)}
                       className="text-left text-sm font-medium hover:underline"
                     >
                       {row.title}
@@ -276,7 +325,7 @@ export function ActionsBoard({ clientId }: { clientId: string }) {
               <li key={row.id} className="flex justify-between gap-3 border-b py-1.5 last:border-0">
                 <button
                   type="button"
-                  onClick={() => setSelected(row)}
+                  onClick={() => select(row)}
                   className="text-left hover:underline"
                 >
                   {row.title}
@@ -299,7 +348,7 @@ export function ActionsBoard({ clientId }: { clientId: string }) {
             <h2 className="text-lg font-semibold">{selected.title}</h2>
             <button
               type="button"
-              onClick={() => setSelected(null)}
+              onClick={() => select(null)}
               aria-label="Close"
               className="text-muted-foreground hover:text-foreground"
             >
@@ -361,8 +410,18 @@ export function ActionsBoard({ clientId }: { clientId: string }) {
               value={selected.ownerUserId ?? ""}
               onChange={(event) => {
                 const ownerUserId = event.target.value || null;
+                const previous = selected.ownerUserId;
                 setSelected({ ...selected, ownerUserId });
-                update.mutate({ id: selected.id, ownerUserId });
+                update.mutate(
+                  { id: selected.id, ownerUserId },
+                  {
+                    // Сервер не принял — селект возвращается к тому, что записано.
+                    onError: () =>
+                      setSelected((current) =>
+                        current?.id === selected.id ? { ...current, ownerUserId: previous } : current,
+                      ),
+                  },
+                );
               }}
               className={cn(controlClass, "h-10 px-2.5")}
             >
@@ -386,6 +445,7 @@ export function ActionsBoard({ clientId }: { clientId: string }) {
                 onChange={(event) => setDropReason(event.target.value)}
                 placeholder="Why this is not worth doing"
                 rows={2}
+                maxLength={500}
                 className={cn(controlClass, "p-2.5")}
               />
               <button
@@ -393,19 +453,31 @@ export function ActionsBoard({ clientId }: { clientId: string }) {
                 data-testid="drop-action"
                 disabled={!dropReason.trim() || update.isPending}
                 onClick={() => {
-                  update.mutate({
-                    id: selected.id,
-                    status: "dropped",
-                    dropReason: dropReason.trim(),
-                  });
-                  setDropReason("");
-                  setSelected(null);
+                  // Причина стирается и панель закрывается только после ответа
+                  // сервера: при отказе набранный текст не должен пропасть.
+                  update.mutate(
+                    { id: selected.id, status: "dropped", dropReason: dropReason.trim() },
+                    {
+                      onSuccess: () => {
+                        setDropReason("");
+                        setSelected(null);
+                      },
+                    },
+                  );
                 }}
                 className="h-9 self-start rounded-md border px-3 text-sm font-medium hover:bg-accent disabled:opacity-60"
               >
-                Drop the action
+                {update.isPending && update.variables?.status === "dropped"
+                  ? "Dropping…"
+                  : "Drop the action"}
               </button>
             </div>
+          )}
+
+          {update.error && (
+            <p role="alert" data-testid="update-error" className="text-sm text-destructive">
+              {update.error.message}
+            </p>
           )}
 
           <ActionOutcomePanel actionId={selected.id} />
@@ -447,6 +519,12 @@ export function ActionsBoard({ clientId }: { clientId: string }) {
                 {createExperiment.isSuccess ? "Close" : "Not now"}
               </button>
             </div>
+
+            {createExperiment.error && (
+              <p role="alert" data-testid="form-error" className="text-sm text-destructive">
+                {createExperiment.error.message}
+              </p>
+            )}
 
             {experimentWarnings.length > 0 && (
               <ul data-testid="experiment-warnings" className="flex flex-col gap-1 text-sm text-muted-foreground">
@@ -645,6 +723,7 @@ function NewActionDialog({
           <input
             value={title}
             onChange={(event) => setTitle(event.target.value)}
+            maxLength={300}
             className={cn(controlClass, "h-10 px-3")}
           />
         </label>
@@ -655,6 +734,7 @@ function NewActionDialog({
             value={reason}
             onChange={(event) => setReason(event.target.value)}
             rows={3}
+            maxLength={2000}
             placeholder="What in the measurements makes this worth doing"
             className={cn(controlClass, "p-2.5")}
           />

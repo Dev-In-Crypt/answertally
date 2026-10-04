@@ -50,6 +50,7 @@ export {
 } from "./adapters/grok";
 export type { GrokAdapterConfig, GrokPricing } from "./adapters/grok";
 export { registerLiveAdapters } from "./adapters/live";
+export { liveAdapterPlatforms } from "./adapters/live";
 export {
   getAdapter,
   getAdapters,

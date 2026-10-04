@@ -89,6 +89,15 @@ export const PRICING_NOTES = {
     "Start with the free audit on a brand you work on, then pick a plan in the product and pay by card. Cards are handled by the payment provider; we never see the number.",
   checkoutLeadDirect:
     "Start with the free audit on a brand you work on. Plans and billing are then set up with us directly; there is no “Buy now” button to pretend with.",
+  stepPickTitleSelfServe: "Pick a plan in the product",
+  stepPickSelfServe:
+    "Choose the plan that fits how many clients you plan to measure and pay by card. If your agency would rather be invoiced, say so and we set that up directly.",
+  stepBillingSelfServe:
+    "The plan’s limits apply as soon as the payment provider confirms the payment.",
+  stepPickTitleDirect: "Pick the plan with us",
+  stepPickDirect:
+    "Plans are agreed directly rather than through a checkout: say how many clients you plan to measure, and the matching plan is set up.",
+  stepBillingDirect: "Billing is set up with us directly, and the plan’s limits apply from then on.",
   seoSuite:
     "Keep your SEO suite. Semrush or Ahrefs stay where your keyword and backlink work lives; Answertally is the client-facing AI-visibility layer next to them and does not try to replace them.",
 };
@@ -105,6 +114,9 @@ export function checkoutCopy(paymentsOn: boolean): {
   lead: string;
   note: string;
   faqAnswer: string;
+  stepPickTitle: string;
+  stepPick: string;
+  stepBilling: string;
 } {
   return paymentsOn
     ? {
@@ -112,12 +124,18 @@ export function checkoutCopy(paymentsOn: boolean): {
         lead: PRICING_NOTES.checkoutLeadSelfServe,
         note: PRICING_NOTES.checkoutSelfServe,
         faqAnswer: `Yes. ${PRICING_NOTES.checkoutSelfServe}`,
+        stepPickTitle: PRICING_NOTES.stepPickTitleSelfServe,
+        stepPick: PRICING_NOTES.stepPickSelfServe,
+        stepBilling: PRICING_NOTES.stepBillingSelfServe,
       }
     : {
         heading: PRICING_NOTES.checkoutHeadingDirect,
         lead: PRICING_NOTES.checkoutLeadDirect,
         note: PRICING_NOTES.checkoutDirect,
         faqAnswer: `Not yet. ${PRICING_NOTES.checkoutDirect}`,
+        stepPickTitle: PRICING_NOTES.stepPickTitleDirect,
+        stepPick: PRICING_NOTES.stepPickDirect,
+        stepBilling: PRICING_NOTES.stepBillingDirect,
       };
 }
 

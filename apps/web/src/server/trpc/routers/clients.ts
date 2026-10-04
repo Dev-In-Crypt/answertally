@@ -59,9 +59,12 @@ const clientInput = z.object({
 
 /**
  * Входные данные обновления: те же поля, но без умолчаний. Отсутствующий ключ
- * обязан означать «не трогай», а не «поставь пустое».
+ * обязан означать «не трогай», а не «поставь пустое». Отрасль стирается явным
+ * `null`: иначе очищенное поле молча оставляло старую, и она продолжала
+ * подставляться в генерацию промптов.
  */
 const clientPatch = clientInput.omit({ brandNames: true, competitorNames: true }).partial().extend({
+  industry: z.string().max(200).nullable().optional(),
   brandNames: nameList.optional(),
   competitorNames: nameList.optional(),
 });

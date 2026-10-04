@@ -175,7 +175,9 @@ services:
       XAI_API_KEY: ${XAI_API_KEY:-}
       GROK_MODEL: ${GROK_MODEL:-}
       GROK_ENDPOINT: ${GROK_ENDPOINT:-}
-      EMAIL_MODE: ${EMAIL_MODE:-log}
+      # Без умолчания: тихий `log` в бою значит, что ни одно письмо не уходит,
+      # а регистрация с подтверждением почты встаёт. Режим выбирают явно.
+      EMAIL_MODE: ${EMAIL_MODE:?set EMAIL_MODE (live, or log to keep emails in the server log)}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       EMAIL_FROM: ${EMAIL_FROM:-}
       # Creem — основной провайдер оплаты; Stripe ниже — запасной.
@@ -260,7 +262,7 @@ services:
       # Почта у воркера та же, что у веба. Сегодня он писем не шлёт, но
       # умолчание внутри кода — `log`, и первое же письмо из фонового задания
       # ушло бы в лог вместо адресата, никак об этом не сообщив.
-      EMAIL_MODE: ${EMAIL_MODE:-log}
+      EMAIL_MODE: ${EMAIL_MODE:?set EMAIL_MODE (live, or log to keep emails in the server log)}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       EMAIL_FROM: ${EMAIL_FROM:-}
       # Ссылки в письмах строятся от публичного адреса продукта, а на отчёт —

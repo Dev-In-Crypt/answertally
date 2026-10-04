@@ -11,7 +11,7 @@ import {
   findSampleResponseId,
   getAgencyIdForRun,
   incrementAiChecks,
-  finishRun,
+  finishRunWithNote,
   getRunById,
   getRunSchedule,
   listActivePromptsForClient,
@@ -23,6 +23,7 @@ import type { Database } from "@repo/db";
 import { entitlementsForAgency } from "./entitlements";
 import { rawResponseKey, storage } from "./storage";
 import { storeCitations } from "./parse-job";
+import { NO_ACTIVE_PROMPTS_NOTE, runOutcome } from "./finalize-run";
 
 export interface RunJobSpec {
   runId: string;
@@ -199,10 +200,14 @@ export async function orchestrateRun(
   }
 
   const written = await countResponsesByRun(db, runId);
-  // Частичный успех всё равно помечается failed: агентство должно видеть,
-  // что окно измерения неполное, а не считать долю по обрезанной выборке.
-  const status = failed === 0 ? "done" : "failed";
-  await finishRun(db, runId, status);
+  // То же правило, что у сборки в воркере: неполный прогон с большинством
+  // ответов — done с пометкой, сколько не дошло; без вопросов — failed с
+  // причиной, а не безымянным сбоем.
+  const { status, note } =
+    jobs.length === 0
+      ? { status: "failed" as const, note: NO_ACTIVE_PROMPTS_NOTE }
+      : runOutcome(written, jobs.length);
+  await finishRunWithNote(db, runId, status, note);
 
   if (agencyId) {
     await logActivity(db, {

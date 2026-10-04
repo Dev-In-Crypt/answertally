@@ -10,7 +10,9 @@ import {
   upsertSubscription,
 } from "@repo/db";
 import { promptClusters, prompts } from "@repo/db/schema/measurement";
-import { PENDING_RUN_MAX_AGE_MS, pickUpPendingRuns } from "./enqueue-run";
+import { registerLiveAdapters } from "@repo/core";
+import { NO_ACTIVE_PROMPTS_NOTE } from "@repo/pipeline";
+import { FINALIZE_ATTEMPTS, PENDING_RUN_MAX_AGE_MS, pickUpPendingRuns } from "./enqueue-run";
 
 /**
  * Подбор прогонов, созданных вебом. Требует поднятого Postgres; очередь
@@ -21,6 +23,18 @@ import { PENDING_RUN_MAX_AGE_MS, pickUpPendingRuns } from "./enqueue-run";
  */
 
 const { db, close } = createDb();
+
+/**
+ * Живой воркер спрашивает только тех, чей адаптер подключён. Ключи
+ * поддельные: очередь подменена, и в сеть никто не ходит.
+ */
+const ALL_KEYS = {
+  OPENAI_API_KEY: "test",
+  PERPLEXITY_API_KEY: "test",
+  ANTHROPIC_API_KEY: "test",
+  XAI_API_KEY: "test",
+};
+registerLiveAdapters(ALL_KEYS);
 
 function fakeFlow(impl?: () => Promise<unknown>) {
   const add = vi.fn(impl ?? (() => Promise.resolve({})));
@@ -215,7 +229,28 @@ describe("pickUpPendingRuns", () => {
 
     expect(add).not.toHaveBeenCalled();
     expect((await getRunById(db, run.id))?.status).toBe("failed");
+    // Причина названа: без неё такой прогон выглядел сбоем системы.
+    expect((await getRunById(db, run.id))?.note).toBe(NO_ACTIVE_PROMPTS_NOTE);
     expect(second.queuedRuns).toBe(0);
+  });
+
+  it("ассистент без ключа на сервере не спрашивается, и сборка об этом знает", async () => {
+    // Раньше каждая задача Grok падала, и любой прогон плательщика был failed.
+    await makePaying();
+    await manualRun();
+    const { flow, add } = fakeFlow();
+
+    registerLiveAdapters({ OPENAI_API_KEY: "test", PERPLEXITY_API_KEY: "test" });
+    try {
+      const result = await pickUpPendingRuns(db, flow, "live");
+      expect(result.queuedJobs).toBe(12);
+    } finally {
+      registerLiveAdapters(ALL_KEYS);
+    }
+
+    expect(queuedPlatforms(add).some((queue) => queue.includes("grok"))).toBe(false);
+    const call = add.mock.calls[0] as unknown as [{ data: { unavailable: string[] } }];
+    expect(call[0].data.unavailable).toEqual(["grok"]);
   });
 
   it("прогон старше суток не запускается, а закрывается как неудавшийся", async () => {
@@ -262,6 +297,8 @@ describe("pickUpPendingRuns", () => {
       { opts: Record<string, unknown>; children: { opts: Record<string, unknown> }[] },
     ];
     expect(call[0].opts).toHaveProperty("removeOnComplete");
+    // Сборка повторяется: сбой базы посреди свёртки не оставляет прогон без цифр.
+    expect(call[0].opts).toMatchObject({ attempts: FINALIZE_ATTEMPTS });
     expect(call[0].children[0]?.opts).toMatchObject({ ignoreDependencyOnFailure: true });
     expect(call[0].children[0]?.opts).toHaveProperty("removeOnFail");
   });

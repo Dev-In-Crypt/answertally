@@ -1,7 +1,14 @@
 import type { Metadata } from "next";
 import { reportPayloadSchema } from "@repo/core";
-import { getAgencyById, getClientById, getReportById, getShareByToken } from "@repo/db";
+import {
+  getAgencyById,
+  getClientById,
+  getReportApproval,
+  getReportById,
+  getShareByToken,
+} from "@repo/db";
 import { ReportView } from "@/components/report-view";
+import { readPrintToken } from "../print-token";
 import { reportUrl } from "../report-url";
 import { ApproveForm } from "./approve-form";
 import { db } from "@/server/db";
@@ -57,10 +64,12 @@ export async function generateMetadata({
 export default async function PublicReportPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
 
-  const share = await getShareByToken(db, token);
+  // Печать PDF приходит со своим пропуском, а не с клиентской ссылкой.
+  const printReportId = readPrintToken(token);
+  const share = printReportId ? undefined : await getShareByToken(db, token);
   const expired = share?.expiresAt ? share.expiresAt.getTime() < Date.now() : false;
 
-  if (!share || expired) {
+  if (!printReportId && (!share || expired)) {
     return (
       <main className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center gap-3 px-6">
         <h1 className="text-xl font-semibold tracking-tight">This link is no longer valid</h1>
@@ -69,7 +78,8 @@ export default async function PublicReportPage({ params }: { params: Promise<{ t
     );
   }
 
-  const report = await getReportById(db, share.reportId);
+  const reportId = printReportId ?? share?.reportId;
+  const report = reportId ? await getReportById(db, reportId) : undefined;
   const client = report ? await getClientById(db, report.clientId) : undefined;
   const agency = client ? await getAgencyById(db, client.agencyId) : undefined;
 
@@ -82,6 +92,12 @@ export default async function PublicReportPage({ params }: { params: Promise<{ t
   }
 
   const payload = reportPayloadSchema.parse(report.payload);
+  // Подтверждение принадлежит отчёту: печать показывает его и без ссылки.
+  const approved = share
+    ? share.approvedAt
+      ? { at: share.approvedAt, byName: share.approvedByName }
+      : null
+    : await getReportApproval(db, report.id);
 
   return (
     // Цвет агентства задан на всей странице, а не только внутри отчёта:
@@ -94,9 +110,9 @@ export default async function PublicReportPage({ params }: { params: Promise<{ t
           logoUrl: agency.logoUrl,
           brandColor: agency.brandColor,
         }}
-        approved={share.approvedAt ? { at: share.approvedAt, byName: share.approvedByName } : null}
+        approved={approved}
       />
-      {!share.approvedAt && <ApproveForm token={token} />}
+      {share && !approved && <ApproveForm token={token} />}
     </main>
   );
 }

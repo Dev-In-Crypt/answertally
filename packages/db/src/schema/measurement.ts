@@ -88,6 +88,15 @@ export const runSchedules = pgTable(
     samplesPerPrompt: integer("samples_per_prompt").notNull().default(3),
     nextRunAt: timestamp("next_run_at", { withTimezone: true }),
     active: boolean("active").notNull().default(true),
+    /**
+     * Почему последний созревший замер не начался — человеческой фразой.
+     *
+     * Без этого пропуск (лимит израсходован, частота не по тарифу, нет
+     * вопросов) жил только в логе воркера, а экран показывал прошедшую дату
+     * «Next run». Пусто — последний срок отработал.
+     */
+    skipReason: text("skip_reason"),
+    skippedAt: timestamp("skipped_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
@@ -131,6 +140,11 @@ export const runs = pgTable(
      * Пусто у прогонов, созданных до появления поля.
      */
     plannedChecks: integer("planned_checks"),
+    /**
+     * Пояснение к итогу прогона для экрана: почему он упал или чего в нём
+     * не хватает («140 of 144 answers came back»). Пусто — прогон полный.
+     */
+    note: text("note"),
     startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
     finishedAt: timestamp("finished_at", { withTimezone: true }),
   },

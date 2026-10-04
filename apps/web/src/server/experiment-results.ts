@@ -1,9 +1,9 @@
 import {
   averageVisibility,
   estimateExperiment,
+  experimentSnapshots,
   formatEstimate,
   type ExperimentEstimate,
-  type SnapshotPoint,
 } from "@repo/core";
 import {
   listAllSnapshots,
@@ -43,12 +43,7 @@ export async function experimentOutcomes(
   if (experiments.length === 0) return [];
 
   const snapshotRows = await listAllSnapshots(db, clientId);
-  const snapshots: SnapshotPoint[] = snapshotRows.map((row) => ({
-    clusterId: row.clusterId,
-    periodStart: row.periodStart,
-    clientVisibilityPct: Number(row.clientVisibilityPct),
-    sampleCount: row.sampleCount,
-  }));
+  const snapshots = experimentSnapshots(snapshotRows);
 
   const outcomes: ExperimentOutcome[] = [];
 

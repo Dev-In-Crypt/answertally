@@ -85,14 +85,21 @@ export function OpportunitiesView({ clientId }: { clientId: string }) {
         {/* Только счёт. «Ранжировано внутренней оценкой» уже сказано в
             описании страницы, и второй раз это просто шум. */}
         <p className="text-sm text-muted-foreground">{open.length} open</p>
-        <button
-          data-testid="refresh-opportunities"
-          onClick={() => refresh.mutate({ clientId })}
-          disabled={refresh.isPending}
-          className={buttonClass("outline", "lg", "shrink-0")}
-        >
-          {refresh.isPending ? "Recomputing…" : "Recompute"}
-        </button>
+        <div className="flex flex-col items-end gap-1">
+          <button
+            data-testid="refresh-opportunities"
+            onClick={() => refresh.mutate({ clientId })}
+            disabled={refresh.isPending}
+            className={buttonClass("outline", "lg", "shrink-0")}
+          >
+            {refresh.isPending ? "Recomputing…" : "Recompute"}
+          </button>
+          {refresh.error && (
+            <p role="alert" className="text-sm text-destructive">
+              {refresh.error.message}
+            </p>
+          )}
+        </div>
       </div>
       )}
 
@@ -404,6 +411,11 @@ function OpportunityDetail({
                 </div>
               </li>
             ))}
+            {convert.error && (
+              <li role="alert" className="text-sm text-destructive">
+                {convert.error.message}
+              </li>
+            )}
           </ul>
         ) : (
           <p className="text-sm text-muted-foreground">
@@ -428,6 +440,7 @@ function OpportunityDetail({
           value={dismissReason}
           onChange={(event) => setDismissReason(event.target.value)}
           rows={2}
+          maxLength={500}
           className={cn(controlClass, "p-2.5")}
         />
         <div className="flex flex-wrap items-center gap-2">

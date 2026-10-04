@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { authClient } from "@/lib/auth-client";
+import { authClient, settled } from "@/lib/auth-client";
+import { authErrorMessage } from "@/lib/auth-client-messages";
 import { buttonClass } from "@/components/ui/button";
 import { controlClass } from "@/components/ui/field";
 import { cn } from "@/lib/utils";
@@ -12,18 +14,21 @@ export function ResetPasswordForm({ token }: { token: string }) {
   const [password, setPassword] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** Ссылка просрочена или уже использована — нужен путь к новой. */
+  const [linkDead, setLinkDead] = useState(false);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
     setPending(true);
 
-    const result = await authClient.resetPassword({ newPassword: password, token });
+    const result = await settled(authClient.resetPassword({ newPassword: password, token }));
 
     setPending(false);
 
     if (result.error) {
-      setError(result.error.message ?? "This link is no longer valid. Ask for a new one.");
+      setError(authErrorMessage(result.error));
+      setLinkDead(result.error.code === "INVALID_TOKEN" || result.error.code === "TOKEN_EXPIRED");
       return;
     }
 
@@ -48,8 +53,13 @@ export function ResetPasswordForm({ token }: { token: string }) {
       </label>
 
       {error && (
-        <p data-testid="form-error" className="text-sm text-destructive">
-          {error}
+        <p role="alert" data-testid="form-error" className="text-sm text-destructive">
+          {error}{" "}
+          {linkDead && (
+            <Link href="/forgot-password" className="font-medium underline underline-offset-4">
+              Request a new link
+            </Link>
+          )}
         </p>
       )}
 

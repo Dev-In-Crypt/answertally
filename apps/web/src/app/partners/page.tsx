@@ -32,6 +32,9 @@ import { SalesCta } from "./sales-cta";
  * которого весь продукт и затеян.
  */
 
+// Признак оплаты — из env рантайма, а не сборки (см. /pricing).
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "For agencies · Answertally",
   description:

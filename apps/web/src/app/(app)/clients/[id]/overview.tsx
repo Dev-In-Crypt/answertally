@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { keepPreviousData } from "@tanstack/react-query";
 import {
   CartesianGrid,
   Line,
@@ -516,7 +517,12 @@ export function ClientOverview({ clientId }: { clientId: string }) {
   const [clusterId, setClusterId] = useState<string | null>(null);
 
   const clusters = api.prompts.clusters.useQuery({ clientId });
-  const data = api.measurement.visibility.useQuery({ clientId, platform, clusterId });
+  // Смена фильтра держит прежние цифры, пока грузятся новые: иначе вся
+  // страница схлопывается в скелетоны и теряет место прокрутки.
+  const data = api.measurement.visibility.useQuery(
+    { clientId, platform, clusterId },
+    { placeholderData: keepPreviousData },
+  );
   const matrix = api.measurement.matrix.useQuery({ clientId });
 
   if (data.isPending) {

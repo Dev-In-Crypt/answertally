@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { normalizeDomain } from "@repo/core";
 import { buttonClass } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/field";
 
@@ -19,6 +20,37 @@ export function parseList(value: string): string[] {
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+/**
+ * Те же границы, что у `clientInput` на сервере, но с человеческим текстом:
+ * иначе ошибка ловилась только сервером и до экрана доходил разбор zod.
+ */
+const NAME_MAX = 200;
+const LIST_NAME_MAX = 100;
+const LIST_MAX = 50;
+
+function listProblem(label: string, items: string[]): string | null {
+  if (items.length > LIST_MAX) {
+    return `List at most ${LIST_MAX} ${label} (you have ${items.length}).`;
+  }
+  const tooLong = items.find((item) => item.length > LIST_NAME_MAX);
+  if (tooLong) {
+    return `Each of the ${label} can be at most ${LIST_NAME_MAX} characters. This one is too long: “${tooLong.slice(0, 40)}…”`;
+  }
+  return null;
+}
+
+/** Первая проблема формы человеческим языком или null, если всё в порядке. */
+export function clientFormProblem(values: ClientFormValues): string | null {
+  if (!values.name) return "Enter the client name.";
+  if (values.name.length > NAME_MAX) return `The client name can be at most ${NAME_MAX} characters.`;
+  // Сервер сначала приводит домен к голому хосту, поэтому и проверка — после него.
+  if (!normalizeDomain(values.domain).includes(".")) return "Enter a domain, for example acme.com.";
+  return (
+    listProblem("brand names", values.brandNames) ??
+    listProblem("competitors", values.competitorNames)
+  );
 }
 
 
@@ -43,25 +75,36 @@ export function ClientForm({
     (initial?.competitorNames ?? []).join(", "),
   );
   const [isProspect, setIsProspect] = useState(initial?.isProspect ?? false);
+  const [problem, setProblem] = useState<string | null>(null);
+  const shownError = problem ?? error;
 
   return (
     <form
       className="flex max-w-xl flex-col gap-4"
       onSubmit={(event) => {
         event.preventDefault();
-        onSubmit({
+        const values = {
           name: name.trim(),
           domain: domain.trim(),
           industry: industry.trim(),
           brandNames: parseList(brandNames),
           competitorNames: parseList(competitorNames),
           isProspect,
-        });
+        };
+        const found = clientFormProblem(values);
+        setProblem(found);
+        if (!found) onSubmit(values);
       }}
     >
       <label className="flex flex-col gap-1.5">
         <span className="text-sm font-medium">Client name</span>
-        <input value={name} onChange={(e) => setName(e.target.value)} required className={inputClass} />
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+          maxLength={NAME_MAX}
+          className={inputClass}
+        />
       </label>
 
       <label className="flex flex-col gap-1.5">
@@ -70,6 +113,7 @@ export function ClientForm({
           value={domain}
           onChange={(e) => setDomain(e.target.value)}
           required
+          maxLength={255}
           placeholder="acmecrm.com"
           className={inputClass}
         />
@@ -80,6 +124,7 @@ export function ClientForm({
         <input
           value={industry}
           onChange={(e) => setIndustry(e.target.value)}
+          maxLength={NAME_MAX}
           placeholder="B2B SaaS / CRM"
           className={inputClass}
         />
@@ -128,9 +173,9 @@ export function ClientForm({
         </span>
       </label>
 
-      {error && (
+      {shownError && (
         <p role="alert" data-testid="form-error" className="text-sm text-destructive">
-          {error}
+          {shownError}
         </p>
       )}
 

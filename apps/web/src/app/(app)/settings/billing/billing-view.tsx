@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/trpc/react";
 import { cn } from "@/lib/utils";
+import { SUPPORT_EMAIL } from "@/config/site";
 import { buttonClass } from "@/components/ui/button";
 import { NotePanel } from "@/components/ui/note-panel";
 import { SkeletonCards } from "@/components/ui/skeleton";
@@ -15,6 +17,8 @@ const PLAN_NAMES: Record<string, string> = {
 
 const PLAN_ORDER = ["starter", "growth", "scale"];
 
+type PlanChoice = "starter" | "growth" | "scale";
+
 /**
  * Пока провайдер не подтвердил перемену, экран её не рисует.
  *
@@ -25,33 +29,76 @@ const PLAN_ORDER = ["starter", "growth", "scale"];
 const PENDING_NOTE =
   "The change is with our payment provider. This page updates as soon as it confirms.";
 
-/** Сколько ждать подтверждения провайдера, опрашивая экран. */
+const CHECKOUT_NOTE =
+  "Thanks — we are confirming your payment with our payment provider. This page updates on its own, usually within a few seconds.";
+
+/** Сколько ждать подтверждения провайдера, опрашивая экран часто. */
 const CONFIRM_WAIT_MS = 60_000;
 
 type SubscriptionSnapshot =
-  | { status: string | null; cancelAtPeriodEnd: boolean; entitlements: { plan: string } }
+  | {
+      status: string | null;
+      cancelAtPeriodEnd: boolean;
+      hasLiveSubscription: boolean;
+      entitlements: { plan: string };
+    }
   | undefined;
 
 function snapshotKey(data: SubscriptionSnapshot): string {
   return data ? `${data.entitlements.plan}|${data.status}|${data.cancelAtPeriodEnd}` : "";
 }
 
+function usd(value: number): string {
+  return `$${value.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
+}
+
 export function BillingView() {
+  const router = useRouter();
+  // Creem возвращает сюда сразу после оплаты, а вебхук приходит позже: без
+  // ожидания экран показывал старый тариф и кнопки, и второй checkout
+  // означал бы второй счёт.
+  const checkoutReturn = useSearchParams().get("checkout") === "done";
+
   const [error, setError] = useState<string | null>(null);
+  const [confirmPlan, setConfirmPlan] = useState<PlanChoice | null>(null);
   // Пока подтверждения нет, экран опрашивает сервер: вебхук приходит через
   // секунды после нажатия, и без опроса страница так и показывала бы
-  // прежнее состояние.
-  const [waiting, setWaiting] = useState<{ key: string; until: number } | null>(null);
-  const isWaiting = (data: SubscriptionSnapshot) =>
-    waiting !== null && Date.now() < waiting.until && snapshotKey(data) === waiting.key;
+  // прежнее состояние. `key: null` — ждём живую подписку после checkout.
+  const [waiting, setWaiting] = useState<{ key: string | null; until: number } | null>(() =>
+    checkoutReturn ? { key: null, until: Date.now() + CONFIRM_WAIT_MS } : null,
+  );
+  // Минута прошла без подтверждения: сказать это, а не висеть молча.
+  const [slow, setSlow] = useState(false);
 
+  useEffect(() => {
+    setSlow(false);
+    if (!waiting) return;
+    const timer = setTimeout(() => setSlow(true), Math.max(0, waiting.until - Date.now()));
+    return () => clearTimeout(timer);
+  }, [waiting]);
+
+  const isWaiting = (data: SubscriptionSnapshot) =>
+    waiting !== null &&
+    data !== undefined &&
+    (waiting.key === null ? !data.hasLiveSubscription : snapshotKey(data) === waiting.key);
+
+  // После минуты опрос не бросается, а редеет: повтор вебхука у провайдера
+  // приходит через 30 секунд и через 5 минут.
   const subscription = api.billing.subscription.useQuery(undefined, {
-    refetchInterval: (query) => (isWaiting(query.state.data) ? 2_000 : false),
+    refetchInterval: (query) =>
+      isWaiting(query.state.data) ? (slow ? 15_000 : 2_000) : false,
   });
+
+  const confirmedCheckout = checkoutReturn && subscription.data?.hasLiveSubscription === true;
+  useEffect(() => {
+    // Подтверждено — метка в адресе больше не нужна и при перезагрузке солгала бы.
+    if (confirmedCheckout) router.replace("/settings/billing");
+  }, [confirmedCheckout, router]);
 
   function begin() {
     setError(null);
     setWaiting(null);
+    setConfirmPlan(null);
   }
 
   function onError(mutationError: { message: string }) {
@@ -86,6 +133,16 @@ export function BillingView() {
 
   const data = subscription.data;
   if (!data) {
+    if (subscription.error) {
+      return (
+        <NotePanel title="Could not load your plan" testId="form-error">
+          {subscription.error.message}{" "}
+          <button type="button" className="underline" onClick={() => subscription.refetch()}>
+            Try again
+          </button>
+        </NotePanel>
+      );
+    }
     return <SkeletonCards count={2} />;
   }
 
@@ -93,25 +150,45 @@ export function BillingView() {
   const busy =
     checkout.isPending || changePlan.isPending || cancel.isPending || resume.isPending;
   const currentRank = PLAN_ORDER.indexOf(entitlements.plan);
+  const pending = isWaiting(data);
+  const pastDue = data.status === "past_due";
+  // Тариф двигается только у живой подписки без просрочки и не во время
+  // ожидания: пока провайдер не ответил, вторая перемена легла бы поверх первой.
+  const canChange = data.paymentsConfigured && data.canManage && !pending && !pastDue;
+  const free = data.aiChecks.free;
+  const planTitle = data.hasLiveSubscription
+    ? (PLAN_NAMES[entitlements.plan] ?? entitlements.plan)
+    : free
+      ? "Free audit"
+      : "No active plan";
+
+  const target = confirmPlan ? data.plans.find((plan) => plan.id === confirmPlan) : undefined;
+  const targetName = target ? (PLAN_NAMES[target.id] ?? target.id) : "";
+  const upgrade = target ? PLAN_ORDER.indexOf(target.id) > currentRank : false;
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-2 rounded-lg border p-5">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           <span data-testid="current-plan" className="text-lg font-medium">
-            {PLAN_NAMES[entitlements.plan] ?? entitlements.plan}
+            {planTitle}
           </span>
-          <span className="metric text-sm text-muted-foreground">
-            {data.clientsUsed} of {entitlements.clientLimit} clients ·{" "}
-            {entitlements.aiCheckAllowance.toLocaleString("en-US")} AI checks a month
-          </span>
+          {(data.hasLiveSubscription || free) && (
+            <span className="metric text-sm text-muted-foreground">
+              {data.clientsUsed} of {entitlements.clientLimit} clients ·{" "}
+              {free
+                ? `${data.aiChecks.used.toLocaleString("en-US")} of ${data.aiChecks.allowance.toLocaleString("en-US")} free AI checks used`
+                : `${entitlements.aiCheckAllowance.toLocaleString("en-US")} AI checks a month`}
+            </span>
+          )}
         </div>
 
         <p data-testid="plan-reason" className="text-sm text-muted-foreground">
           {entitlements.reason}
         </p>
 
-        {data.currentPeriodEnd && (
+        {/* Дата — только у живой подписки: у закрытой «Renews» читалось бы как будущее списание. */}
+        {data.hasLiveSubscription && !pastDue && data.currentPeriodEnd && (
           <p className="metric text-sm text-muted-foreground">
             {data.cancelAtPeriodEnd ? "Ends" : "Renews"} on{" "}
             {new Date(data.currentPeriodEnd).toLocaleDateString()}.
@@ -119,13 +196,14 @@ export function BillingView() {
         )}
       </div>
 
-      {data.status === "past_due" && (
+      {pastDue && (
         // Сбой списания — это ещё не отказ от продукта: у карты кончился
         // срок, банк отклонил разовый платёж. Отчёты клиентов агентства
         // всё это время продолжают открываться.
         <NotePanel testId="past-due-note" title="A payment did not go through">
-          Update the card and the account keeps running. Your clients&rsquo; report links stay open
-          while this is sorted out.
+          Update the card in Manage billing below and the account keeps running. Plan changes and
+          cancelling are available once the payment goes through. Your clients&rsquo; report links
+          stay open while this is sorted out.
         </NotePanel>
       )}
 
@@ -133,14 +211,38 @@ export function BillingView() {
         // Ни фальшивого checkout, ни кнопки, которая упадёт: пока провайдер
         // не подключён, продукт говорит это прямо.
         <p data-testid="payments-off" className="text-sm text-muted-foreground">
-          Payments are not connected yet, so plans cannot be changed from here. The starter limits
-          apply and everything else in the product works.
+          Payments are not connected yet, so plans cannot be changed from here. Everything else in
+          the product works.
         </p>
       )}
 
-      {isWaiting(data) && (
+      {data.paymentsConfigured && !data.canManage && (
+        <p data-testid="owner-only" className="text-sm text-muted-foreground">
+          Only the agency owner can change the plan or the billing details.
+        </p>
+      )}
+
+      {pending && (
         <p data-testid="change-pending" className="text-sm text-muted-foreground">
-          {PENDING_NOTE}
+          {slow ? (
+            waiting?.key === null ? (
+              <>
+                Your payment has not been confirmed yet. If you paid, it can take a few minutes —
+                this page keeps checking. If nothing changes, write to {SUPPORT_EMAIL}. Closed the
+                payment page without paying?{" "}
+                <a href="/settings/billing" className="text-primary underline">
+                  Choose a plan again
+                </a>
+                .
+              </>
+            ) : (
+              `Our payment provider has not confirmed the change yet. This page keeps checking — refresh in a few minutes, and if nothing changes write to ${SUPPORT_EMAIL}.`
+            )
+          ) : waiting?.key === null ? (
+            CHECKOUT_NOTE
+          ) : (
+            PENDING_NOTE
+          )}
         </p>
       )}
 
@@ -152,7 +254,9 @@ export function BillingView() {
 
       <div className="grid gap-3 sm:grid-cols-3">
         {data.plans.map((plan) => {
-          const current = plan.id === entitlements.plan;
+          // «Текущий» — только оплаченный: бесплатный и отменённый аккаунт
+          // starter не покупали, и купить его должны иметь возможность.
+          const current = data.hasLiveSubscription && plan.id === entitlements.plan;
           const rank = PLAN_ORDER.indexOf(plan.id);
           // Одна и та же кнопка ведёт себя по-разному только по надписи:
           // вверх это «Upgrade», вниз — «Switch down», и человек видит, на
@@ -182,30 +286,33 @@ export function BillingView() {
               </span>
 
               {/* Закрывающуюся подписку провайдер не двигает: сначала «Keep». */}
-              {data.paymentsConfigured && !current && !data.cancelAtPeriodEnd && (
-                <button
-                  type="button"
-                  data-testid={`choose-${plan.id}`}
-                  onClick={() => {
-                    begin();
-                    // Платящее агентство двигает существующую подписку:
-                    // второй checkout означал бы второй счёт за тот же продукт.
-                    if (data.hasLiveSubscription) {
-                      changePlan.mutate({ plan: plan.id });
-                    } else {
-                      checkout.mutate({ plan: plan.id });
-                    }
-                  }}
-                  disabled={busy}
-                  className={buttonClass(
-                    rank > currentRank ? "primary" : "outline",
-                    "lg",
-                    "mt-2 w-full",
-                  )}
-                >
-                  {label}
-                </button>
-              )}
+              {canChange &&
+                !current &&
+                !(data.hasLiveSubscription && data.cancelAtPeriodEnd) && (
+                  <button
+                    type="button"
+                    data-testid={`choose-${plan.id}`}
+                    onClick={() => {
+                      begin();
+                      // Платящее агентство двигает существующую подписку:
+                      // второй checkout означал бы второй счёт за тот же продукт.
+                      // Списание сразу — поэтому сначала подтверждение с суммой.
+                      if (data.hasLiveSubscription) {
+                        setConfirmPlan(plan.id);
+                      } else {
+                        checkout.mutate({ plan: plan.id });
+                      }
+                    }}
+                    disabled={busy}
+                    className={buttonClass(
+                      rank > currentRank ? "primary" : "outline",
+                      "lg",
+                      "mt-2 w-full",
+                    )}
+                  >
+                    {label}
+                  </button>
+                )}
 
               {current && (
                 <span className="mt-2 text-sm font-medium text-primary">Current plan</span>
@@ -215,7 +322,69 @@ export function BillingView() {
         })}
       </div>
 
-      {data.paymentsConfigured && data.hasLiveSubscription && (
+      {canChange && target && (
+        <div
+          data-testid="confirm-plan-change"
+          className="flex flex-col gap-3 rounded-lg border border-primary p-5"
+        >
+          <p className="font-medium">
+            {upgrade ? "Upgrade" : "Switch"} to {targetName} — {usd(target.priceUsd)} / month
+          </p>
+          {upgrade ? (
+            <p className="text-sm text-muted-foreground">
+              The plan changes today, and our payment provider charges the difference for the rest
+              of this period right away
+              {target.estimatedChargeNowUsd !== null && (
+                <>
+                  : an estimated{" "}
+                  <span className="metric">{usd(target.estimatedChargeNowUsd)}</span> before any
+                  tax. The invoice shows the exact amount
+                </>
+              )}
+              . From the next period you pay {usd(target.priceUsd)} a month.
+            </p>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              The plan changes today: from now on it covers {target.clientLimit} clients and{" "}
+              {target.aiCheckAllowance.toLocaleString("en-US")} AI checks a month. Our payment
+              provider prorates the rest of this period between the two plans — the invoice shows
+              the exact amount — and from the next period you pay {usd(target.priceUsd)} a month.
+            </p>
+          )}
+          {/* Лимит — потолок ровно в 100%: при равенстве новый прогон тоже ждёт. */}
+          {!upgrade && data.aiChecks.used >= target.aiCheckAllowance && (
+            <p data-testid="confirm-over-allowance" className="text-sm text-destructive">
+              This month {data.aiChecks.used.toLocaleString("en-US")} AI checks are already used and{" "}
+              {targetName} includes {target.aiCheckAllowance.toLocaleString("en-US")}, so new runs
+              would wait until the 1st.
+            </p>
+          )}
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              data-testid="confirm-plan-change-yes"
+              onClick={() => {
+                begin();
+                changePlan.mutate({ plan: target.id });
+              }}
+              disabled={busy}
+              className={buttonClass("primary", "lg")}
+            >
+              {upgrade ? `Upgrade and pay now` : `Switch to ${targetName}`}
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmPlan(null)}
+              disabled={busy}
+              className={buttonClass("outline", "lg")}
+            >
+              Keep the current plan
+            </button>
+          </div>
+        </div>
+      )}
+
+      {canChange && data.hasLiveSubscription && (
         <div className="flex flex-col gap-3 rounded-lg border p-5">
           {data.cancelAtPeriodEnd ? (
             <>
@@ -260,7 +429,7 @@ export function BillingView() {
         </div>
       )}
 
-      {data.paymentsConfigured && data.hasCustomer && (
+      {data.paymentsConfigured && data.canManage && data.hasCustomer && (
         <div className="flex flex-col gap-2">
           <button
             type="button"
@@ -274,9 +443,14 @@ export function BillingView() {
           >
             Manage billing
           </button>
-          {/* Карта и счета живут у провайдера: продукт платёжных данных не хранит. */}
+          {/* Карта и счета живут у провайдера: продукт платёжных данных не хранит.
+              Отмена там мгновенная, поэтому отменять — здесь, кнопкой выше. */}
           <p className="text-sm text-muted-foreground">
-            Card and invoices are handled by our payment provider.
+            Update the card and download invoices with our payment provider.
+            {data.hasLiveSubscription &&
+              !data.cancelAtPeriodEnd &&
+              !pastDue &&
+              " To cancel, use Cancel at period end on this page, so the plan keeps working until the period you paid for ends."}
           </p>
         </div>
       )}

@@ -1,4 +1,5 @@
 import { randomBytes } from "node:crypto";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { assertMaySendReport } from "../../email-quota";
 import {
@@ -20,7 +21,7 @@ import {
 } from "@repo/core";
 import type { CitationFact, SourceType, VisibilitySnapshot } from "@repo/core";
 import {
-  listAgencyReports,
+  listAgencyReportsWithApproval,
   listCitationFacts,
   countClientMentionsBetween,
   countNewCitedDomains,
@@ -80,6 +81,9 @@ function toFacts(
   return [...byKey.values()];
 }
 
+const NO_MEASUREMENT_YET =
+  "There's no measured week in this period yet. Run a measurement, then generate the report once it finishes.";
+
 /** Период по умолчанию — календарный месяц назад от конца. */
 function defaultPeriod(): { start: Date; end: Date } {
   const end = new Date();
@@ -97,7 +101,7 @@ export const reportsRouter = router({
    * каждого.
    */
   listForAgency: protectedProcedure.query(({ ctx }) =>
-    listAgencyReports(ctx.db, ctx.user.agencyId),
+    listAgencyReportsWithApproval(ctx.db, ctx.user.agencyId),
   ),
 
   list: protectedProcedure.input(z.object({ clientId: z.uuid() })).query(async ({ ctx, input }) => {
@@ -182,6 +186,12 @@ export const reportsRouter = router({
           sampleCount: row.sampleCount,
           sufficient: row.sufficient,
         }));
+
+      // Без единой измеренной недели отчёт сказал бы клиенту «0%, up from 0%» —
+      // это читается как результат, а не как «ещё не мерили».
+      if (snapshots.length === 0) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: NO_MEASUREMENT_YET });
+      }
 
       /**
        * Результаты экспериментов считает та же функция, что и экран: отчёт
@@ -476,21 +486,23 @@ export const reportsRouter = router({
       // а не движение за период: движения ещё не было.
       const rollups = snapshotRows.filter((row) => row.clusterId === null && row.platform === null);
       const latest = rollups.at(-1);
+      // Аудит без замера показал бы проспекту «0% сегодня» как факт.
+      if (!latest) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: NO_MEASUREMENT_YET });
+      }
 
-      const snapshots: VisibilitySnapshot[] = latest
-        ? [
-            {
-              clusterId: null,
-              platform: null,
-              periodStart: latest.periodStart,
-              periodEnd: latest.periodEnd,
-              clientVisibilityPct: Number(latest.clientVisibilityPct),
-              competitorVisibility: latest.competitorVisibility,
-              sampleCount: latest.sampleCount,
-              sufficient: latest.sufficient,
-            },
-          ]
-        : [];
+      const snapshots: VisibilitySnapshot[] = [
+        {
+          clusterId: null,
+          platform: null,
+          periodStart: latest.periodStart,
+          periodEnd: latest.periodEnd,
+          clientVisibilityPct: Number(latest.clientVisibilityPct),
+          competitorVisibility: latest.competitorVisibility,
+          sampleCount: latest.sampleCount,
+          sufficient: latest.sufficient,
+        },
+      ];
 
       const recommendations = buildRecommendations(diagnose(toFacts(citationRows)));
 
@@ -500,8 +512,8 @@ export const reportsRouter = router({
       };
 
       const opportunity = buildAuditProposal({
-        currentVisibilityPct: latest ? Number(latest.clientVisibilityPct) : 0,
-        competitorVisibility: latest?.competitorVisibility ?? {},
+        currentVisibilityPct: Number(latest.clientVisibilityPct),
+        competitorVisibility: latest.competitorVisibility,
         rankedActions: recommendations.map((recommendation) => ({
           title: recommendation.title,
           reason: recommendation.reason,
@@ -515,12 +527,12 @@ export const reportsRouter = router({
 
       const caveats: string[] = [...PROPOSAL_CAVEATS];
       // Недобор сэмплов в аудите — обычное дело: прогон один.
-      if (latest && !latest.sufficient) {
+      if (!latest.sufficient) {
         caveats.push(REPORT_COPY.shortPeriod);
       }
 
-      const periodEnd = latest?.periodEnd ?? new Date();
-      const periodStart = latest?.periodStart ?? periodEnd;
+      const periodEnd = latest.periodEnd;
+      const periodStart = latest.periodStart;
 
       const payload = buildReportPayload({
         clientName: client.name,
@@ -579,6 +591,9 @@ export const reportsRouter = router({
       assertTenant(client, ctx.user.agencyId);
 
       await revokeReportShares(ctx.db, report.id);
+      // «Отправлен» без живой ссылки — неправда: клиенту больше нечего открыть.
+      // Подтверждённый отчёт подтверждённым и остаётся.
+      if (report.status === "shared") await setReportStatus(ctx.db, report.id, "draft");
       return { reportId: report.id };
     }),
 
@@ -594,6 +609,10 @@ export const reportsRouter = router({
       const client = await getClientById(ctx.db, report.clientId);
       assertTenant(client, ctx.user.agencyId);
 
+      // Подтверждённый отчёт ссылкой обратно в «отправлен» не уходит. Статус
+      // ставится и для уже живой ссылки: старые печати PDF выдавали её молча.
+      if (report.status === "draft") await setReportStatus(ctx.db, report.id, "shared");
+
       const existing = await getShareForReport(ctx.db, report.id);
       if (existing) {
         return { token: existing.token, created: false };
@@ -603,8 +622,6 @@ export const reportsRouter = router({
       // бессмысленным.
       const token = randomBytes(32).toString("base64url");
       await createReportShare(ctx.db, { reportId: report.id, token });
-      // Подтверждённый отчёт новой ссылкой обратно в «отправлен» не уходит.
-      if (report.status === "draft") await setReportStatus(ctx.db, report.id, "shared");
 
       return { token, created: true };
     }),
@@ -637,9 +654,9 @@ export const reportsRouter = router({
       if (!share) {
         const token = randomBytes(32).toString("base64url");
         share = await createReportShare(ctx.db, { reportId: report.id, token });
-        // Подтверждённый отчёт новой ссылкой обратно в «отправлен» не уходит.
-        if (report.status === "draft") await setReportStatus(ctx.db, report.id, "shared");
       }
+      // Подтверждённый отчёт ссылкой обратно в «отправлен» не уходит.
+      if (report.status === "draft") await setReportStatus(ctx.db, report.id, "shared");
 
       const message = reportReadyEmail({
         to: input.to,
@@ -666,8 +683,9 @@ export const reportsRouter = router({
        */
       let delivered = false;
       try {
-        await getEmailSender().send(message);
-        delivered = true;
+        // Режим без транспорта письмо только записывает: «отправлено» было бы
+        // неправдой, и агентство ждало бы ответа на письмо, которого нет.
+        delivered = !(await getEmailSender().send(message)).logged;
       } catch (error) {
         console.error(`[report] delivery failed for report ${report.id}`, error);
       }

@@ -1,8 +1,9 @@
 "use client";
 
-import { use } from "react";
+import { use, useState } from "react";
 import Link from "next/link";
-import { ASSISTANTS, highlightMentions } from "@repo/core";
+import { keepPreviousData } from "@tanstack/react-query";
+import { ASSISTANTS, highlightMentions, startOfIsoWeek } from "@repo/core";
 import { api } from "@/trpc/react";
 import { EmptyState, PageHeader } from "@/components/page-header";
 import { buttonClass } from "@/components/ui/button";
@@ -27,17 +28,34 @@ export default function PromptResponsesPage({
   params: Promise<{ id: string; promptId: string }>;
 }) {
   const { id, promptId } = use(params);
-  const data = api.runs.responses.useQuery({ promptId });
+  const [limit, setLimit] = useState(30);
+  const data = api.runs.responses.useQuery(
+    { promptId, limit },
+    { placeholderData: keepPreviousData },
+  );
 
   if (data.isPending) {
     return <SkeletonCards count={3} />;
+  }
+
+  // «Не найден» — только когда сервер так и ответил; сбой сети — не удаление.
+  if (data.error && data.error.data?.code !== "NOT_FOUND") {
+    return (
+      <div role="alert" className="flex flex-col items-start gap-3 rounded-lg border border-dashed p-8">
+        <h2 className="text-base font-medium">Answers could not be loaded</h2>
+        <p className="max-w-prose text-sm text-muted-foreground">{data.error.message}</p>
+        <button type="button" onClick={() => data.refetch()} className={buttonClass("outline", "lg")}>
+          Try again
+        </button>
+      </div>
+    );
   }
 
   if (data.error || !data.data) {
     return <PageHeader title="Prompt not found" description="It may have been removed." />;
   }
 
-  const { prompt, dictionary, responses } = data.data;
+  const { prompt, dictionary, responses, hasMore } = data.data;
 
   /**
    * Ответ считается «назвал клиента», если подсветка нашла в нём клиента —
@@ -46,7 +64,21 @@ export default function PromptResponsesPage({
    */
   const mentionsClient = (text: string) =>
     highlightMentions(text, dictionary).some((segment) => segment.kind === "client");
-  const namedIn = responses.filter((response) => mentionsClient(response.rawText));
+
+  /**
+   * Счёт — по последней неделе, как на дашборде (недельные окна, контракт C3):
+   * смесь нескольких недель не совпала бы ни с одной цифрой там.
+   */
+  const latestWeek = responses[0] ? startOfIsoWeek(new Date(responses[0].createdAt)) : null;
+  const weekResponses = latestWeek
+    ? responses.filter(
+        (response) =>
+          startOfIsoWeek(new Date(response.createdAt)).getTime() === latestWeek.getTime(),
+      )
+    : [];
+  const namedIn = weekResponses.filter((response) => mentionsClient(response.rawText));
+  // При ежедневном расписании неделя длиннее страницы: тогда счёт — по показанным, и это сказано.
+  const weekCut = hasMore && weekResponses.length === responses.length;
 
   /**
    * Место клиента среди названных брендов этого ответа. Одна доля упоминаний
@@ -94,10 +126,19 @@ export default function PromptResponsesPage({
         </span>
         {/* Сколько ответов и в скольких из них клиент — это и есть та доля,
             которая стоит на дашборде; здесь её можно пересчитать руками. */}
-        <span data-testid="named-in" className="metric">
-          {responses.length} {responses.length === 1 ? "answer" : "answers"} · named in{" "}
-          {namedIn.length}
-        </span>
+        {latestWeek && (
+          <span data-testid="named-in" className="metric">
+            Week of {latestWeek.toISOString().slice(0, 10)}:{weekCut ? " latest" : ""}{" "}
+            {weekResponses.length} {weekResponses.length === 1 ? "answer" : "answers"} · named in{" "}
+            {namedIn.length}
+          </span>
+        )}
+        {responses.length > 0 && (
+          <span>
+            Showing the latest {responses.length} {responses.length === 1 ? "answer" : "answers"}
+            {hasMore ? "; older ones are not shown." : "."}
+          </span>
+        )}
         {prompt.isControl && <span>This is a control prompt.</span>}
       </div>
 
@@ -115,9 +156,7 @@ export default function PromptResponsesPage({
                 <span className="font-medium text-foreground">
                   {PLATFORM_LABELS[response.platform] ?? response.platform}
                 </span>
-                <span className="metric">
-                  sample {response.sampleIndex + 1} of {responses.length}
-                </span>
+                <span className="metric">sample {response.sampleIndex + 1}</span>
                 <span className="metric">{response.modelVersion}</span>
                 <span className="metric">${Number(response.costUsd).toFixed(4)}</span>
                 <span className="metric">{new Date(response.createdAt).toLocaleString()}</span>
@@ -189,6 +228,17 @@ export default function PromptResponsesPage({
             </li>
           ))}
         </ul>
+      )}
+
+      {hasMore && limit < 100 && (
+        <button
+          type="button"
+          onClick={() => setLimit(100)}
+          disabled={data.isFetching}
+          className={buttonClass("outline", "lg", "mt-4")}
+        >
+          {data.isFetching ? "Loading…" : "Show older answers"}
+        </button>
       )}
     </>
   );

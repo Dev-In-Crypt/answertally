@@ -3,6 +3,7 @@ import {
   DEFAULT_GENERATED_PROMPT_COUNT,
   GENERATED_PROMPT_RANGE,
   groupByCluster,
+  normalizePromptText,
   parsePromptCsv,
   TemplatePromptGenerator,
 } from "@repo/core";
@@ -65,9 +66,36 @@ async function assertRoomForPrompts(
   if (active + adding > PROMPTS_PER_CLIENT) {
     throw new TRPCError({
       code: "BAD_REQUEST",
-      message: `A client can have up to ${PROMPTS_PER_CLIENT} active prompts. This one has ${active}; pause or delete some to add ${adding} more.`,
+      // «Pause» здесь не предлагается: выключателя вопроса в интерфейсе нет.
+      message: `A client can have up to ${PROMPTS_PER_CLIENT} active prompts. This one has ${active}; delete some to add ${adding} more.`,
     });
   }
+}
+
+/**
+ * Что из набора клиент уже отслеживает.
+ *
+ * Повторный импорт исправленного файла — обычный сценарий, и раньше он
+ * удваивал каждый вопрос: дубль спрашивался на каждом прогоне, съедал
+ * потолок и считался в видимости дважды. Сверяется весь клиент, включая
+ * выключенные вопросы: иначе рядом с выключенным встал бы его активный дубль.
+ */
+async function splitAlreadyTracked<T extends { text: string }>(
+  db: Parameters<typeof listPromptsByClient>[0],
+  clientId: string,
+  candidates: T[],
+): Promise<{ fresh: T[]; alreadyTracked: number }> {
+  const known = new Set(
+    (await listPromptsByClient(db, clientId)).map((prompt) => normalizePromptText(prompt.text)),
+  );
+  const fresh: T[] = [];
+  for (const candidate of candidates) {
+    const key = normalizePromptText(candidate.text);
+    if (known.has(key)) continue;
+    known.add(key);
+    fresh.push(candidate);
+  }
+  return { fresh, alreadyTracked: candidates.length - fresh.length };
 }
 
 const generatedPrompt = z.object({
@@ -233,7 +261,12 @@ export const promptsRouter = router({
     .mutation(async ({ ctx, input }) => {
       const client = await getClientById(ctx.db, input.clientId);
       assertTenant(client, ctx.user.agencyId);
-      await assertRoomForPrompts(ctx.db, input.clientId, input.prompts.length);
+      const { fresh, alreadyTracked } = await splitAlreadyTracked(
+        ctx.db,
+        input.clientId,
+        input.prompts,
+      );
+      await assertRoomForPrompts(ctx.db, input.clientId, fresh.length);
 
       const existing = await listPromptClusters(ctx.db, input.clientId);
       const byName = new Map(existing.map((cluster) => [cluster.name.toLowerCase(), cluster]));
@@ -241,7 +274,7 @@ export const promptsRouter = router({
       let createdClusters = 0;
       let createdPrompts = 0;
 
-      for (const prompt of input.prompts) {
+      for (const prompt of fresh) {
         let cluster = byName.get(prompt.cluster.toLowerCase());
         if (!cluster) {
           cluster = await createPromptCluster(ctx.db, {
@@ -261,7 +294,7 @@ export const promptsRouter = router({
         createdPrompts++;
       }
 
-      return { createdClusters, createdPrompts };
+      return { createdClusters, createdPrompts, alreadyTracked };
     }),
 
   importCsv: roleProcedure("member")
@@ -271,9 +304,14 @@ export const promptsRouter = router({
       assertTenant(client, ctx.user.agencyId);
 
       const parsed = parsePromptCsv(input.csv);
+      const { fresh, alreadyTracked } = await splitAlreadyTracked(
+        ctx.db,
+        input.clientId,
+        parsed.rows.map((row) => ({ ...row, text: row.prompt })),
+      );
       // Файл целиком или ничего: обрезанный импорт молча терял бы вопросы.
-      await assertRoomForPrompts(ctx.db, input.clientId, parsed.rows.length);
-      const groups = groupByCluster(parsed.rows);
+      await assertRoomForPrompts(ctx.db, input.clientId, fresh.length);
+      const groups = groupByCluster(fresh);
 
       const existing = await listPromptClusters(ctx.db, input.clientId);
       const byName = new Map(existing.map((cluster) => [cluster.name.toLowerCase(), cluster]));
@@ -309,6 +347,7 @@ export const promptsRouter = router({
         createdClusters,
         createdPrompts,
         skipped: parsed.errors.length,
+        alreadyTracked,
         errors: parsed.errors,
       };
     }),

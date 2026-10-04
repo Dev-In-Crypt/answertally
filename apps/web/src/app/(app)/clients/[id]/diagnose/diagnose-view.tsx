@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { keepPreviousData } from "@tanstack/react-query";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { api } from "@/trpc/react";
 import { EmptyState } from "@/components/page-header";
@@ -59,15 +60,22 @@ function CreateActionButton({
   const done = convert.isSuccess;
 
   return (
-    <button
-      type="button"
-      data-testid="create-action"
-      disabled={convert.isPending || done}
-      onClick={() => convert.mutate({ clientId, recommendation })}
-      className={buttonClass("outline", "md", "shrink-0")}
-    >
-      {done ? "Added to actions" : convert.isPending ? "Adding…" : "Create action"}
-    </button>
+    <div className="flex shrink-0 flex-col items-end gap-1">
+      <button
+        type="button"
+        data-testid="create-action"
+        disabled={convert.isPending || done}
+        onClick={() => convert.mutate({ clientId, recommendation })}
+        className={buttonClass("outline", "md", "shrink-0")}
+      >
+        {done ? "Added to actions" : convert.isPending ? "Adding…" : "Create action"}
+      </button>
+      {convert.error && (
+        <p role="alert" className="max-w-56 text-right text-xs text-destructive">
+          {convert.error.message}
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -75,8 +83,16 @@ export function DiagnoseView({ clientId }: { clientId: string }) {
   const [clusterId, setClusterId] = useState<string | null>(null);
 
   const clusters = api.prompts.clusters.useQuery({ clientId });
-  const graph = api.diagnosis.sourceGraph.useQuery({ clientId, clusterId });
-  const recommendations = api.diagnosis.recommendations.useQuery({ clientId, clusterId });
+  // Смена кластера не стирает экран до скелетона: прежние данные стоят,
+  // пока грузятся новые, и селектор не исчезает из-под руки.
+  const graph = api.diagnosis.sourceGraph.useQuery(
+    { clientId, clusterId },
+    { placeholderData: keepPreviousData },
+  );
+  const recommendations = api.diagnosis.recommendations.useQuery(
+    { clientId, clusterId },
+    { placeholderData: keepPreviousData },
+  );
   const opportunities = api.opportunities.list.useQuery({ clientId });
 
   /**
@@ -96,7 +112,70 @@ export function DiagnoseView({ clientId }: { clientId: string }) {
 
   const data = graph.data;
 
+  const clusterSelect = (
+    <select
+      aria-label="Cluster"
+      value={clusterId ?? ""}
+      onChange={(e) => setClusterId(e.target.value || null)}
+      className="h-9 shrink-0 rounded-md border border-input bg-background px-2 text-sm"
+    >
+      <option value="">All clusters</option>
+      {(clusters.data ?? []).map((cluster) => (
+        <option key={cluster.id} value={cluster.id}>
+          {cluster.name}
+        </option>
+      ))}
+    </select>
+  );
+
+  // Сбой — не «источников нет»: пустое состояние отправило бы запускать
+  // проверку, хотя прогоны есть, а не загрузился экран.
+  if (graph.error) {
+    return (
+      <div className="flex flex-col gap-4">
+        {clusterId && <div className="flex justify-end">{clusterSelect}</div>}
+        <div
+          role="alert"
+          data-testid="form-error"
+          className="flex flex-col items-start gap-3 rounded-lg border border-dashed p-8"
+        >
+          <h2 className="text-base font-medium">Diagnosis could not be loaded</h2>
+          <p className="max-w-prose text-sm text-muted-foreground">{graph.error.message}</p>
+          <button
+            type="button"
+            onClick={() => graph.refetch()}
+            className={buttonClass("outline", "lg")}
+          >
+            Try again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (!data || data.influential.length === 0) {
+    // Пустой кластер — не пустой клиент: селектор остаётся, чтобы вернуться.
+    if (clusterId) {
+      return (
+        <div className="flex flex-col gap-4">
+          <div className="flex justify-end">{clusterSelect}</div>
+          <EmptyState
+            title="No sources cited for this cluster"
+            icon={Quote}
+            description="Answers to this cluster's prompts named no sources yet. Other clusters may still have them."
+            action={
+              <button
+                type="button"
+                onClick={() => setClusterId(null)}
+                className={buttonClass("outline", "md")}
+              >
+                Show all clusters
+              </button>
+            }
+          />
+        </div>
+      );
+    }
     return (
       <EmptyState
         title="No cited sources yet"
@@ -115,19 +194,7 @@ export function DiagnoseView({ clientId }: { clientId: string }) {
           {data.statement}{" "}
           <span className="text-muted-foreground">{data.evidenceNote}</span>
         </p>
-        <select
-          aria-label="Cluster"
-          value={clusterId ?? ""}
-          onChange={(e) => setClusterId(e.target.value || null)}
-          className="h-9 shrink-0 rounded-md border border-input bg-background px-2 text-sm"
-        >
-          <option value="">All clusters</option>
-          {(clusters.data ?? []).map((cluster) => (
-            <option key={cluster.id} value={cluster.id}>
-              {cluster.name}
-            </option>
-          ))}
-        </select>
+        {clusterSelect}
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
@@ -267,7 +334,17 @@ export function DiagnoseView({ clientId }: { clientId: string }) {
       <section className="flex flex-col gap-3 rounded-lg border p-4">
         <h2 className="text-base font-medium">Recommended next actions</h2>
 
-        {(recommendations.data ?? []).length === 0 ? (
+        {/* Сбой и загрузка — не «рекомендовать нечего». */}
+        {recommendations.error ? (
+          <p role="alert" className="text-sm text-destructive">
+            Recommendations could not be loaded. {recommendations.error.message}{" "}
+            <button type="button" className="underline" onClick={() => recommendations.refetch()}>
+              Try again
+            </button>
+          </p>
+        ) : recommendations.isPending ? (
+          <p className="text-sm text-muted-foreground">Loading…</p>
+        ) : (recommendations.data ?? []).length === 0 ? (
           <p className="text-sm text-muted-foreground">
             Nothing to recommend from the current data. More runs will make the picture readable.
           </p>

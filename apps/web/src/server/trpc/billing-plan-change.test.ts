@@ -1,6 +1,7 @@
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TRPCError } from "@trpc/server";
 import {
+  FREE_CHECK_ALLOWANCE,
   UnconfiguredPaymentProvider,
   type CancelInput,
   type ChangePlanInput,
@@ -11,6 +12,7 @@ import { createAgency, createClient, createDb, deleteAgency, upsertSubscription 
 import { appRouter } from "./root";
 import type { SessionUser, TrpcContext } from "./context";
 import { setPaymentProvider } from "../payments";
+import { estimateUpgradeChargeUsd } from "./routers/billing";
 
 /**
  * Апгрейд, даунгрейд, отмена и возврат из неё.
@@ -226,12 +228,44 @@ describe("billing plan changes", () => {
     quiet.mockRestore();
   });
 
-  it("агентство со сбоем платежа всё ещё может сменить тариф", async () => {
+  it("при сбое платежа сначала карта: тариф и отмена не двигаются", async () => {
+    // Провайдер такую подписку не двигает (`subscription_not_active`), и
+    // «попробуйте через минуту» тут было бы неправдой.
     await giveSubscription({ status: "past_due" });
 
-    await caller(agencyId).billing.changePlan({ plan: "scale" });
+    await expect(caller(agencyId).billing.changePlan({ plan: "scale" })).rejects.toThrow(
+      /update the card/i,
+    );
+    await expect(caller(agencyId).billing.cancel()).rejects.toThrow(/update the card/i);
+    expect(calls.changePlan).not.toHaveBeenCalled();
+    expect(calls.setCancelAtPeriodEnd).not.toHaveBeenCalled();
+  });
 
-    expect(calls.changePlan).toHaveBeenCalledTimes(1);
+  it("бесплатный аккаунт видит бесплатный аудит, а не месячный лимит starter", async () => {
+    const state = await caller(agencyId).billing.subscription();
+    expect(state.aiChecks).toMatchObject({ free: true, allowance: FREE_CHECK_ALLOWANCE });
+    expect(state.entitlements.reason).toMatch(/free audit/i);
+
+    const usage = await caller(agencyId).billing.usage();
+    expect(usage.aiChecks).toMatchObject({ free: true, allowance: FREE_CHECK_ALLOWANCE });
+  });
+
+  it("платящему — месячный лимит тарифа и оценка доплаты только вверх", async () => {
+    await giveSubscription({ currentPeriodEnd: new Date(Date.now() + 15 * 86_400_000) });
+
+    const state = await caller(agencyId).billing.subscription();
+    expect(state.aiChecks).toMatchObject({ free: false, allowance: 13_000 });
+    const byId = Object.fromEntries(state.plans.map((plan) => [plan.id, plan]));
+    expect(byId.starter?.estimatedChargeNowUsd).toBeNull();
+    expect(byId.growth?.estimatedChargeNowUsd).toBeNull();
+    expect(byId.scale?.estimatedChargeNowUsd).toBeGreaterThan(0);
+    expect(byId.scale?.estimatedChargeNowUsd).toBeLessThan(1_200);
+  });
+
+  it("экран знает, что платёжные кнопки не для участника", async () => {
+    expect((await caller(agencyId).billing.subscription()).canManage).toBe(true);
+    expect((await caller(agencyId, "admin").billing.subscription()).canManage).toBe(false);
+    expect((await caller(agencyId, "member").billing.subscription()).canManage).toBe(false);
   });
 
   it("менять тариф может только владелец", async () => {
@@ -261,5 +295,33 @@ describe("billing plan changes", () => {
     ]) {
       await expect(attempt()).rejects.toThrow(/not connected/i);
     }
+  });
+});
+
+describe("estimateUpgradeChargeUsd", () => {
+  const end = new Date("2026-11-15T00:00:00.000Z");
+
+  it.each([
+    // [from, to, now, expected]
+    [1_299, 2_499, "2026-10-15T00:00:00.000Z", 1_200], // весь период впереди
+    [1_299, 2_499, "2026-10-31T00:00:00.000Z", 580.65], // 15 из 31 дня
+    [1_299, 2_499, "2026-11-15T00:00:00.000Z", 0], // период кончился
+    [1_299, 2_499, "2026-12-01T00:00:00.000Z", 0], // и давно — не в минус
+    [1_299, 2_499, "2026-10-01T00:00:00.000Z", 1_200], // часы разошлись — не больше разницы
+  ])("%d → %d на %s: %d", (from, to, now, expected) => {
+    expect(estimateUpgradeChargeUsd(from, to, end, new Date(now))).toBeCloseTo(expected, 2);
+  });
+
+  it("вниз и без конца периода — оценки нет", () => {
+    expect(estimateUpgradeChargeUsd(2_499, 499, end)).toBeNull();
+    expect(estimateUpgradeChargeUsd(499, 2_499, null)).toBeNull();
+  });
+
+  it("31-е: начало периода — последний день прошлого месяца, а не 3-е", () => {
+    const march31 = new Date("2026-03-31T00:00:00.000Z");
+    // Февраль 2026 — 28 дней: на 14 марта впереди 17 из 31 дня (28.02 → 31.03).
+    expect(
+      estimateUpgradeChargeUsd(0, 3_100, march31, new Date("2026-03-14T00:00:00.000Z")),
+    ).toBeCloseTo(1_700, 2);
   });
 });

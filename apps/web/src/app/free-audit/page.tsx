@@ -30,6 +30,9 @@ import { ReportPreview } from "@/components/marketing/report-preview";
  */
 const FREE_TRIO = freeAuditAssistantSentence();
 
+// Признак оплаты — из env рантайма, а не сборки (см. /pricing).
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Free audit · Answertally",
   description:

@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { decodeCsvBytes } from "@repo/core";
+import { CLUSTER_NAME_MAX, PROMPT_TEXT_MAX } from "@repo/core/config/measurement";
 import { api } from "@/trpc/react";
 import { EmptyState } from "@/components/page-header";
 import { SchedulePanel } from "./schedule-panel";
@@ -14,6 +16,18 @@ import { MessageSquare } from "lucide-react";
 
 const INTENTS = ["comparison", "learning", "purchase", "other"] as const;
 
+/**
+ * Отказ сервера словами — рядом с кнопкой, которая его вызвала. Без этого
+ * потолок вопросов или битый файл выглядели как кнопка, которая не работает.
+ */
+function ErrorLine({ error }: { error: { message: string } | null }) {
+  if (!error) return null;
+  return (
+    <p role="alert" className="text-sm text-destructive">
+      {error.message}
+    </p>
+  );
+}
 
 export function MeasureView({ clientId }: { clientId: string }) {
   const utils = api.useUtils();
@@ -70,6 +84,7 @@ export function MeasureView({ clientId }: { clientId: string }) {
               value={clusterName}
               onChange={(e) => setClusterName(e.target.value)}
               placeholder="CRM comparison"
+              maxLength={CLUSTER_NAME_MAX}
               className={inputClass}
             />
           </label>
@@ -89,7 +104,7 @@ export function MeasureView({ clientId }: { clientId: string }) {
           </label>
           <button
             type="button"
-            disabled={!clusterName || createCluster.isPending}
+            disabled={!clusterName.trim() || createCluster.isPending}
             onClick={() =>
               createCluster.mutate({ clientId, name: clusterName, intent: clusterIntent })
             }
@@ -98,6 +113,7 @@ export function MeasureView({ clientId }: { clientId: string }) {
             Add cluster
           </button>
         </div>
+        <ErrorLine error={createCluster.error ?? deleteCluster.error} />
         <p className="max-w-prose text-sm text-muted-foreground">
           Intent decides which answer format models tend to cite, so it is worth setting honestly.
         </p>
@@ -125,7 +141,19 @@ export function MeasureView({ clientId }: { clientId: string }) {
                 </div>
                 <button
                   type="button"
-                  onClick={() => deleteCluster.mutate({ id: cluster.id })}
+                  disabled={deleteCluster.isPending}
+                  onClick={() => {
+                    // Удаление уносит и измеренные ответы — история графиков
+                    // меняется, поэтому одного клика мало.
+                    const count = promptsByCluster.get(cluster.id)?.length ?? 0;
+                    if (
+                      window.confirm(
+                        `Delete the cluster "${cluster.name}" and its ${count} prompts? Every measured answer for these prompts is deleted too, and past visibility changes. This cannot be undone.`,
+                      )
+                    ) {
+                      deleteCluster.mutate({ id: cluster.id });
+                    }
+                  }}
                   className="text-sm text-muted-foreground hover:text-destructive"
                 >
                   Remove
@@ -203,7 +231,16 @@ function PromptList({
             </span>
             <button
               type="button"
-              onClick={() => remove.mutate({ id: prompt.id })}
+              disabled={remove.isPending}
+              onClick={() => {
+                if (
+                  window.confirm(
+                    `Delete "${prompt.text}"? Every measured answer for this prompt is deleted too, and past visibility changes. This cannot be undone.`,
+                  )
+                ) {
+                  remove.mutate({ id: prompt.id });
+                }
+              }}
               className="text-muted-foreground hover:text-destructive"
               aria-label={`Delete prompt ${prompt.text}`}
             >
@@ -218,6 +255,7 @@ function PromptList({
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="best CRM for startups"
+          maxLength={PROMPT_TEXT_MAX}
           aria-label={`New prompt for cluster`}
           className={`${inputClass} min-w-64 flex-1`}
         />
@@ -231,13 +269,14 @@ function PromptList({
         </label>
         <button
           type="button"
-          disabled={!text || create.isPending}
+          disabled={!text.trim() || create.isPending}
           onClick={() => create.mutate({ clusterId, text, isControl })}
           className={buttonClass("outline", "lg")}
         >
           Add prompt
         </button>
       </div>
+      <ErrorLine error={create.error ?? remove.error} />
     </div>
   );
 }
@@ -249,12 +288,32 @@ function CsvImport({ clientId, onImported }: { clientId: string; onImported: () 
   const importCsv = api.prompts.importCsv.useMutation({
     onSuccess: async (result) => {
       setSummary(
-        `Imported ${result.createdPrompts} prompts into ${result.createdClusters} new clusters.`,
+        `Imported ${result.createdPrompts} prompts into ${result.createdClusters} new clusters.` +
+          (result.alreadyTracked > 0
+            ? ` ${result.alreadyTracked} already tracked for this client, skipped.`
+            : ""),
       );
       setErrors(result.errors);
       await onImported();
     },
+    onError: (error) => setErrors([error.message]),
   });
+
+  async function handleFile(file: File | null) {
+    if (!file) return;
+    setSummary(null);
+    setErrors([]);
+    // Байты, а не file.text(): ANSI-выгрузка Excel иначе портит буквы.
+    const csv = decodeCsvBytes(new Uint8Array(await file.arrayBuffer()));
+    // Те же границы, что у сервера, но словами, а не отказом валидации.
+    if (csv.trim() === "") {
+      setErrors(["The file is empty."]);
+    } else if (csv.length > 500_000) {
+      setErrors(["The file is over 500 KB. Split it and import the parts one by one."]);
+    } else {
+      importCsv.mutate({ clientId, csv });
+    }
+  }
 
   return (
     <section className="flex flex-col gap-2 rounded-lg border border-dashed p-4">
@@ -272,12 +331,7 @@ function CsvImport({ clientId, onImported }: { clientId: string; onImported: () 
         accept=".csv,text/csv"
         disabled={importCsv.isPending}
         buttonText="Choose CSV"
-        onSelect={async (file) => {
-          if (!file) return;
-          setSummary(null);
-          setErrors([]);
-          importCsv.mutate({ clientId, csv: await file.text() });
-        }}
+        onSelect={(file) => void handleFile(file)}
       />
       {summary && (
         <p data-testid="import-summary" className="text-sm text-muted-foreground">
