@@ -41,10 +41,21 @@ function launchOptions() {
  */
 let printing: Promise<unknown> = Promise.resolve();
 
+/** Дольше печать не ждёт: зависший браузер держал бы очередь всех агентств. */
+const RENDER_TIMEOUT_MS = 60_000;
+
 export function renderReportPdf(options: PdfOptions): Promise<Uint8Array> {
-  const next = printing.then(() => render(options));
+  const next = printing.then(() => withTimeout(render(options), RENDER_TIMEOUT_MS));
   printing = next.catch(() => undefined);
   return next;
+}
+
+function withTimeout<T>(work: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`PDF render timed out after ${ms} ms`)), ms);
+  });
+  return Promise.race([work, timeout]).finally(() => clearTimeout(timer));
 }
 
 async function render(options: PdfOptions): Promise<Uint8Array> {

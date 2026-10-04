@@ -1593,9 +1593,24 @@ export async function createReportShare(
     values.expiresAt === undefined
       ? new Date(Date.now() + REPORT_SHARE_TTL_DAYS * 86_400_000)
       : values.expiresAt;
+  // Подтверждение клиента принадлежит отчёту, а не ссылке: новая ссылка
+  // после отзыва или истечения срока несёт его дальше. Иначе отчёт снова
+  // предлагал бы подтвердить себя, и любой со ссылкой поставил бы своё имя.
+  const [previous] = await db
+    .select({ approvedAt: reportShares.approvedAt, approvedByName: reportShares.approvedByName })
+    .from(reportShares)
+    .where(and(eq(reportShares.reportId, values.reportId), isNotNull(reportShares.approvedAt)))
+    .orderBy(desc(reportShares.approvedAt))
+    .limit(1);
   const rows = await db
     .insert(reportShares)
-    .values({ reportId: values.reportId, token: values.token, expiresAt })
+    .values({
+      reportId: values.reportId,
+      token: values.token,
+      expiresAt,
+      approvedAt: previous?.approvedAt ?? null,
+      approvedByName: previous?.approvedByName ?? null,
+    })
     .returning();
   const created = rows[0];
   if (!created) {

@@ -76,7 +76,10 @@ export async function applySubscriptionChange(
     known?.subscriptionId &&
     change.subscriptionId &&
     known.subscriptionId !== change.subscriptionId &&
-    known.status !== "canceled";
+    known.status !== "canceled" &&
+    // Неоплаченная попытка не держит место: после неё человек оформляет
+    // новую подписку, и её события должны применяться.
+    known.status !== "incomplete";
   if (otherSubscription) {
     return { applied: false, reason: "The event belongs to another subscription." };
   }
@@ -109,7 +112,9 @@ export async function applySubscriptionChange(
   const saved = await upsertSubscription(db, {
     agencyId,
     customerId: change.customerId,
-    subscriptionId: change.subscriptionId,
+    // Событие без подписки (возврат денег) не стирает записанную: иначе
+    // экран оплаты счёл бы подписку несуществующей и предложил вторую.
+    subscriptionId: change.subscriptionId ?? known?.subscriptionId ?? null,
     plan: fields.plan,
     status: change.status,
     currentPeriodEnd: fields.currentPeriodEnd,

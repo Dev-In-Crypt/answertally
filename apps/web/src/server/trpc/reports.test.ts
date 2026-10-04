@@ -185,6 +185,24 @@ describe("reports.generate", () => {
     expect(next.token).not.toBe(token);
   });
 
+  it("подтверждение отчёта переживает новую ссылку", async () => {
+    // Подтверждение принадлежит отчёту: иначе после отзыва ссылки отчёт
+    // снова просил бы подтверждения, и любой со ссылкой поставил бы имя.
+    const report = await generate();
+    const { token } = await caller(agencyId).reports.share({ reportId: report.id });
+    await caller(agencyId).publicReport.approve({ token, name: "Dana" });
+
+    await caller(agencyId).reports.revokeShare({ reportId: report.id });
+    const next = await caller(agencyId).reports.share({ reportId: report.id });
+
+    const again = await caller(agencyId).publicReport.approve({
+      token: next.token,
+      name: "Mallory",
+    });
+    expect(again.alreadyApproved).toBe(true);
+    expect((await getShareByToken(db, next.token))?.approvedByName).toBe("Dana");
+  });
+
   it("вопрос без сравнимой выборки не попадает в «что изменилось»", async () => {
     const report = await generate();
     const payload = reportPayloadSchema.parse(report.payload);

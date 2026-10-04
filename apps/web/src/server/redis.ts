@@ -25,6 +25,9 @@ export function getRedis(): IORedis | null {
     // Недоступный Redis не должен держать запрос: вызывающий переходит
     // на счёт в памяти, и лучше сделать это сразу.
     connectTimeout: 1000,
+    // Подвисший, но подключённый Redis (fsync, fork) не должен держать
+    // каждый запрос входа: через полсекунды счётчик уходит в память.
+    commandTimeout: 500,
     lazyConnect: false,
     enableOfflineQueue: false,
   });

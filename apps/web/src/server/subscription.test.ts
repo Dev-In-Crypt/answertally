@@ -131,6 +131,34 @@ describe("applySubscriptionChange", () => {
     expect((await getSubscriptionByAgency(db, agencyId))?.status).toBe("canceled");
   });
 
+  it("возврат денег закрывает доступ, но не стирает номер подписки", async () => {
+    // С пустым номером экран оплаты предлагал бы вторую подписку, а поздний
+    // счёт той же подписки воскрешал бы отменённую.
+    const customerId = "cus_refund";
+    await applySubscriptionChange(db, change({ agencyId, customerId, plan: "growth" }));
+    await applySubscriptionChange(
+      db,
+      change({
+        agencyId,
+        customerId,
+        subscriptionId: null,
+        plan: null,
+        status: "canceled",
+        unknownFields: ["plan"],
+      }),
+    );
+
+    const saved = await getSubscriptionByAgency(db, agencyId);
+    expect(saved?.status).toBe("canceled");
+    expect(saved?.subscriptionId).toBe("sub_1");
+
+    const late = await applySubscriptionChange(
+      db,
+      change({ agencyId, customerId, plan: null, status: "active", unknownFields: ["plan"] }),
+    );
+    expect(late.applied).toBe(false);
+  });
+
   it("новая подписка после отмены принимается", async () => {
     const customerId = "cus_again";
     await applySubscriptionChange(db, change({ agencyId, customerId, status: "canceled" }));

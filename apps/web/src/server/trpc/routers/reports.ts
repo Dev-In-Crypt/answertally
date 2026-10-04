@@ -100,14 +100,12 @@ export const reportsRouter = router({
     listAgencyReports(ctx.db, ctx.user.agencyId),
   ),
 
-  list: protectedProcedure
-    .input(z.object({ clientId: z.uuid() }))
-    .query(async ({ ctx, input }) => {
-      const client = await getClientById(ctx.db, input.clientId);
-      assertTenant(client, ctx.user.agencyId);
+  list: protectedProcedure.input(z.object({ clientId: z.uuid() })).query(async ({ ctx, input }) => {
+    const client = await getClientById(ctx.db, input.clientId);
+    assertTenant(client, ctx.user.agencyId);
 
-      return listReports(ctx.db, input.clientId);
-    }),
+    return listReports(ctx.db, input.clientId);
+  }),
 
   get: protectedProcedure.input(z.object({ id: z.uuid() })).query(async ({ ctx, input }) => {
     const report = await getReportById(ctx.db, input.id);
@@ -476,9 +474,7 @@ export const reportsRouter = router({
 
       // Аудит — снимок «как сейчас», поэтому берётся последняя свёртка,
       // а не движение за период: движения ещё не было.
-      const rollups = snapshotRows.filter(
-        (row) => row.clusterId === null && row.platform === null,
-      );
+      const rollups = snapshotRows.filter((row) => row.clusterId === null && row.platform === null);
       const latest = rollups.at(-1);
 
       const snapshots: VisibilitySnapshot[] = latest
@@ -567,7 +563,6 @@ export const reportsRouter = router({
       return report;
     }),
 
-  /** Выдаёт ссылку для клиента агентства. Повторный вызов её не меняет. */
   /**
    * Отозвать ссылку на отчёт: она перестаёт открываться, а следующая
    * выдача даст новую. Так обещано в политике конфиденциальности и DPA.
@@ -587,6 +582,7 @@ export const reportsRouter = router({
       return { reportId: report.id };
     }),
 
+  /** Выдаёт ссылку для клиента агентства. Повторный вызов её не меняет. */
   share: roleProcedure("member")
     .input(z.object({ reportId: z.uuid() }))
     .mutation(async ({ ctx, input }) => {
@@ -607,7 +603,8 @@ export const reportsRouter = router({
       // бессмысленным.
       const token = randomBytes(32).toString("base64url");
       await createReportShare(ctx.db, { reportId: report.id, token });
-      await setReportStatus(ctx.db, report.id, "shared");
+      // Подтверждённый отчёт новой ссылкой обратно в «отправлен» не уходит.
+      if (report.status === "draft") await setReportStatus(ctx.db, report.id, "shared");
 
       return { token, created: true };
     }),
@@ -640,7 +637,8 @@ export const reportsRouter = router({
       if (!share) {
         const token = randomBytes(32).toString("base64url");
         share = await createReportShare(ctx.db, { reportId: report.id, token });
-        await setReportStatus(ctx.db, report.id, "shared");
+        // Подтверждённый отчёт новой ссылкой обратно в «отправлен» не уходит.
+        if (report.status === "draft") await setReportStatus(ctx.db, report.id, "shared");
       }
 
       const message = reportReadyEmail({

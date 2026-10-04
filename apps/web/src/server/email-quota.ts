@@ -17,6 +17,7 @@ import { entitlementsForAgency } from "./subscription";
  */
 export const PAID_EMAILS_PER_DAY = 50;
 export const FREE_PENDING_INVITES = 3;
+export const FREE_INVITES_PER_DAY = 5;
 
 const DAY_SECONDS = 24 * 60 * 60;
 
@@ -51,6 +52,14 @@ export async function assertMayInvite(db: Database, agencyId: string): Promise<v
       throw new TRPCError({
         code: "FORBIDDEN",
         message: `Up to ${FREE_PENDING_INVITES} invitations can wait at once before a plan. Wait for one to be accepted or to expire.`,
+      });
+    }
+    // Отзыв освобождает место в ожидании, и «пригласить — отозвать —
+    // пригласить» слало бы письма без конца. Суточный счёт закрывает это.
+    if (!(await hit(`agency-invite:${agencyId}`, FREE_INVITES_PER_DAY, DAY_SECONDS))) {
+      throw new TRPCError({
+        code: "TOO_MANY_REQUESTS",
+        message: `Up to ${FREE_INVITES_PER_DAY} invitations a day before a plan. Try again tomorrow.`,
       });
     }
     return;

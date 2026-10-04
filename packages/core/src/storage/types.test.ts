@@ -44,12 +44,14 @@ describe("sniffImageType", () => {
     );
     expect(sniffImageType(text('<svg xmlns="http://www.w3.org/2000/svg"/>'))).toBe("image/svg+xml");
     expect(sniffImageType(text('<?xml version="1.0"?><svg/>'))).toBe("image/svg+xml");
+    expect(sniffImageType(text("<!-- Generator: Figma --><svg/>"))).toBe("image/svg+xml");
+    expect(sniffImageType(text("<!DOCTYPE svg><svg/>"))).toBe("image/svg+xml");
   });
 
   it("что угодно другое под видом картинки не проходит", () => {
     // Тип из формы задаёт загружающий — верить ему нельзя.
     expect(sniffImageType(text("%PDF-1.4 fake"))).toBeNull();
-    expect(sniffImageType(text("<html><script>alert(1)</script>"))).toBeNull();
+    expect(sniffImageType(text("<html><script>alert(1)</script></html>"))).toBeNull();
     expect(sniffImageType(bytes())).toBeNull();
   });
 });

@@ -62,8 +62,10 @@ export function sniffImageType(bytes: Uint8Array): string | null {
   ) {
     return "image/webp";
   }
-  const head = new TextDecoder().decode(bytes.slice(0, 512)).trimStart().toLowerCase();
-  if (head.startsWith("<svg") || (head.startsWith("<?xml") && head.includes("<svg"))) {
+  // SVG начинается с разметки — с самого тега, с объявления XML, с
+  // комментария или DOCTYPE. Сам тег ищется в начале файла.
+  const head = new TextDecoder().decode(bytes.slice(0, 1024)).trimStart().toLowerCase();
+  if (head.startsWith("<") && head.includes("<svg")) {
     return "image/svg+xml";
   }
   return null;

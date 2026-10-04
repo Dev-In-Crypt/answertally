@@ -190,6 +190,13 @@
       "when": 1791059893839,
       "tag": "0026_brainy_vulcan",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1791113930922,
+      "tag": "0027_expire_old_shares",
+      "breakpoints": true
     }
   ]
 }

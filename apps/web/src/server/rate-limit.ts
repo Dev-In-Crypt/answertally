@@ -50,7 +50,9 @@ export async function hit(
     }
     return count <= max;
   } catch (error) {
-    console.error("[rate-limit] fell back to memory", error);
+    // Одна строка, без стека: при недоступном Redis это случается на каждый
+    // запрос, и стеки забили бы журнал.
+    console.error(`[rate-limit] fell back to memory: ${(error as Error).message}`);
     return hitLocal(key, max, windowSeconds, now);
   }
 }

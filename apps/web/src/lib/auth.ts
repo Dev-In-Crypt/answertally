@@ -61,17 +61,19 @@ export function deriveAgencyName(email: string): string {
 export const SIGNUP_RATE_LIMIT = { window: 3600, max: 3 } as const;
 
 /**
- * Писем подтверждения и сброса — не больше пяти в сутки на один адрес.
+ * Писем подтверждения и сброса — не больше десяти каждого вида в сутки на адрес.
  *
  * Лимит по IP их не держит: зарегистрировав чужой адрес и меняя адреса,
  * можно было слать жертве письма от нашего домена без конца — и жечь его
  * репутацию. Сверх лимита письмо молча не уходит: ответ тот же, чтобы не
  * подсказывать, сработал ли лимит.
  */
-export const AUTH_EMAILS_PER_ADDRESS_PER_DAY = 5;
+export const AUTH_EMAILS_PER_ADDRESS_PER_DAY = 10;
 
-async function mayMailAddress(email: string): Promise<boolean> {
-  return hit(`auth-mail:${email.toLowerCase()}`, AUTH_EMAILS_PER_ADDRESS_PER_DAY, 24 * 60 * 60);
+async function mayMailAddress(kind: "reset" | "verify", email: string): Promise<boolean> {
+  // Счётчики раздельные: иначе пять чужих запросов сброса закрывали бы
+  // человеку и письмо подтверждения.
+  return hit(`auth-mail:${kind}:${email.toLowerCase()}`, AUTH_EMAILS_PER_ADDRESS_PER_DAY, 24 * 60 * 60);
 }
 
 export const auth = betterAuth({
@@ -101,7 +103,7 @@ export const auth = betterAuth({
      * ссылка уходит в лог — восстановить доступ всё равно можно.
      */
     sendResetPassword: async ({ user, url }) => {
-      if (!(await mayMailAddress(user.email))) return;
+      if (!(await mayMailAddress("reset", user.email))) return;
       await getEmailSender().send(passwordResetEmail({ to: user.email, resetUrl: url }));
     },
     // Сброс пароля выкидывает все остальные входы: иначе укравший сессию
@@ -127,7 +129,7 @@ export const auth = betterAuth({
      * «требуем, но не отправляем».
      */
     sendVerificationEmail: async ({ user, url }) => {
-      if (!(await mayMailAddress(user.email))) return;
+      if (!(await mayMailAddress("verify", user.email))) return;
       await getEmailSender().send(verifyEmailEmail({ to: user.email, verifyUrl: url }));
     },
   },
