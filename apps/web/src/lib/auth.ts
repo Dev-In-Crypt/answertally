@@ -14,6 +14,7 @@ import {
   claimInvitation,
   findUserByCanonicalEmail,
   getUserById,
+  reactivateByInvitation,
   sessions,
   users,
   verifications,
@@ -172,9 +173,11 @@ export const auth = betterAuth({
         // отозваны при удалении, а новую он не получит.
         before: async (session) => {
           const user = await getUserById(db, session.userId);
-          if (user?.deactivatedAt) {
+          // Новое приглашение на его адрес возвращает участника при входе.
+          if (user?.deactivatedAt && !(await reactivateByInvitation(db, user))) {
             throw new APIError("FORBIDDEN", {
-              message: "This account was removed from its workspace. Ask the owner to invite you again.",
+              message:
+                "This account was removed from its workspace. Ask the owner to invite you again, then sign in.",
             });
           }
         },

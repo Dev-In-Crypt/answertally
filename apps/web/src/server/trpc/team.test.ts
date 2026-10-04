@@ -1,5 +1,12 @@
 import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
-import { createAgency, createDb, createUser, deleteAgency, getUserById } from "@repo/db";
+import {
+  createAgency,
+  createDb,
+  createUser,
+  deleteAgency,
+  getUserById,
+  reactivateByInvitation,
+} from "@repo/db";
 import { appRouter } from "./root";
 import type { SessionUser, TrpcContext, UserRole } from "./context";
 
@@ -131,4 +138,19 @@ describe("команда агентства", () => {
     await expect(caller(agencyId, owner).agency.inviteInfo({ token })).rejects.toThrow();
     expect(await caller(agencyId, owner).agency.invites()).toHaveLength(0);
   });
+
+  it("убранного участника возвращает новое приглашение на его адрес", async () => {
+    // Раньше вернуть его было нельзя: регистрация упиралась в существующий
+    // аккаунт, а вход — в отметку об удалении.
+    await caller(agencyId, owner).agency.removeMember({ userId: member.id });
+    const removed = (await getUserById(db, member.id))!;
+    expect(await reactivateByInvitation(db, removed)).toBeUndefined();
+
+    await caller(agencyId, owner).agency.invite({ email: removed.email });
+    const invitation = await reactivateByInvitation(db, removed);
+
+    expect(invitation?.agencyId).toBe(agencyId);
+    expect((await getUserById(db, member.id))?.deactivatedAt).toBeNull();
+  });
 });
+

@@ -2085,6 +2085,40 @@ export async function setUserRole(
     .where(and(eq(users.id, userId), eq(users.agencyId, agencyId)));
 }
 
+/**
+ * Вернуть убранного участника по новому приглашению на его адрес.
+ *
+ * Регистрация тут не поможет — аккаунт уже есть, — поэтому приглашение
+ * принимается при входе: пароль доказывает, что это он. Касается только
+ * деактивированных: действующий участник одного агентства этим путём в
+ * другое не переходит. `undefined` — подходящего приглашения нет.
+ */
+export async function reactivateByInvitation(
+  db: Database,
+  user: { id: string; email: string },
+  now: Date = new Date(),
+) {
+  const rows = await db
+    .update(invitations)
+    .set({ accepted: true })
+    .where(
+      and(
+        eq(invitations.accepted, false),
+        gt(invitations.expiresAt, now),
+        sql`lower(${invitations.email}) = ${user.email.toLowerCase()}`,
+      ),
+    )
+    .returning();
+  const invitation = rows[0];
+  if (!invitation) return undefined;
+
+  await db
+    .update(users)
+    .set({ deactivatedAt: null, agencyId: invitation.agencyId, role: invitation.role as User["role"] })
+    .where(eq(users.id, user.id));
+  return invitation;
+}
+
 /** Отозвать приглашение — срок истекает сейчас, ссылка перестаёт работать. */
 export async function revokeInvitation(db: Database, id: string, agencyId: string): Promise<void> {
   await db

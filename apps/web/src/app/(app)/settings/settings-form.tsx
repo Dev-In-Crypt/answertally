@@ -193,16 +193,25 @@ function TeamSection() {
               ) : (
                 <span className="text-muted-foreground">{member.role}</span>
               )}
-              {myRole !== "member" && !member.isYou && member.role !== "owner" && (
-                <button
-                  type="button"
-                  onClick={() => removeMember.mutate({ userId: member.id })}
-                  disabled={removeMember.isPending}
-                  className={buttonClass("outline", "sm")}
-                >
-                  Remove
-                </button>
-              )}
+              {/* Администратора убирает только владелец — кнопку видит только он. */}
+              {myRole !== "member" &&
+                !member.isYou &&
+                member.role !== "owner" &&
+                (member.role !== "admin" || myRole === "owner") && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      // Без подтверждения один промах закрывал человеку доступ.
+                      if (window.confirm(`Remove ${member.email} from the workspace?`)) {
+                        removeMember.mutate({ userId: member.id });
+                      }
+                    }}
+                    disabled={removeMember.isPending}
+                    className={buttonClass("outline", "sm")}
+                  >
+                    Remove
+                  </button>
+                )}
             </span>
           </li>
         ))}
