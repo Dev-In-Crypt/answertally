@@ -96,5 +96,12 @@ export async function postJson<T>(options: PostJsonOptions): Promise<T> {
  * чтобы рассуждение модели не обрезало обычный ответ.
  */
 export const MAX_ANSWER_OUTPUT_TOKENS = 8000;
+
+/**
+ * У OpenAI в потолок ответа входят и токены рассуждения: при 8000 длинное
+ * рассуждение съедало весь бюджет, и оплаченный ответ приходил пустым.
+ * Выход у gpt-6-luna — $0.5 за миллион, так что 16k — меньше цента.
+ */
+export const MAX_OPENAI_OUTPUT_TOKENS = 16000;
 export const MAX_SEARCHES_PER_ANSWER = 5;
 

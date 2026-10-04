@@ -184,11 +184,9 @@ describe("PerplexityAdapter", () => {
 
     expect(url).toBe("https://api.perplexity.ai/v1/agent");
     expect((init.headers as Record<string, string>)["Authorization"]).toBe("Bearer test-key");
-    expect(body).toEqual({
-      preset: "fast",
-      input: "best CRM for startups",
-      max_output_tokens: 8000,
-    });
+    // Потолок длины и шагов задаёт пресет (8192 токена): свой ниже него
+    // только выбрасывал бы оплаченные длинные ответы.
+    expect(body).toEqual({ preset: "fast", input: "best CRM for startups" });
   });
 
   it("язык и регион уходят инструкцией", async () => {

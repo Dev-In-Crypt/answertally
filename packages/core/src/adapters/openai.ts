@@ -1,6 +1,6 @@
 import type { AdapterOptions, AdapterResult, Citation, PlatformAdapter } from "./types";
 import { adapterResultSchema } from "./types";
-import { MAX_ANSWER_OUTPUT_TOKENS, MAX_SEARCHES_PER_ANSWER } from "./http";
+import { MAX_OPENAI_OUTPUT_TOKENS, MAX_SEARCHES_PER_ANSWER } from "./http";
 
 /**
  * Живой адаптер ChatGPT: Responses API с включённым инструментом веб-поиска.
@@ -255,7 +255,7 @@ export class OpenAiAdapter implements PlatformAdapter {
       tools: [{ type: "web_search" }],
       input: prompt,
       reasoning: { effort: this.reasoningEffort },
-      max_output_tokens: MAX_ANSWER_OUTPUT_TOKENS,
+      max_output_tokens: MAX_OPENAI_OUTPUT_TOKENS,
       max_tool_calls: MAX_SEARCHES_PER_ANSWER,
       ...(opts?.lang || opts?.geo
         ? {

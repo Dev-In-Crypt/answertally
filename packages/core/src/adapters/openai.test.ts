@@ -237,7 +237,7 @@ describe("OpenAiAdapter", () => {
     expect(body.tools).toEqual([{ type: "web_search" }]);
     expect(body.model).toBe("gpt-5.6-luna");
     // Вопрос задаёт агентство: «сделай тридцать поисков» не должно проходить.
-    expect(body.max_output_tokens).toBe(8000);
+    expect(body.max_output_tokens).toBe(16000);
     expect(body.max_tool_calls).toBe(5);
   });
 
