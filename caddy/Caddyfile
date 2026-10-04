@@ -32,5 +32,10 @@
 			request>uri delete
 		}
 	}
+	# www — только вход на основной адрес. Отдавать на нём само приложение
+	# нельзя: куки входа и адрес возврата привязаны к основному домену, и
+	# вход на www зависал на «Please wait…».
+	@www header_regexp www Host ^www\.(.+)$
+	redir @www https://{re.www.1}{uri} permanent
 	reverse_proxy web:3000
 }
