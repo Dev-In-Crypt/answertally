@@ -8,10 +8,7 @@ import { buttonClass } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/field";
 import { cn } from "@/lib/utils";
 
-function cadenceLabelOf(
-  options: { id: string; label: string }[],
-  cadence: Cadence,
-): string {
+function cadenceLabelOf(options: { id: string; label: string }[], cadence: Cadence): string {
   return options.find((option) => option.id === cadence)?.label ?? cadence;
 }
 
@@ -108,9 +105,7 @@ export function SchedulePanel({ clientId }: { clientId: string }) {
 
   function togglePlatform(platform: Platform): void {
     setPlatforms((current) =>
-      current.includes(platform)
-        ? current.filter((p) => p !== platform)
-        : [...current, platform],
+      current.includes(platform) ? current.filter((p) => p !== platform) : [...current, platform],
     );
   }
 
@@ -342,6 +337,28 @@ export function SchedulePanel({ clientId }: { clientId: string }) {
                   ? " Lower the cadence, the samples, or the number of assistants to fit."
                   : ""}
               </p>
+              {options.otherClientsMonthly > 0 && (
+                <p
+                  data-testid="schedule-agency-total"
+                  className={
+                    estimate.answersPerMonth + options.otherClientsMonthly > estimate.allowance
+                      ? "text-destructive"
+                      : "text-muted-foreground"
+                  }
+                >
+                  With your other clients&rsquo; schedules:{" "}
+                  <span className="metric">
+                    {(estimate.answersPerMonth + options.otherClientsMonthly).toLocaleString(
+                      "en-US",
+                    )}
+                  </span>{" "}
+                  of <span className="metric">{estimate.allowance.toLocaleString("en-US")}</span> a
+                  month.
+                  {estimate.answersPerMonth + options.otherClientsMonthly > estimate.allowance
+                    ? " Above the plan: once the month's checks run out, new runs wait until the 1st."
+                    : ""}
+                </p>
+              )}
               {/*
                 Себестоимость ответа агентству не показывается: это наша цифра,
                 а не его. Агентство платит за тариф и решает по проверкам —

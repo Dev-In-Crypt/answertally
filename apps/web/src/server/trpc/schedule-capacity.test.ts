@@ -112,6 +112,30 @@ describe("ёмкость расписания", () => {
     expect(capacity.promptCount).toBe(3);
   });
 
+  it("складывает расход расписаний остальных клиентов агентства", async () => {
+    // Лимит — на всё агентство: форма одного клиента должна видеть остальных.
+    const caller = appRouter.createCaller(contextFor(userIn(agencyId)));
+    expect((await caller.runs.capacity({ clientId })).otherClientsMonthly).toBe(0);
+
+    const other = await createClient(db, { agencyId, name: "Other", domain: "other-cap.test" });
+    const cluster = await createPromptCluster(db, {
+      clientId: other.id,
+      name: "C",
+      intent: "other",
+    });
+    await createPrompt(db, { clusterId: cluster.id, text: "q", isControl: false });
+    await caller.runs.saveSchedule({
+      clientId: other.id,
+      cadence: "weekly",
+      platforms: ["chatgpt"],
+      samplesPerPrompt: 3,
+      active: true,
+    });
+
+    // 1 вопрос × 1 ассистент × 3 сэмпла × 4.35 прогона.
+    expect((await caller.runs.capacity({ clientId })).otherClientsMonthly).toBe(13);
+  });
+
   it("цена ответа берётся из кода, а не назначается экраном", async () => {
     const caller = appRouter.createCaller(contextFor(userIn(agencyId)));
     const capacity = await caller.runs.capacity({ clientId });

@@ -1,11 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import {
-  parseAdaptersMode,
-  PLATFORM_IDS,
-  type AdaptersMode,
-  type PlanId,
-} from "@repo/core";
+import { parseAdaptersMode, PLATFORM_IDS, type AdaptersMode, type PlanId } from "@repo/core";
 import {
   capacityOptions,
   isCadence,
@@ -15,7 +10,9 @@ import {
 import {
   capabilitiesFor,
   capabilitiesForAgency,
+  monthlyAnswers,
   plannedChecksForRun,
+  platformsForRun,
 } from "@repo/core/config/measurement";
 import { completeRun, startRunIfAllowed } from "@repo/pipeline";
 import {
@@ -25,6 +22,7 @@ import {
   getPromptClusterById,
   getScheduleForClient,
   listActivePromptsForClient,
+  listClientsByAgency,
   listResponsesForPrompt,
   listRecentRuns,
   logActivity,
@@ -44,10 +42,9 @@ const platformEnum = z.enum(PLATFORM_IDS);
  * означал бы вторую точку правды, и добавленная в конфиг частота молча не
  * проходила бы валидацию входа.
  */
-const cadenceSchema = z.custom<Cadence>(
-  (value) => typeof value === "string" && isCadence(value),
-  { message: "Unknown cadence." },
-);
+const cadenceSchema = z.custom<Cadence>((value) => typeof value === "string" && isCadence(value), {
+  message: "Unknown cadence.",
+});
 
 /**
  * Прогон стоит денег, поэтому его начало проверяется по подписке.
@@ -100,6 +97,28 @@ function plannedChecks(
   return plannedChecksForRun(capabilitiesForAgency(entitlements), promptCount, schedule);
 }
 
+async function otherClientsMonthly(
+  db: TrpcContext["db"],
+  agencyId: string,
+  clientId: string,
+  capabilities: ReturnType<typeof capabilitiesForAgency>,
+): Promise<number> {
+  const clients = (await listClientsByAgency(db, agencyId)).filter((c) => c.id !== clientId);
+  let total = 0;
+  for (const client of clients) {
+    const schedule = await getScheduleForClient(db, client.id);
+    if (!schedule?.active) continue;
+    const prompts = await listActivePromptsForClient(db, client.id);
+    total += monthlyAnswers({
+      prompts: prompts.length,
+      assistants: platformsForRun(capabilities, schedule.platforms).length,
+      samplesPerPrompt: schedule.samplesPerPrompt,
+      cadence: schedule.cadence,
+    });
+  }
+  return total;
+}
+
 export const runsRouter = router({
   schedule: protectedProcedure
     .input(z.object({ clientId: z.uuid() }))
@@ -131,6 +150,19 @@ export const runsRouter = router({
         ...capacityOptions(entitlements.plan, capabilitiesFor, capabilitiesForAgency(entitlements)),
         /** Активные вопросы клиента — множитель, на который считается оценка. */
         promptCount: prompts.length,
+        /**
+         * Сколько в месяц съедают расписания остальных клиентов агентства.
+         *
+         * Месячный лимит тарифа — потолок на всё агентство: сверх него новые
+         * прогоны не начинаются до первого числа. Без этой суммы форма одного
+         * клиента показывала «помещается», а вместе расписания не помещались.
+         */
+        otherClientsMonthly: await otherClientsMonthly(
+          ctx.db,
+          ctx.user.agencyId,
+          input.clientId,
+          capabilitiesForAgency(entitlements),
+        ),
       };
     }),
 
@@ -171,13 +203,11 @@ export const runsRouter = router({
       return upsertRunSchedule(ctx.db, clientId, values);
     }),
 
-  list: protectedProcedure
-    .input(z.object({ clientId: z.uuid() }))
-    .query(async ({ ctx, input }) => {
-      const client = await getClientById(ctx.db, input.clientId);
-      assertTenant(client, ctx.user.agencyId);
-      return listRecentRuns(ctx.db, input.clientId, 10);
-    }),
+  list: protectedProcedure.input(z.object({ clientId: z.uuid() })).query(async ({ ctx, input }) => {
+    const client = await getClientById(ctx.db, input.clientId);
+    assertTenant(client, ctx.user.agencyId);
+    return listRecentRuns(ctx.db, input.clientId, 10);
+  }),
 
   get: protectedProcedure.input(z.object({ id: z.uuid() })).query(async ({ ctx, input }) => {
     const run = await getRunById(ctx.db, input.id);
@@ -287,9 +317,8 @@ export const runsRouter = router({
         { clientId: input.clientId, scheduleId: null, adaptersMode: mode },
       );
 
-      const outcome = mode === "mock"
-        ? await completeRun(ctx.db, run.id, input.clientId, mode)
-        : null;
+      const outcome =
+        mode === "mock" ? await completeRun(ctx.db, run.id, input.clientId, mode) : null;
 
       if (outcome) {
         await logActivity(ctx.db, {
