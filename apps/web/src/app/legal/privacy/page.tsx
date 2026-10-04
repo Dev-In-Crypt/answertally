@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { LEGAL_ENTITY } from "@/config/legal";
+import { SUPPORT_EMAIL } from "@/config/site";
 
 /**
  * Политика конфиденциальности.
@@ -177,8 +178,9 @@ export default function PrivacyPage() {
           </>
         ) : (
           <>
-            A contact address will be published here with the operating company. Until then, reach
-            us through the agency that gave you the link, or the contact on the site.
+            Write to <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>. If you are in the EEA
+            or the UK and we have not resolved something, you may complain to your national data
+            protection authority.
           </>
         )}
       </p>

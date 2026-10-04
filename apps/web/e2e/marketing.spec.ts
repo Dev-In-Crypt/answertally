@@ -259,3 +259,12 @@ test("no marketing page scrolls sideways at 375px", async ({ page }) => {
     expect(overflow.scroll, `${entry.path} scrolls sideways`).toBeLessThanOrEqual(overflow.client);
   }
 });
+
+test("a support address is visible in the footer and on the legal pages", async ({ page }) => {
+  // Платёжный провайдер проверяет, что почта поддержки видна на сайте.
+  await page.goto("/");
+  await expect(page.getByTestId("support-email")).toHaveText("support@answertally.com");
+
+  await page.goto("/legal/terms");
+  await expect(page.getByText("support@answertally.com").first()).toBeVisible();
+});

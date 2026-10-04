@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LEGAL_ENTITY, LEGAL_LAST_UPDATED } from "@/config/legal";
+import { SUPPORT_EMAIL } from "@/config/site";
 import { MarketingShell } from "@/components/marketing/chrome";
 
 /**
@@ -44,6 +45,10 @@ export default function LegalLayout({ children }: { children: React.ReactNode })
             <footer className="legal-foot">
               <p>
                 Last updated <span className="mono">{LEGAL_LAST_UPDATED}</span>.
+              </p>
+              <p>
+                Support and questions about these terms:{" "}
+                <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.
               </p>
               {LEGAL_ENTITY ? (
                 <p>

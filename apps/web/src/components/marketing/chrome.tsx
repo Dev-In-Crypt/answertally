@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { MARKETING_COPY } from "@repo/core";
+import { SUPPORT_EMAIL } from "@/config/site";
 import { Wordmark } from "./logo";
 import "./marketing.css";
 
@@ -136,6 +137,9 @@ export function MarketingFooter() {
             <Link href="/legal/dpa">Data processing</Link>
             <Link href="/legal/subprocessors">Sub-processors</Link>
             <Link href="/legal/cookies">Cookies</Link>
+            <a href={`mailto:${SUPPORT_EMAIL}`} data-testid="support-email">
+              {SUPPORT_EMAIL}
+            </a>
           </span>
           <span>© 2026 Answertally</span>
         </div>

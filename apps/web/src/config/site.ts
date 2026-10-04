@@ -37,3 +37,12 @@ export const SALES_CONTACT: SalesContact | null = readContact();
  * открывает, не должна вести на чужой бренд.
  */
 export const REPORT_HOST: string | null = process.env.NEXT_PUBLIC_REPORT_HOST?.trim() || null;
+
+/**
+ * Почта поддержки — та же, что указана в магазине у платёжного провайдера.
+ *
+ * Провайдер оплаты проверяет, что её видно на сайте (подвал и юридические
+ * страницы), и сверяет с адресом в чеках. Адрес публичный, поэтому в коде.
+ */
+export const SUPPORT_EMAIL = "support@answertally.com";
+
