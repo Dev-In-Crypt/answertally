@@ -1102,11 +1102,14 @@ export async function inFlightRemainingChecks(db: Database, agencyId: string): P
 }
 
 /**
- * Измеряли ли этот сайт вживую в другом агентстве.
+ * Получал ли этот сайт бесплатный аудит в другом, неплатящем агентстве.
  *
  * Бесплатный аудит обещан «на один бренд», а не «на один аккаунт»: десять
  * аккаунтов на один сайт — это десять аудитов одного и того же за наш счёт.
- * Домен клиента хранится нормализованным (`normalizeDomain` при заведении).
+ * Считаются только прогоны, давшие ответы, и только у агентств без
+ * действующей подписки: платный замер того же бренда — обычная работа, и
+ * агентство-конкурент, которое бренд питчит, не должно из-за него остаться
+ * без пробного аудита. Домен клиента хранится нормализованным.
  *
  * ponytail: без индекса по домену — пока клиентов тысячи, это быстро.
  */
@@ -1124,6 +1127,8 @@ export async function domainMeasuredElsewhere(
         eq(clients.domain, domain),
         sql`${clients.agencyId} <> ${agencyId}`,
         eq(runs.adaptersMode, "live"),
+        sql`exists (select 1 from ${responses} where ${responses.runId} = ${runs.id})`,
+        sql`not exists (select 1 from ${subscriptions} where ${subscriptions.agencyId} = ${clients.agencyId} and ${subscriptions.status} in ('active', 'trialing', 'past_due'))`,
       ),
     )
     .limit(1);

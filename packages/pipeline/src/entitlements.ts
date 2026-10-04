@@ -167,7 +167,9 @@ async function afterDowngradeOrFarming(
   if (values.adaptersMode === "live" && !entitlements.paying) {
     const client = await getClientById(db, values.clientId);
     if (client && (await domainMeasuredElsewhere(db, client.domain, agencyId))) {
-      return `${client.domain} already had its free audit in another workspace. Pick a plan to measure it, or audit a different brand.`;
+      // Текст общий: назвать «другое агентство» значило бы сказать
+      // постороннему, что этот бренд у кого-то на платформе есть.
+      return `${client.domain} has already had its free audit. Pick a plan to measure it, or audit a different brand.`;
     }
   }
 

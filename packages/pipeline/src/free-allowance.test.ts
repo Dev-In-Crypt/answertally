@@ -4,6 +4,9 @@ import {
   createAgency,
   createClient,
   createDb,
+  createPrompt,
+  createPromptCluster,
+  createResponse,
   createRun,
   deleteAgency,
   finishRun,
@@ -208,6 +211,24 @@ describe("один бесплатный аудит на сайт", () => {
     return { agencyId, clientId };
   }
 
+  /** Аудит, давший хотя бы один ответ. */
+  async function auditedWithAnswer(agencyId: string, clientId: string) {
+    const values = { scheduleId: null, trigger: "manual" as const, adaptersMode: "live" as const };
+    const { run } = await startRunIfAllowed(db, agencyId, { ...values, clientId }, 144);
+    const cluster = await createPromptCluster(db, { clientId, name: "C", intent: "other" });
+    const prompt = await createPrompt(db, { clusterId: cluster.id, text: "best CRM" });
+    await createResponse(db, {
+      runId: run!.id,
+      promptId: prompt.id,
+      platform: "chatgpt",
+      modelVersion: "test",
+      sampleIndex: 0,
+      rawText: "answer",
+      latencyMs: 1,
+      costUsd: "0.01",
+    });
+  }
+
   it("тот же домен в другом бесплатном аккаунте аудита не получает", async () => {
     // Десять аккаунтов на один сайт — это десять аудитов одного и того же.
     const domain = `farm-${crypto.randomUUID().slice(0, 8)}.test`;
@@ -215,10 +236,7 @@ describe("один бесплатный аудит на сайт", () => {
     const second = await agencyWithClient(domain);
     const values = { scheduleId: null, trigger: "manual" as const, adaptersMode: "live" as const };
 
-    expect(
-      (await startRunIfAllowed(db, first.agencyId, { ...values, clientId: first.clientId }, 144))
-        .run,
-    ).not.toBeNull();
+    await auditedWithAnswer(first.agencyId, first.clientId);
 
     const refused = await startRunIfAllowed(
       db,
@@ -228,6 +246,24 @@ describe("один бесплатный аудит на сайт", () => {
     );
     expect(refused.run).toBeNull();
     expect(refused.decision.message).toContain(domain);
+    // Текст не выдаёт, что бренд есть у кого-то ещё на платформе.
+    expect(refused.decision.message).not.toMatch(/workspace/i);
+  });
+
+  it("аудит, не давший ответов, домен не занимает", async () => {
+    const domain = `farm-${crypto.randomUUID().slice(0, 8)}.test`;
+    const first = await agencyWithClient(domain);
+    const second = await agencyWithClient(domain);
+    const values = { scheduleId: null, trigger: "manual" as const, adaptersMode: "live" as const };
+
+    await startRunIfAllowed(db, first.agencyId, { ...values, clientId: first.clientId }, 144);
+    const allowed = await startRunIfAllowed(
+      db,
+      second.agencyId,
+      { ...values, clientId: second.clientId },
+      144,
+    );
+    expect(allowed.run).not.toBeNull();
   });
 
   it("платящему тот же домен измерять можно", async () => {
