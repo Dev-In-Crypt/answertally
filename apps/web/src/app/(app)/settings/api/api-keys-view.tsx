@@ -76,6 +76,8 @@ export function ApiKeysView({ canManage }: { canManage: boolean }) {
               <input
                 value={name}
                 onChange={(event) => setName(event.target.value)}
+                // Тот же потолок, что у сервера (apiKeys.create: max 100).
+                maxLength={100}
                 placeholder="Looker Studio"
                 className={cn(controlClass, "h-10 px-3")}
               />
@@ -83,10 +85,10 @@ export function ApiKeysView({ canManage }: { canManage: boolean }) {
             <button
               type="button"
               data-testid="create-api-key"
-              disabled={!name || create.isPending}
+              disabled={!name.trim() || create.isPending}
               onClick={() => {
                 setError(null);
-                create.mutate({ name });
+                create.mutate({ name: name.trim() });
               }}
               className={buttonClass("primary", "lg")}
             >

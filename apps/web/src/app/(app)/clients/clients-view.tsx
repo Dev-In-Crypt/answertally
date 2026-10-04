@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { api } from "@/trpc/react";
+import { ASK_ADMIN_TO_ADD_CLIENT } from "@/lib/role";
+import { useCan } from "@/lib/role-context";
 import { EmptyState } from "@/components/page-header";
 import { buttonClass } from "@/components/ui/button";
 import { SkeletonCards } from "@/components/ui/skeleton";
@@ -9,6 +11,7 @@ import { Users } from "lucide-react";
 
 export function ClientsView() {
   const clients = api.clients.list.useQuery();
+  const canAddClient = useCan("admin");
   // Доля берётся из той же сводки, что и главная: две разные цифры одного
   // клиента на соседних экранах хуже, чем любая из них.
   const portfolio = api.clients.portfolio.useQuery();
@@ -47,14 +50,20 @@ export function ClientsView() {
       <EmptyState
         title="No clients yet"
         icon={Users}
-        description="Add your first client to start measuring how often AI assistants mention them, and where competitors show up instead."
+        description={
+          canAddClient
+            ? "Add your first client to start measuring how often AI assistants mention them, and where competitors show up instead."
+            : ASK_ADMIN_TO_ADD_CLIENT
+        }
         action={
-          <Link
-            href="/clients/new"
-            className={buttonClass("primary", "lg")}
-          >
-            Add client
-          </Link>
+          canAddClient && (
+            <Link
+              href="/clients/new"
+              className={buttonClass("primary", "lg")}
+            >
+              Add client
+            </Link>
+          )
         }
       />
     );

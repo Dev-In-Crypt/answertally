@@ -165,6 +165,8 @@ export const runsRouter = router({
         ...capacityOptions(entitlements.plan, capabilitiesFor, capabilitiesForAgency(entitlements)),
         /** Активные вопросы клиента — множитель, на который считается оценка. */
         promptCount: prompts.length,
+        /** Без оплаты расписание не сохраняется — форма показывает это заранее. */
+        paying: entitlements.paying,
         /**
          * Сколько в месяц съедают расписания остальных клиентов агентства.
          *
@@ -213,13 +215,15 @@ export const runsRouter = router({
         });
       }
 
-      const prompts = await listActivePromptsForClient(ctx.db, input.clientId);
-
-      const refusal = refuseSchedule(capabilitiesForAgency(entitlements), {
-        cadence: input.cadence,
-        assistants: input.platforms,
-        promptCount: prompts.length,
-      });
+      // Пауза ничего не запускает и не тратит, поэтому тариф её не проверяет:
+      // после понижения тарифа старое расписание иначе нельзя было бы остановить.
+      const refusal = input.active
+        ? refuseSchedule(capabilitiesForAgency(entitlements), {
+            cadence: input.cadence,
+            assistants: input.platforms,
+            promptCount: (await listActivePromptsForClient(ctx.db, input.clientId)).length,
+          })
+        : null;
 
       if (refusal) {
         throw new TRPCError({ code: "BAD_REQUEST", message: refusal.message });

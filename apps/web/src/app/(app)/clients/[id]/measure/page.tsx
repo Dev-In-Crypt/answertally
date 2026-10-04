@@ -6,6 +6,7 @@ import { api } from "@/trpc/react";
 import { PageHeader } from "@/components/page-header";
 import { MeasureView } from "./measure-view";
 import { OnboardingSteps } from "../onboarding/steps";
+import { ClientLoadError } from "../client-load-error";
 
 export default function MeasurePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -13,8 +14,8 @@ export default function MeasurePage({ params }: { params: Promise<{ id: string }
   const onboarding = searchParams.get("step") === "3";
   const client = api.clients.get.useQuery({ id });
 
-  if (client.error) {
-    return <PageHeader title="Client not found" description="It may have been removed." />;
+  if (client.error && !client.data) {
+    return <ClientLoadError error={client.error} retry={() => client.refetch()} />;
   }
 
   return (

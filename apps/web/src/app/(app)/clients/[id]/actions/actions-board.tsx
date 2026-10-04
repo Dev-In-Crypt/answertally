@@ -128,7 +128,7 @@ export function ActionsBoard({ clientId }: { clientId: string }) {
 
   // Сбой загрузки — не «действий нет»: пустое состояние зовёт завести их
   // заново, и агентство продублирует то, что уже есть.
-  if (actions.error) {
+  if (actions.error && !actions.data) {
     return (
       <div
         role="alert"

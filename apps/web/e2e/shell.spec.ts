@@ -69,7 +69,8 @@ test("app shell renders every route without console errors", async ({ page }) =>
 test("protected routes redirect anonymous visitors to login", async ({ page }) => {
   for (const route of ROUTES) {
     await page.goto(route);
-    await expect(page).toHaveURL(/\/login$/);
+    // Цель сохраняется в ?next: после входа человек попадает туда, куда шёл.
+    await expect(page).toHaveURL(new RegExp(`/login\\?next=${encodeURIComponent(route)}$`));
   }
 });
 

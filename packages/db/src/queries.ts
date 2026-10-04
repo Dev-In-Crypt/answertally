@@ -674,11 +674,24 @@ export async function listPortfolioRows(
     .from(actions)
     .where(inArray(actions.clientId, ids));
 
+  // Считаются отчёты, а не ссылки: отозванная или истёкшая ссылка согласования
+  // не принесёт, а повторно выданная не делает из одного отчёта два
+  // (то же правило, что в listAgencyReportsWithApproval).
   const pendingApprovals = await db
-    .select({ clientId: reports.clientId, shareId: reportShares.id })
-    .from(reportShares)
-    .innerJoin(reports, eq(reportShares.reportId, reports.id))
-    .where(and(inArray(reports.clientId, ids), isNull(reportShares.approvedAt)));
+    .select({ clientId: reports.clientId })
+    .from(reports)
+    .where(
+      and(
+        inArray(reports.clientId, ids),
+        eq(reports.status, "shared"),
+        sql`exists (
+          select 1 from ${reportShares}
+          where ${reportShares.reportId} = ${reports.id}
+            and ${reportShares.approvedAt} is null
+            and (${reportShares.expiresAt} is null or ${reportShares.expiresAt} > ${now.toISOString()}::timestamptz)
+        )`,
+      ),
+    );
 
   const lastRuns = await db
     .select({ clientId: runs.clientId, finishedAt: runs.finishedAt, startedAt: runs.startedAt })
@@ -2695,6 +2708,9 @@ export async function agencyRunStats(
           eq(clients.agencyId, agencyId),
           eq(runSchedules.active, true),
           lte(runSchedules.nextRunAt, endOfDay),
+          // Пропущенное расписание (нет вопросов, нет оплаты) держит срок, но
+          // сегодня не сработает — считать его «запланированным» было бы неправдой.
+          isNull(runSchedules.skipReason),
         ),
       ),
     db
@@ -2726,47 +2742,6 @@ export interface AgencyReportRow {
   createdAt: Date;
   /** Ссылка выдана, но клиент ещё не согласовал. */
   awaitingApproval: boolean;
-}
-
-/**
- * Все отчёты агентства одним списком.
- *
- * Отчёты живут у клиента, но вопрос «кому пора отправлять и кто ещё не
- * согласовал» — про всё агентство сразу, и обходить ради него клиентов по
- * одному значит платить запросом за каждого.
- */
-export async function listAgencyReports(
-  db: Database,
-  agencyId: string,
-): Promise<AgencyReportRow[]> {
-  const rows = await db
-    .select({
-      id: reports.id,
-      clientId: reports.clientId,
-      clientName: clients.name,
-      periodStart: reports.periodStart,
-      periodEnd: reports.periodEnd,
-      status: reports.status,
-      createdAt: reports.createdAt,
-      shareId: reportShares.id,
-      approvedAt: reportShares.approvedAt,
-    })
-    .from(reports)
-    .innerJoin(clients, eq(clients.id, reports.clientId))
-    .leftJoin(reportShares, eq(reportShares.reportId, reports.id))
-    .where(eq(clients.agencyId, agencyId))
-    .orderBy(desc(reports.createdAt));
-
-  return rows.map((row) => ({
-    id: row.id,
-    clientId: row.clientId,
-    clientName: row.clientName,
-    periodStart: row.periodStart,
-    periodEnd: row.periodEnd,
-    status: row.status,
-    createdAt: row.createdAt,
-    awaitingApproval: row.shareId !== null && row.approvedAt === null,
-  }));
 }
 
 /**
@@ -2830,6 +2805,26 @@ export async function finishRunWithNote(
   note: string | null,
 ): Promise<void> {
   await db.update(runs).set({ status, note, finishedAt: new Date() }).where(eq(runs.id, runId));
+}
+
+/**
+ * Закрывает прогон неудачей, только если он ещё идёт.
+ *
+ * Условие в самом UPDATE: запоздалый обработчик сбоя не должен затирать
+ * прогон, который успел закончиться (или был закрыт по сроку). Возвращает,
+ * закрыл ли.
+ */
+export async function failRunIfInFlight(
+  db: Database,
+  runId: string,
+  note: string,
+): Promise<boolean> {
+  const rows = await db
+    .update(runs)
+    .set({ status: "failed", note, finishedAt: new Date() })
+    .where(and(eq(runs.id, runId), inArray(runs.status, ["pending", "running"])))
+    .returning({ id: runs.id });
+  return rows.length > 0;
 }
 
 /** Пояснение к уже закрытому прогону (например, закрытому по сроку). */

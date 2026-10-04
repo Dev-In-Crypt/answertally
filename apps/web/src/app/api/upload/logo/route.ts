@@ -56,10 +56,14 @@ export async function POST(request: Request) {
 
   const extension = EXTENSION_BY_TYPE[sniffed] ?? "png";
   const key = logoKey(user.agencyId, extension);
-  const url = await storage.put(key, bytes, sniffed);
-
-  // Кэш-бастер: путь стабильный, поэтому браузер иначе покажет старый логотип.
-  await updateAgency(db, user.agencyId, { logoUrl: `${url}?v=${Date.now()}` });
-
-  return Response.json({ url });
+  // Хранилище или база недоступны — человеку фраза, а не пустая страница 500.
+  try {
+    const url = await storage.put(key, bytes, sniffed);
+    // Кэш-бастер: путь стабильный, поэтому браузер иначе покажет старый логотип.
+    await updateAgency(db, user.agencyId, { logoUrl: `${url}?v=${Date.now()}` });
+    return Response.json({ url });
+  } catch (error) {
+    console.error(`[logo] upload failed for agency ${user.agencyId}`, error);
+    return Response.json({ error: "The logo did not upload. Try again in a minute." }, { status: 500 });
+  }
 }

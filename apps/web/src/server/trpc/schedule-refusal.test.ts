@@ -163,7 +163,7 @@ describe("роутер расписания и отказ тарифа", () => {
         cadence: "biweekly",
         platforms: ["gemini"],
         samplesPerPrompt: 10,
-        active: false,
+        active: true,
       }),
     ).rejects.toBeInstanceOf(TRPCError);
 
@@ -173,6 +173,22 @@ describe("роутер расписания и отказ тарифа", () => {
     expect(after?.platforms).toEqual(before?.platforms);
     expect(after?.samplesPerPrompt).toBe(before?.samplesPerPrompt);
     expect(after?.active).toBe(before?.active);
+  });
+
+  it("пауза проходит и после понижения тарифа — политика её не проверяет", async () => {
+    // Иначе расписание, ставшее «не по тарифу», нельзя было бы даже остановить.
+    refuseSchedule.mockReturnValue({ code: "cadence", message: "Daily is not in plan." });
+
+    await caller(agencyId).runs.saveSchedule({
+      clientId,
+      cadence: "daily",
+      platforms: ["chatgpt"],
+      samplesPerPrompt: 3,
+      active: false,
+    });
+
+    expect(refuseSchedule).not.toHaveBeenCalled();
+    expect((await getScheduleForClient(db, clientId))?.active).toBe(false);
   });
 
   it("бесплатный аккаунт не сохраняет расписание, которое никогда не запустится", async () => {

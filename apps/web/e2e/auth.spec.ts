@@ -28,9 +28,9 @@ test("signup creates an agency, then logout and login work", async ({ page }) =>
   await page.getByRole("button", { name: "Sign out" }).click();
   await expect(page).toHaveURL(/\/login$/);
 
-  // Сессии нет — защищённая страница возвращает на логин.
+  // Сессии нет — защищённая страница возвращает на логин и помнит, куда шли.
   await page.goto("/dashboard");
-  await expect(page).toHaveURL(/\/login$/);
+  await expect(page).toHaveURL(/\/login\?next=%2Fdashboard$/);
 
   await page.getByLabel("Work email").fill(email);
   await page.getByLabel("Password").fill(password);

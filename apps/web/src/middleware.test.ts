@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { allowedOnReportHost } from "./middleware";
+import { allowedOnReportHost, pagePath } from "./middleware";
 
 /**
  * Что открывается на домене агентства.
@@ -52,5 +52,13 @@ describe("домен отчётов", () => {
     expect(allowedOnReportHost("/reports")).toBe(false);
     expect(allowedOnReportHost("/rogue")).toBe(false);
     expect(allowedOnReportHost("/fontsize")).toBe(false);
+  });
+});
+
+describe("адрес страницы для возврата после входа", () => {
+  it("хранит путь и query, без хоста и служебного _rsc", () => {
+    expect(pagePath(new URL("https://app.example.com/clients/abc?tab=gaps"))).toBe("/clients/abc?tab=gaps");
+    expect(pagePath(new URL("https://app.example.com/dashboard?_rsc=1x2y"))).toBe("/dashboard");
+    expect(pagePath(new URL("https://app.example.com/reports?_rsc=1&q=a"))).toBe("/reports?q=a");
   });
 });

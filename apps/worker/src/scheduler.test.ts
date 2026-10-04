@@ -214,6 +214,12 @@ describe("tickSchedules", () => {
     expect(skipped.find((s) => s.scheduleId === scheduleId)?.reason).toMatch(/no active prompts/);
     // Вопросы появятся — замер начнётся в ближайший тик, а не через сутки.
     expect((await getRunSchedule(db, scheduleId))?.nextRunAt?.getTime()).toBe(due.getTime());
+
+    // Следующий тик с той же причиной молчит: ни записи, ни строки в логе каждые пять минут.
+    const skippedAt = (await getRunSchedule(db, scheduleId))?.skippedAt?.getTime();
+    const again = await tickSchedules(db, new Date(Date.now() + 60_000));
+    expect(again.skipped.filter((s) => s.scheduleId === scheduleId)).toHaveLength(0);
+    expect((await getRunSchedule(db, scheduleId))?.skippedAt?.getTime()).toBe(skippedAt);
   });
 
   it("у бесплатного аккаунта расписание не запускается вовсе", async () => {

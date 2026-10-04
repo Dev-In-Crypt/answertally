@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { MEASUREMENT_COPY, MIN_SAMPLES_PER_CELL, platformLabel, type Platform } from "@repo/core";
 import { estimateSchedule, type Cadence } from "@repo/core/adapters/capacity";
 import { api } from "@/trpc/react";
@@ -136,8 +137,12 @@ export function SchedulePanel({ clientId }: { clientId: string }) {
       await utils.runs.schedule.invalidate({ clientId });
     },
     // Отказ тарифа — не молчаливая неудача: сервер объясняет словами, что
-    // именно не разрешено, и это должно попасть на экран.
-    onError: (e) => setError(e.message),
+    // именно не разрешено, и это должно попасть на экран. Прошлый отказ «Run
+    // now» сбрасывается: иначе ссылка на тариф цеплялась бы к чужой ошибке.
+    onError: (e) => {
+      trigger.reset();
+      setError(e.message);
+    },
   });
 
   const trigger = api.runs.triggerManual.useMutation({
@@ -147,7 +152,10 @@ export function SchedulePanel({ clientId }: { clientId: string }) {
       // случаях список и цифры перечитываются, дальше ведёт опрос списка.
       await utils.invalidate();
     },
-    onError: (e) => setError(e.message),
+    onError: (e) => {
+      save.reset();
+      setError(e.message);
+    },
   });
 
   /**
@@ -174,6 +182,12 @@ export function SchedulePanel({ clientId }: { clientId: string }) {
   }
 
   const options = capacity.data;
+  /**
+   * Без оплаты расписание не сохраняется (сервер откажет), поэтому формы нет
+   * вовсе: настраивать то, что не запустится, — та же неправда, что «Saved».
+   * Пауза и «Run now» остаются: старое расписание должно выключаться.
+   */
+  const unpaid = options !== undefined && !options.paying;
   /**
    * Сохранённая частота показывается, даже если тариф её больше не разрешает:
    * подменить выбор молча — значит соврать о том, что настроено. Выбрать её
@@ -253,103 +267,117 @@ export function SchedulePanel({ clientId }: { clientId: string }) {
         </p>
       </div>
 
+      {unpaid && (
+        <p data-testid="schedule-needs-plan" className="text-sm">
+          Scheduled checks start with a plan.{" "}
+          <Link href="/settings/billing" className="text-primary underline-offset-4 hover:underline">
+            See plans
+          </Link>
+          . Until then, the free audit runs when you start it.
+        </p>
+      )}
+
       <div className="flex flex-wrap items-end gap-4">
-        <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium">Cadence</span>
-          <select
-            value={cadence}
-            onChange={(e) => setCadence(e.target.value as Cadence)}
-            className={inputClass}
-          >
-            {cadenceOptions.map((option) => (
-              <option key={option.id} value={option.id} disabled={!option.allowed}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        {!unpaid && (
+          <>
+            <label className="flex flex-col gap-1.5">
+              <span className="text-sm font-medium">Cadence</span>
+              <select
+                value={cadence}
+                onChange={(e) => setCadence(e.target.value as Cadence)}
+                className={inputClass}
+              >
+                {cadenceOptions.map((option) => (
+                  <option key={option.id} value={option.id} disabled={!option.allowed}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-        <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium">Samples per prompt</span>
-          <input
-            type="number"
-            min={1}
-            max={10}
-            step={1}
-            value={samplesInput}
-            onChange={(e) => setSamplesInput(e.target.value)}
-            aria-invalid={!samplesValid}
-            className={`${inputClass} w-24`}
-          />
-        </label>
+            <label className="flex flex-col gap-1.5">
+              <span className="text-sm font-medium">Samples per prompt</span>
+              <input
+                type="number"
+                min={1}
+                max={10}
+                step={1}
+                value={samplesInput}
+                onChange={(e) => setSamplesInput(e.target.value)}
+                aria-invalid={!samplesValid}
+                className={`${inputClass} w-24`}
+              />
+            </label>
 
-        <fieldset className="flex flex-col gap-1.5">
-          <legend className="text-sm font-medium">Platforms</legend>
-          <div className="flex flex-wrap gap-x-4 gap-y-1.5">
-            {assistantOptions.map(({ id, label, allowed, unlocksOn, needsPlan }) => {
-              const selected = platforms.includes(id);
-              const locked = !allowed && !selected;
-              /** Стоит в расписании, но тариф его больше не даёт. */
-              const outsidePlan = !allowed && selected && options !== undefined;
+            <fieldset className="flex flex-col gap-1.5">
+              <legend className="text-sm font-medium">Platforms</legend>
+              <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+                {assistantOptions.map(({ id, label, allowed, unlocksOn, needsPlan }) => {
+                  const selected = platforms.includes(id);
+                  const locked = !allowed && !selected;
+                  /** Стоит в расписании, но тариф его больше не даёт. */
+                  const outsidePlan = !allowed && selected && options !== undefined;
 
-              return (
-                <label
-                  key={id}
-                  className={cn(
-                    "flex items-center gap-1.5 text-sm",
-                    locked && "text-muted-foreground",
-                    outsidePlan && "text-destructive",
-                  )}
-                  title={outsidePlan ? MEASUREMENT_COPY.assistantOutsidePlan : undefined}
-                >
-                  <input
-                    type="checkbox"
-                    checked={selected}
-                    disabled={locked}
-                    onChange={() => togglePlatform(id)}
-                  />
-                  {label}
-                  {locked && (unlocksOn || needsPlan) && (
-                    /* Отказ с ответом «что делать», а не серая галочка. */
-                    <span
-                      data-testid={`assistant-locked-${id}`}
-                      className="metric rounded-full bg-muted px-1.5 py-0.5 text-[11px]"
+                  return (
+                    <label
+                      key={id}
+                      className={cn(
+                        "flex items-center gap-1.5 text-sm",
+                        locked && "text-muted-foreground",
+                        outsidePlan && "text-destructive",
+                      )}
+                      title={outsidePlan ? MEASUREMENT_COPY.assistantOutsidePlan : undefined}
                     >
-                      {unlocksOn ? `${unlocksOn} and up` : "any plan"}
-                    </span>
-                  )}
-                  {outsidePlan && (
-                    <span
-                      data-testid={`assistant-outside-plan-${id}`}
-                      className="metric rounded-full bg-destructive/10 px-1.5 py-0.5 text-[11px] text-destructive"
-                    >
-                      not in plan
-                    </span>
-                  )}
-                </label>
-              );
-            })}
-          </div>
-          <p className="max-w-prose text-xs text-muted-foreground">
-            Every assistant you add asks each prompt again on every run, so it adds to the cost. An
-            assistant only answers once its key is set on the server.
-          </p>
-        </fieldset>
+                      <input
+                        type="checkbox"
+                        checked={selected}
+                        disabled={locked}
+                        onChange={() => togglePlatform(id)}
+                      />
+                      {label}
+                      {locked && (unlocksOn || needsPlan) && (
+                        /* Отказ с ответом «что делать», а не серая галочка. */
+                        <span
+                          data-testid={`assistant-locked-${id}`}
+                          className="metric rounded-full bg-muted px-1.5 py-0.5 text-[11px]"
+                        >
+                          {unlocksOn ? `${unlocksOn} and up` : "any plan"}
+                        </span>
+                      )}
+                      {outsidePlan && (
+                        <span
+                          data-testid={`assistant-outside-plan-${id}`}
+                          className="metric rounded-full bg-destructive/10 px-1.5 py-0.5 text-[11px] text-destructive"
+                        >
+                          not in plan
+                        </span>
+                      )}
+                    </label>
+                  );
+                })}
+              </div>
+              <p className="max-w-prose text-xs text-muted-foreground">
+                Every assistant you add asks each prompt again on every run, so it adds to the cost. An
+                assistant only answers once its key is set on the server.
+              </p>
+            </fieldset>
 
-        <button
-          type="button"
-          disabled={platforms.length === 0 || !samplesValid || save.isPending}
-          onClick={() =>
-            save.mutate({ clientId, cadence, platforms, samplesPerPrompt: samples, active: true })
-          }
-          className={buttonClass("outline", "lg")}
-        >
-          {save.isPending
-            ? "Saving…"
-            : saved && !saved.active
-              ? "Save and resume"
-              : "Save schedule"}
-        </button>
+            <button
+              type="button"
+              disabled={platforms.length === 0 || !samplesValid || save.isPending}
+              onClick={() =>
+                save.mutate({ clientId, cadence, platforms, samplesPerPrompt: samples, active: true })
+              }
+              className={buttonClass("outline", "lg")}
+            >
+              {save.isPending
+                ? "Saving…"
+                : saved && !saved.active
+                  ? "Save and resume"
+                  : "Save schedule"}
+            </button>
+          </>
+        )}
 
         {/*
           Пока прогон по клиенту идёт, второй не запускается: в live кнопка
@@ -385,11 +413,11 @@ export function SchedulePanel({ clientId }: { clientId: string }) {
         )}
       </div>
 
-      {!samplesValid && (
+      {!samplesValid && !unpaid && (
         <p className="text-sm text-destructive">Samples per prompt: a whole number from 1 to 10.</p>
       )}
 
-      {unsaved && !inFlight && (
+      {unsaved && !inFlight && !unpaid && (
         <p data-testid="run-now-unsaved" className="text-sm text-muted-foreground">
           Run now uses the saved settings. Save the schedule to run with what is shown here.
         </p>
@@ -419,7 +447,7 @@ export function SchedulePanel({ clientId }: { clientId: string }) {
         обещать среднюю цену данные не позволяют. Настоящая стоимость каждого
         ответа пишется в базу адаптером.
       */}
-      {options && (
+      {options && !unpaid && (
         <div
           data-testid="schedule-estimate"
           className="flex flex-col gap-1 rounded-md bg-secondary/50 p-3 text-sm"
@@ -484,12 +512,41 @@ export function SchedulePanel({ clientId }: { clientId: string }) {
           {saved.active ? "Saved" : "Paused — no scheduled checks run until you resume"}:{" "}
           {cadenceLabelOf(cadenceOptions, saved.cadence).toLowerCase()}, {saved.samplesPerPrompt}{" "}
           samples per prompt, {saved.platforms.map(platformLabel).join(", ")}.
+          {/* При пропуске срок держится или переносится на перепроверку — это не
+              замер, и дату за «Next run» не выдаём: причина стоит строкой ниже. */}
+          {saved.active && saved.nextRunAt && !saved.skipReason && (
+            <> Next run: <span className="metric">{new Date(saved.nextRunAt).toLocaleString()}</span>.</>
+          )}
+        </p>
+      )}
+
+      {/* Пропуск срока — словами и с временем, а не прошедшей датой «Next run». */}
+      {saved?.active && saved.skipReason && (
+        <p data-testid="schedule-skipped" className="text-sm text-destructive">
+          Last scheduled check skipped
+          {saved.skippedAt && (
+            <>
+              {" "}
+              (<span className="metric">{new Date(saved.skippedAt).toLocaleString()}</span>)
+            </>
+          )}
+          : {saved.skipReason}
         </p>
       )}
 
       {error && (
         <p role="alert" data-testid="form-error" className="text-sm text-destructive">
           {error}
+          {/* Отказ тарифа — с дорогой к тарифу, а не тупиком. */}
+          {trigger.error?.data?.code === "FORBIDDEN" || save.error?.data?.code === "BAD_REQUEST" ? (
+            <>
+              {" "}
+              <Link href="/settings/billing" className="underline-offset-4 hover:underline">
+                See plans and usage
+              </Link>
+              .
+            </>
+          ) : null}
         </p>
       )}
 

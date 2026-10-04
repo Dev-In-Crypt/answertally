@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { assertMaySendReport } from "../../email-quota";
+import { assertMaySendReport, refundDailyQuota } from "../../email-quota";
 import {
   buildAuditProposal,
   buildRecommendations,
@@ -644,7 +644,7 @@ export const reportsRouter = router({
       }
       const client = await getClientById(ctx.db, report.clientId);
       assertTenant(client, ctx.user.agencyId);
-      await assertMaySendReport(ctx.db, ctx.user.agencyId);
+      const spend = await assertMaySendReport(ctx.db, ctx.user.agencyId);
 
       const agency = await getAgencyById(ctx.db, ctx.user.agencyId);
 
@@ -689,6 +689,8 @@ export const reportsRouter = router({
       } catch (error) {
         console.error(`[report] delivery failed for report ${report.id}`, error);
       }
+      // Неушедшее письмо квоту не тратит.
+      if (!delivered) await refundDailyQuota(spend);
 
       await logActivity(ctx.db, {
         agencyId: ctx.user.agencyId,

@@ -130,7 +130,7 @@ export function DiagnoseView({ clientId }: { clientId: string }) {
 
   // Сбой — не «источников нет»: пустое состояние отправило бы запускать
   // проверку, хотя прогоны есть, а не загрузился экран.
-  if (graph.error) {
+  if (graph.error && !data) {
     return (
       <div className="flex flex-col gap-4">
         {clusterId && <div className="flex justify-end">{clusterSelect}</div>}
@@ -335,7 +335,7 @@ export function DiagnoseView({ clientId }: { clientId: string }) {
         <h2 className="text-base font-medium">Recommended next actions</h2>
 
         {/* Сбой и загрузка — не «рекомендовать нечего». */}
-        {recommendations.error ? (
+        {recommendations.error && !recommendations.data ? (
           <p role="alert" className="text-sm text-destructive">
             Recommendations could not be loaded. {recommendations.error.message}{" "}
             <button type="button" className="underline" onClick={() => recommendations.refetch()}>

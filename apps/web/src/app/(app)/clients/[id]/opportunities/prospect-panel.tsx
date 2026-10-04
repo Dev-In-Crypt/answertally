@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { api } from "@/trpc/react";
 import { buttonClass } from "@/components/ui/button";
+import { ADMIN_ONLY_HINT } from "@/lib/role";
+import { useCan } from "@/lib/role-context";
 
 /**
  * Что делать с проспектом после аудита.
@@ -21,6 +23,7 @@ export function ProspectPanel({ clientId }: { clientId: string }) {
   const client = api.clients.get.useQuery({ id: clientId });
   const suggestions = api.diagnosis.suggestedCompetitors.useQuery({ clientId });
   const [added, setAdded] = useState<string[]>([]);
+  const canEdit = useCan("admin");
 
   const update = api.clients.update.useMutation({
     onSuccess: async () => {
@@ -66,8 +69,8 @@ export function ProspectPanel({ clientId }: { clientId: string }) {
             {fresh.map((row) => (
               <li key={row.domain}>
                 <button
-                  disabled={update.isPending || full}
-                  title={`Track as “${row.name}”`}
+                  disabled={!canEdit || update.isPending || full}
+                  title={canEdit ? `Track as “${row.name}”` : ADMIN_ONLY_HINT}
                   onClick={() => {
                     setAdded((current) => [...current, row.domain]);
                     update.mutate(
@@ -100,21 +103,26 @@ export function ProspectPanel({ clientId }: { clientId: string }) {
         </div>
       )}
 
-      <div className="flex flex-wrap items-center gap-3">
-        <button
-          data-testid="convert-prospect"
-          disabled={update.isPending}
-          onClick={() => update.mutate({ id: clientId, status: "active" })}
-          className={buttonClass("primary", "lg")}
-        >
-          {update.isPending && update.variables?.status === "active"
-            ? "Converting…"
-            : "Convert to client"}
-        </button>
-        <span className="text-xs text-muted-foreground">
-          Nothing is rebuilt and nothing is re-measured.
-        </span>
-      </div>
+      {canEdit ? (
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            data-testid="convert-prospect"
+            disabled={update.isPending}
+            onClick={() => update.mutate({ id: clientId, status: "active" })}
+            className={buttonClass("primary", "lg")}
+          >
+            {update.isPending && update.variables?.status === "active"
+              ? "Converting…"
+              : "Convert to client"}
+          </button>
+          <span className="text-xs text-muted-foreground">
+            Nothing is rebuilt and nothing is re-measured.
+          </span>
+        </div>
+      ) : (
+        // Список конкурентов и статус меняют админ и владелец (clients.update).
+        <p className="text-xs text-muted-foreground">{ADMIN_ONLY_HINT}</p>
+      )}
 
       {update.error && (
         <p role="alert" data-testid="form-error" className="text-sm text-destructive">

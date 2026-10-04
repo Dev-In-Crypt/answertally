@@ -2,8 +2,8 @@
 
 import { use } from "react";
 import { api } from "@/trpc/react";
-import { PageHeader } from "@/components/page-header";
 import { ClientOverview } from "./overview";
+import { ClientLoadError } from "./client-load-error";
 
 export default function ClientOverviewPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -14,15 +14,8 @@ export default function ClientOverviewPage({ params }: { params: Promise<{ id: s
   }
 
   // Чужой клиент отдаётся как NOT_FOUND — интерфейс не подтверждает его существование.
-  if (client.error || !client.data) {
-    return (
-      <>
-        <PageHeader title="Client not found" description="It may have been removed." />
-        <p data-testid="form-error" className="text-sm text-muted-foreground">
-          Nothing to show here.
-        </p>
-      </>
-    );
+  if (client.error && !client.data) {
+    return <ClientLoadError error={client.error} retry={() => client.refetch()} />;
   }
 
   /**

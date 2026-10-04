@@ -33,6 +33,8 @@ function rootDatabaseUrl(): string {
 // оседать в рабочей базе. Саму базу готовит `pnpm --filter @repo/db test:prepare`
 // в скрипте e2e — до того, как Playwright поднимет приложение.
 const databaseUrl = testDatabaseUrl(rootDatabaseUrl());
+// Тот же адрес нужен спекам, которые готовят данные напрямую (e2e/paid-plan.ts).
+process.env["E2E_DATABASE_URL"] = databaseUrl;
 
 export default defineConfig({
   testDir: "./e2e",

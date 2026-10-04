@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { z } from "zod";
-import { assertMayInvite } from "../../email-quota";
+import { assertMayInvite, refundDailyQuota } from "../../email-quota";
 import { TRPCError } from "@trpc/server";
 import {
   createInvitation,
@@ -162,13 +162,14 @@ export const agencyRouter = router({
         });
       }
 
-      await assertMayInvite(ctx.db, ctx.user.agencyId);
-      const expiresAt = new Date(Date.now() + INVITE_TTL_DAYS * 24 * 60 * 60 * 1000);
-
-      // Повтор на адрес, который уже ждёт, освежает то же приглашение.
+      // Повтор на адрес, который уже ждёт, освежает то же приглашение — и
+      // нового места в ожидании не занимает.
       const pending = (await listInvitationsByAgency(ctx.db, ctx.user.agencyId)).find(
         (invite) => invite.email.toLowerCase() === email && invite.expiresAt.getTime() > Date.now(),
       );
+      const spend = await assertMayInvite(ctx.db, ctx.user.agencyId, { refreshing: Boolean(pending) });
+      const expiresAt = new Date(Date.now() + INVITE_TTL_DAYS * 24 * 60 * 60 * 1000);
+
       const invitation = pending
         ? await refreshInvitation(ctx.db, pending.id, ctx.user.agencyId, {
             role: input.role,
@@ -194,21 +195,26 @@ export const agencyRouter = router({
        */
       let delivered = false;
       try {
-        await getEmailSender().send(
-          inviteEmail({
-            to: input.email,
-            agencyName: agency?.name ?? "your agency",
-            role: input.role,
-            inviteUrl,
-            invitedByName: ctx.user.name,
-            // Отвечают приглашённые тому, кто позвал, а не адресу отправки.
-            invitedByEmail: ctx.user.email,
-          }),
-        );
-        delivered = true;
+        // Режим без транспорта письмо только записывает: «Invitation sent»
+        // было бы неправдой, и интерфейс показывает ссылку как единственный путь.
+        delivered = !(
+          await getEmailSender().send(
+            inviteEmail({
+              to: input.email,
+              agencyName: agency?.name ?? "your agency",
+              role: input.role,
+              inviteUrl,
+              invitedByName: ctx.user.name,
+              // Отвечают приглашённые тому, кто позвал, а не адресу отправки.
+              invitedByEmail: ctx.user.email,
+            }),
+          )
+        ).logged;
       } catch (error) {
         console.error(`[invite] delivery failed for ${input.email}`, error);
       }
+      // Неушедшее письмо квоту не тратит.
+      if (!delivered) await refundDailyQuota(spend);
 
       return { id: invitation.id, token, inviteUrl, expiresAt, delivered };
     }),

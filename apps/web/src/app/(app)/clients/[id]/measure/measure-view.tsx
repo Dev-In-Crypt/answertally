@@ -119,10 +119,26 @@ export function MeasureView({ clientId }: { clientId: string }) {
         </p>
       </section>
 
-      {(clusters.data ?? []).length === 0 ? (
+      {/* Сбой загрузки — не «кластеров нет»: пустое состояние было бы неправдой о данных.
+          Сбой фонового перечитывания при уже загруженном списке экран не подменяет. */}
+      {(clusters.isError && !clusters.data) || (prompts.isError && !prompts.data) ? (
+        <div role="alert" className="flex flex-col items-start gap-3 rounded-lg border border-dashed p-8">
+          <h2 className="text-base font-medium">Prompts could not be loaded</h2>
+          <p className="max-w-prose text-sm text-muted-foreground">
+            {(clusters.error ?? prompts.error)?.message}
+          </p>
+          <button
+            type="button"
+            onClick={() => void Promise.all([clusters.refetch(), prompts.refetch()])}
+            className={buttonClass("outline", "lg")}
+          >
+            Try again
+          </button>
+        </div>
+      ) : (clusters.data ?? []).length === 0 ? (
         <EmptyState
           title="No prompt clusters yet"
-        icon={MessageSquare}
+          icon={MessageSquare}
           description="Add a cluster or import a CSV. Clusters group the buyer questions you track, so movement can be read per topic instead of one blended number."
         />
       ) : (

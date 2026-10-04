@@ -125,7 +125,12 @@ function UsageBadge() {
   return (
     <span
       data-testid="nav-usage"
-      title={`${checks.used.toLocaleString("en-US")} of ${checks.allowance.toLocaleString("en-US")} AI checks used this month`}
+      // Бесплатные проверки не обновляются по месяцам — это запас на всё время.
+      title={
+        checks.free
+          ? `${checks.used.toLocaleString("en-US")} of ${checks.allowance.toLocaleString("en-US")} free AI checks used`
+          : `${checks.used.toLocaleString("en-US")} of ${checks.allowance.toLocaleString("en-US")} AI checks used this month`
+      }
       className={cn(
         "metric shrink-0 text-[11px] tabular-nums",
         checks.overAllowance ? "text-destructive" : "text-muted-foreground",

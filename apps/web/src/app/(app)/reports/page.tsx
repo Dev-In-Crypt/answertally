@@ -44,9 +44,10 @@ export default function AgencyReportsPage() {
 
       {reports.isPending ? (
         <SkeletonRows rows={6} />
-      ) : reports.error ? (
+      ) : reports.error && !reports.data ? (
         // Пустое состояние — утверждение о данных: показать его вместо сбоя
         // значит сказать «отчётов нет», когда на деле их не удалось загрузить.
+        // Сбой фонового обновления уже загруженный список не прячет.
         <div
           role="alert"
           data-testid="form-error"

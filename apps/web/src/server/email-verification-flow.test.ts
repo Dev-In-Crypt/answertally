@@ -103,4 +103,33 @@ describe("подтверждение адреса при регистрации"
     const signedIn = await auth.api.signInEmail({ body: { email, password } });
     expect(signedIn.token).toBeTruthy();
   });
+
+  it("письмо не ушло — регистрация и вход говорят это, а не «отправили»", async () => {
+    // Better Auth глотает отказ отправки; без этого форма показывала
+    // «We sent an email» вслед за отказом Resend.
+    setEmailSender({ send: () => Promise.reject(new Error("Resend 503")) });
+    const email = `unsent-${crypto.randomUUID().slice(0, 8)}@agency.test`;
+    const password = "correct-horse-battery";
+    try {
+      await expect(
+        auth.api.signUpEmail({ body: { email, password, name: "Unsent Tester" } }),
+      ).rejects.toMatchObject({ body: { code: "VERIFICATION_EMAIL_NOT_SENT" } });
+      const user = await getUserByEmail(db, email);
+      if (user?.agencyId) createdAgencies.push(user.agencyId);
+
+      // Аккаунт заведён, и вход с тем же паролем тоже честно говорит об отказе.
+      await expect(auth.api.signInEmail({ body: { email, password } })).rejects.toMatchObject({
+        body: { code: "VERIFICATION_EMAIL_NOT_SENT" },
+      });
+
+      // Почта вернулась — вход присылает ссылку, как обычно.
+      setEmailSender(mailbox);
+      await expect(auth.api.signInEmail({ body: { email, password } })).rejects.toMatchObject({
+        body: { code: "EMAIL_NOT_VERIFIED" },
+      });
+      expect(mailbox.lastTo(email)).toBeDefined();
+    } finally {
+      setEmailSender(mailbox);
+    }
+  });
 });

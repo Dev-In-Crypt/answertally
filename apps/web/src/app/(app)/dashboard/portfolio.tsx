@@ -5,6 +5,8 @@ import { CONFIDENCE_LABELS, MEASUREMENT_COPY } from "@repo/core";
 import { api } from "@/trpc/react";
 import { EmptyState } from "@/components/page-header";
 import { cn } from "@/lib/utils";
+import { ASK_ADMIN_TO_ADD_CLIENT } from "@/lib/role";
+import { useCan } from "@/lib/role-context";
 import { buttonClass } from "@/components/ui/button";
 import { SkeletonRows } from "@/components/ui/skeleton";
 import { Table, TD, TH, THead, TR } from "@/components/ui/table";
@@ -30,6 +32,7 @@ function formatPp(value: number | null): string {
 export function Portfolio() {
   const portfolio = api.clients.portfolio.useQuery();
   const rows = portfolio.data ?? [];
+  const canAddClient = useCan("admin");
 
   if (portfolio.isPending) {
     return <SkeletonRows rows={6} />;
@@ -62,11 +65,17 @@ export function Portfolio() {
       <EmptyState
         title="No clients yet"
         icon={Users}
-        description="Add your first client to start measuring how often AI assistants mention them, and where competitors show up instead."
+        description={
+          canAddClient
+            ? "Add your first client to start measuring how often AI assistants mention them, and where competitors show up instead."
+            : ASK_ADMIN_TO_ADD_CLIENT
+        }
         action={
-          <Link href="/clients/new" className={buttonClass("primary", "lg")}>
-            Add client
-          </Link>
+          canAddClient && (
+            <Link href="/clients/new" className={buttonClass("primary", "lg")}>
+              Add client
+            </Link>
+          )
         }
       />
     );

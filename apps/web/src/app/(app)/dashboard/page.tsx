@@ -1,4 +1,5 @@
 import { ButtonLink } from "@/components/ui/button";
+import { RoleGate } from "@/lib/role-context";
 import { DashboardRail, DecisionFeed } from "./feed";
 import { Portfolio } from "./portfolio";
 
@@ -21,9 +22,12 @@ export default function DashboardPage() {
             samples and refresh on each run.
           </p>
         </div>
-        <ButtonLink href="/clients/new" size="lg">
-          Add client
-        </ButtonLink>
+        {/* Заводят клиентов админ и владелец (clients.create). */}
+        <RoleGate min="admin">
+          <ButtonLink href="/clients/new" size="lg">
+            Add client
+          </ButtonLink>
+        </RoleGate>
       </div>
 
       <div className="grid items-start gap-5 lg:grid-cols-[1fr_320px]">

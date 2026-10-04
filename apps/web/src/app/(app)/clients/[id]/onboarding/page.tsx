@@ -4,6 +4,7 @@ import { use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api } from "@/trpc/react";
+import { ClientLoadError } from "../client-load-error";
 import { PageHeader } from "@/components/page-header";
 import { GeneratePrompts } from "../measure/generate-prompts";
 import { OnboardingSteps, SamplingCost } from "./steps";
@@ -24,8 +25,8 @@ export default function OnboardingPage({ params }: { params: Promise<{ id: strin
   const client = api.clients.get.useQuery({ id });
   const prompts = api.prompts.list.useQuery({ clientId: id });
 
-  if (client.error) {
-    return <PageHeader title="Client not found" description="It may have been removed." />;
+  if (client.error && !client.data) {
+    return <ClientLoadError error={client.error} retry={() => client.refetch()} />;
   }
 
   const savedPrompts = prompts.data?.length ?? 0;

@@ -108,7 +108,13 @@ export function ReportView({
             </>
           ) : (
             <>
-              , {payload.results.visibilityDeltaPp >= 0 ? "up" : "down"} from{" "}
+              ,{" "}
+              {payload.results.visibilityDeltaPp === 0
+                ? "unchanged"
+                : payload.results.visibilityDeltaPp > 0
+                  ? "up"
+                  : "down"}{" "}
+              from{" "}
               <span className="metric">{payload.visibility.before}%</span>
             </>
           )}
@@ -341,7 +347,17 @@ export function ReportView({
       {approved && (
         <p data-testid="report-approved" className="text-sm text-muted-foreground">
           Approved{approved.byName ? ` by ${approved.byName}` : ""} on{" "}
-          <span className="metric">{new Date(approved.at).toLocaleDateString()}</span>.
+          {/* Формат фиксирован: иначе дата зависит от локали и пояса сервера
+              (PDF) или читателя — 10/4/2026 читается по-разному. */}
+          <span className="metric">
+            {new Date(approved.at).toLocaleDateString("en-GB", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+              timeZone: "UTC",
+            })}
+          </span>
+          .
         </p>
       )}
     </div>

@@ -102,7 +102,7 @@ export function ExperimentsView({ clientId }: { clientId: string }) {
     return <SkeletonCards count={3} />;
   }
 
-  if (experiments.error) {
+  if (experiments.error && !experiments.data) {
     return (
       <LoadError what="Experiments" error={experiments.error} retry={() => experiments.refetch()} />
     );
@@ -151,7 +151,7 @@ function ExperimentDetail({ experimentId }: { experimentId: string }) {
   if (detail.isPending) {
     return <SkeletonCards count={3} />;
   }
-  if (detail.error) {
+  if (detail.error && !detail.data) {
     return <LoadError what="This experiment" error={detail.error} retry={() => detail.refetch()} />;
   }
   if (!detail.data) {

@@ -235,7 +235,9 @@ export function DashboardRail() {
   return (
     <div className="flex flex-col gap-3">
       <Card className="flex flex-col gap-3">
-        <CardTitle>This month</CardTitle>
+        {/* Бесплатные проверки считаются за всё время, а не за месяц:
+            «This month» обещало бы, что они вернутся первого числа. */}
+        <CardTitle>{checks?.free ? "Free audit" : "This month"}</CardTitle>
         {usage.data && checks ? (
           <div className="flex flex-col gap-2 text-sm">
             <span className="flex items-baseline justify-between gap-3 text-muted-foreground">
@@ -245,7 +247,7 @@ export function DashboardRail() {
               </span>
             </span>
             <span className="flex items-baseline justify-between gap-3 text-muted-foreground">
-              AI checks used
+              {checks.free ? "Free AI checks used" : "AI checks used"}
               <span className="metric font-medium text-foreground">
                 {checks.used.toLocaleString("en-US")} / {checks.allowance.toLocaleString("en-US")}
               </span>

@@ -5,13 +5,14 @@ import { OPPORTUNITY_COPY } from "@repo/core";
 import { api } from "@/trpc/react";
 import { PageHeader } from "@/components/page-header";
 import { OpportunitiesView } from "./opportunities-view";
+import { ClientLoadError } from "../client-load-error";
 
 export default function OpportunitiesPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const client = api.clients.get.useQuery({ id });
 
-  if (client.error) {
-    return <PageHeader title="Client not found" description="It may have been removed." />;
+  if (client.error && !client.data) {
+    return <ClientLoadError error={client.error} retry={() => client.refetch()} />;
   }
 
   return (

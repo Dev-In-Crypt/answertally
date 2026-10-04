@@ -118,7 +118,20 @@ function MetadataStrip({
         <Meta label="Next run">
           {/* «not scheduled» — это утверждение о настройке, а не о сбое сети:
               на ошибке загрузки нельзя делать вид, что расписание выключено. */}
-          {schedule.error ? "—" : schedule.data?.active ? when(schedule.data.nextRunAt) : "not scheduled"}
+          {schedule.error
+            ? "—"
+            : schedule.data?.active
+              ? !schedule.data.skipReason && when(schedule.data.nextRunAt)
+              : "not scheduled"}
+          {/* Пропуск срока словами вместо даты: дата обещала бы замер, которого не будет. */}
+          {schedule.data?.active && schedule.data.skipReason && (
+            <span
+              data-testid="schedule-skip-reason"
+              className="block max-w-xs whitespace-normal font-normal text-destructive"
+            >
+              Skipped: {schedule.data.skipReason}
+            </span>
+          )}
         </Meta>
       </dl>
 
@@ -202,7 +215,11 @@ function NeedsAttention({ clientId }: { clientId: string }) {
 
   // Сбой хотя бы одного из трёх запросов не должен читаться как «всё чисто»:
   // это тот же ложный «пусто», что уже правили в ленте решений и в отчётах.
-  if (opportunities.error || actions.error || experiments.error) {
+  if (
+    (opportunities.error && !opportunities.data) ||
+    (actions.error && !actions.data) ||
+    (experiments.error && !experiments.data)
+  ) {
     return (
       <Card data-testid="needs-attention" className="flex flex-col gap-2">
         <CardTitle>What needs a person</CardTitle>
@@ -575,7 +592,12 @@ export function ClientOverview({ clientId }: { clientId: string }) {
           <MatrixSection matrix={matrix.data} />
         ) : (
           <Card className="text-sm text-muted-foreground">
-            {matrix.isPending ? "Loading…" : MEASUREMENT_COPY.noDataYet}
+            {/* Сбой загрузки — не «данных пока нет». */}
+            {matrix.isPending
+              ? "Loading…"
+              : matrix.error
+                ? `The prompt matrix could not be loaded. ${matrix.error.message}`
+                : MEASUREMENT_COPY.noDataYet}
           </Card>
         )}
 
@@ -636,10 +658,19 @@ export function ClientOverview({ clientId }: { clientId: string }) {
           </div>
         </div>
 
-        {chartData.length === 0 ? (
+        {/* Сбой загрузки — не «данных пока нет»: пустое состояние звало бы мерить то, что уже измерено. */}
+        {data.isError && !data.data ? (
+          <div role="alert" data-testid="visibility-error" className="flex flex-col items-start gap-3 rounded-lg border border-dashed p-8">
+            <h3 className="text-base font-medium">Visibility could not be loaded</h3>
+            <p className="max-w-prose text-sm text-muted-foreground">{data.error.message}</p>
+            <button type="button" onClick={() => void data.refetch()} className={buttonClass("outline", "lg")}>
+              Try again
+            </button>
+          </div>
+        ) : chartData.length === 0 ? (
           <EmptyState
             title="No visibility data yet"
-        icon={TrendingUp}
+            icon={TrendingUp}
             description="Run a check from the Measure screen. Visibility is read from the share of answers across a week, so the first useful reading appears once a run completes."
           />
         ) : (

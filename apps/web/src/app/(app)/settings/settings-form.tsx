@@ -162,15 +162,11 @@ export function SettingsForm({
             <button
               type="button"
               onClick={() => {
-                // Пустое имя сервер отклонил бы техническим текстом.
-                if (!name.trim()) {
-                  fail("Enter the agency name.");
-                  return;
-                }
                 setStatus(null);
                 update.mutate({ name: name.trim(), brandColor });
               }}
-              disabled={update.isPending || uploading}
+              // Пустое имя сервер отклонил бы — кнопка не обещает того, что не выйдет.
+              disabled={!name.trim() || update.isPending || uploading}
               className={buttonClass("primary", "lg")}
             >
               {update.isPending ? "Saving…" : "Save changes"}

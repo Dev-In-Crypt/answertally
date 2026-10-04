@@ -1,4 +1,4 @@
-import { planExperiment, recommendationSchema } from "@repo/core";
+import { experimentSnapshots, planExperiment, recommendationSchema } from "@repo/core";
 import {
   addExperimentEvent,
   createAction,
@@ -98,12 +98,9 @@ async function seedDemoWork(db: Database, clientId: string): Promise<void> {
   if (opportunities.length === 0) return;
 
   const clusters = await listPromptClusters(db, clientId);
-  const snapshots = (await listAllSnapshots(db, clientId)).map((row) => ({
-    clusterId: row.clusterId,
-    periodStart: row.periodStart,
-    clientVisibilityPct: Number(row.clientVisibilityPct),
-    sampleCount: row.sampleCount,
-  }));
+  // Тот же отбор строк, что у настоящего эксперимента: ручной перебор брал и
+  // строки по платформам, и общие — baseline демо считал ответы дважды.
+  const snapshots = experimentSnapshots(await listAllSnapshots(db, clientId));
 
   // Действие закрыто три недели назад: у эксперимента должен быть baseline
   // до работы и хоть какие-то измерения после неё.

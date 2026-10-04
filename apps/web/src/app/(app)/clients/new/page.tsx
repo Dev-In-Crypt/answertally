@@ -1,14 +1,20 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Users } from "lucide-react";
 import { api } from "@/trpc/react";
-import { PageHeader } from "@/components/page-header";
+import { EmptyState, PageHeader } from "@/components/page-header";
+import { buttonClass } from "@/components/ui/button";
+import { ADMIN_ONLY_HINT } from "@/lib/role";
+import { useCan } from "@/lib/role-context";
 import { ClientForm } from "../client-form";
 import { OnboardingSteps } from "../[id]/onboarding/steps";
 
 export default function NewClientPage() {
   const router = useRouter();
   const utils = api.useUtils();
+  const canAddClient = useCan("admin");
 
   const create = api.clients.create.useMutation({
     onSuccess: async (client) => {
@@ -19,6 +25,26 @@ export default function NewClientPage() {
       router.refresh();
     },
   });
+
+  // Заводят клиентов админ и владелец: участнику форма закончилась бы отказом
+  // уже после того, как он всё заполнил.
+  if (!canAddClient) {
+    return (
+      <>
+        <PageHeader title="Add client" />
+        <EmptyState
+          title="Ask an admin to add this client"
+          icon={Users}
+          description={ADMIN_ONLY_HINT}
+          action={
+            <Link href="/clients" className={buttonClass("outline", "lg")}>
+              Back to clients
+            </Link>
+          }
+        />
+      </>
+    );
+  }
 
   return (
     <>

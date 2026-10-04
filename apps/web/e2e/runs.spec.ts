@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
+import { makeAgencyPaying } from "./paid-plan";
 
 /** Verify T22: «Run now» в mock-режиме доходит до done, прогон виден в истории. */
 
@@ -9,7 +10,7 @@ const CSV = [
   "CRM comparison,comparison,Northstack alternatives,false",
 ].join("\n");
 
-async function setUpClientWithPrompts(page: Page): Promise<string> {
+async function setUpClientWithPrompts(page: Page): Promise<{ clientId: string; email: string }> {
   const email = `runs-${Math.random().toString(36).slice(2, 10)}@northwind-agency.test`;
 
   await page.goto("/signup");
@@ -41,17 +42,19 @@ async function setUpClientWithPrompts(page: Page): Promise<string> {
   });
   await expect(page.getByTestId("import-summary")).toContainText("2 prompts");
 
-  return clientId;
+  return { clientId, email };
 }
 
 test("saving a schedule and running a check produces a completed run", async ({ page }) => {
-  const clientId = await setUpClientWithPrompts(page);
+  const { clientId, email } = await setUpClientWithPrompts(page);
+  // Расписание сохраняется только у платящего агентства.
+  await makeAgencyPaying(email);
   await page.goto(`/clients/${clientId}/measure`);
 
   await page.getByLabel("Samples per prompt").fill("3");
   await page.getByRole("button", { name: "Save schedule" }).click();
   await expect(page.getByTestId("schedule-summary")).toContainText("3 samples per prompt");
-  await expect(page.getByTestId("schedule-summary")).toContainText("chatgpt");
+  await expect(page.getByTestId("schedule-summary")).toContainText("ChatGPT");
 
   await page.getByRole("button", { name: "Run now" }).click();
 
@@ -59,7 +62,7 @@ test("saving a schedule and running a check produces a completed run", async ({ 
   await expect(page.getByTestId("run-status")).toContainText("done", { timeout: 30_000 });
 
   const history = page.getByTestId("runs-list");
-  await expect(history).toContainText("manual");
+  await expect(history).toContainText("Run now");
   await expect(history).toContainText("done");
 
   // История переживает перезагрузку — прогон записан, а не показан оптимистично.
@@ -68,45 +71,16 @@ test("saving a schedule and running a check produces a completed run", async ({ 
 });
 
 test("the plan decides what is offered, and locked assistants are visible", async ({ page }) => {
-  const clientId = await setUpClientWithPrompts(page);
+  const { clientId, email } = await setUpClientWithPrompts(page);
   await page.goto(`/clients/${clientId}/measure`);
 
-  // Агентство только зарегистрировалось и ещё не платило — это бесплатный
-  // аудит. Форма предлагает ровно то, что он покрывает, и заранее отмеченным
-  // не оказывается ассистент, которого сохранить нельзя.
-  await expect(page.getByLabel("ChatGPT")).toBeChecked();
-  await expect(page.getByLabel("Perplexity")).toBeChecked();
-
-  // Запертое видно, а не спрятано, и подписано тарифом, на котором включается.
-  await expect(page.getByLabel("Claude")).not.toBeChecked();
-  await expect(page.getByLabel("Claude")).toBeDisabled();
-  await expect(page.getByTestId("assistant-locked-claude")).toContainText("growth");
-
   /**
-   * Grok заперт до оплаты, а не по тарифу: он стоит дороже всех ($0.1058 за
-   * ответ против $0.0014 у Perplexity), и бесплатный аудит его не включает.
-   * Виден он при этом так же, как Claude, — выключенным и с подписью, а не
-   * спрятанным.
+   * Агентство только зарегистрировалось и ещё не платило — это бесплатный
+   * аудит. Расписание без оплаты не запустится ни разу, поэтому формы нет
+   * вовсе, а «Run now» работает: аудит запускают вручную.
    */
-  await expect(page.getByLabel("Grok")).not.toBeChecked();
-  await expect(page.getByLabel("Grok")).toBeDisabled();
-  await expect(page.getByTestId("assistant-locked-grok")).toBeVisible();
-
-  // Умолчание сохраняется без отказа.
-  await page.getByRole("button", { name: "Save schedule" }).click();
-  await expect(page.getByTestId("schedule-summary")).toContainText("chatgpt");
-  await expect(page.getByTestId("schedule-summary")).not.toContainText("grok");
-  await expect(page.getByTestId("form-error")).toHaveCount(0);
-
-  // Снятое остаётся снятым: форма показывает сохранённое, а не умолчания —
-  // иначе следующее «Save» молча вернуло бы выключенное.
-  await page.getByLabel("Perplexity").uncheck();
-  await page.getByRole("button", { name: "Save schedule" }).click();
-  await expect(page.getByTestId("schedule-summary")).not.toContainText("perplexity");
-
-  await page.reload();
-  await expect(page.getByLabel("Perplexity")).not.toBeChecked();
-  await expect(page.getByLabel("ChatGPT")).toBeChecked();
+  await expect(page.getByTestId("schedule-needs-plan")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Save schedule" })).toHaveCount(0);
 
   await page.getByRole("button", { name: "Run now" }).click();
   await expect(page.getByTestId("run-status")).toContainText("done", { timeout: 30_000 });
@@ -118,6 +92,33 @@ test("the plan decides what is offered, and locked assistants are visible", asyn
   await expect(note).toContainText("Copilot");
   await expect(note).not.toContainText("Claude");
   await expect(note).not.toContainText("Grok");
+
+  // После оплаты starter форма предлагает ровно то, что он покрывает.
+  await makeAgencyPaying(email, "starter");
+  await page.goto(`/clients/${clientId}/measure`);
+  await expect(page.getByLabel("ChatGPT")).toBeChecked();
+  await expect(page.getByLabel("Perplexity")).toBeChecked();
+  await expect(page.getByLabel("Grok")).toBeChecked();
+
+  // Запертое видно, а не спрятано, и подписано тарифом, на котором включается.
+  await expect(page.getByLabel("Claude")).not.toBeChecked();
+  await expect(page.getByLabel("Claude")).toBeDisabled();
+  await expect(page.getByTestId("assistant-locked-claude")).toContainText("growth");
+
+  // Умолчание сохраняется без отказа.
+  await page.getByRole("button", { name: "Save schedule" }).click();
+  await expect(page.getByTestId("schedule-summary")).toContainText("ChatGPT");
+  await expect(page.getByTestId("form-error")).toHaveCount(0);
+
+  // Снятое остаётся снятым: форма показывает сохранённое, а не умолчания —
+  // иначе следующее «Save» молча вернуло бы выключенное.
+  await page.getByLabel("Perplexity").uncheck();
+  await page.getByRole("button", { name: "Save schedule" }).click();
+  await expect(page.getByTestId("schedule-summary")).not.toContainText("Perplexity");
+
+  await page.reload();
+  await expect(page.getByLabel("Perplexity")).not.toBeChecked();
+  await expect(page.getByLabel("ChatGPT")).toBeChecked();
 });
 
 test("running a check without prompts explains what to do", async ({ page }) => {

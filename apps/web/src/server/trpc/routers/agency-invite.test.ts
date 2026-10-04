@@ -74,7 +74,7 @@ describe("agency.invite: занятые и повторные адреса", () 
     await deactivateUser(db, gone.id, agencyId);
 
     const result = await caller().agency.invite({ email: gone.email });
-    expect(result.delivered).toBe(true);
+    expect(result.inviteUrl).toContain(`/invite/${result.token}`);
   });
 
   it("повтор на тот же адрес освежает прежнее приглашение и его ссылку", async () => {

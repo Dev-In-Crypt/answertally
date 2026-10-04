@@ -36,15 +36,37 @@ export function hostnameOf(request: NextRequest): string {
   return header.split(":")[0]?.toLowerCase() ?? "";
 }
 
+/**
+ * Пропуск дальше с адресом страницы в заголовке запроса.
+ *
+ * Серверный layout не знает, какую страницу открыли, а без этого редирект на
+ * /login терял бы цель: после входа человек попадал бы на дашборд, а не туда,
+ * куда шёл по ссылке. Кладём только путь и query — без хоста, его /login не
+ * примет (safeNextPath).
+ */
+function nextWithPathname(request: NextRequest): NextResponse {
+  const headers = new Headers(request.headers);
+  headers.set("x-pathname", pagePath(request.nextUrl));
+  return NextResponse.next({ request: { headers } });
+}
+
+/** Путь и query страницы; служебный `_rsc` клиентской навигации не нужен в ссылке. */
+export function pagePath(url: URL): string {
+  const params = new URLSearchParams(url.search);
+  params.delete("_rsc");
+  const query = params.toString();
+  return query ? `${url.pathname}?${query}` : url.pathname;
+}
+
 export function middleware(request: NextRequest): NextResponse {
   const reportHost = process.env.NEXT_PUBLIC_REPORT_HOST?.trim().toLowerCase();
   if (!reportHost) {
     // Своего домена у отчётов нет — приложение работает как обычно.
-    return NextResponse.next();
+    return nextWithPathname(request);
   }
 
   if (hostnameOf(request) !== reportHost) {
-    return NextResponse.next();
+    return nextWithPathname(request);
   }
 
   if (allowedOnReportHost(request.nextUrl.pathname)) {

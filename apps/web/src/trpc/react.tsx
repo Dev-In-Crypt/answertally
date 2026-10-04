@@ -30,7 +30,7 @@ let redirectingToLogin = false;
  * показывал бы ошибку с кнопкой «Try again», которая не может помочь:
  * мягкая навигация не перезапускает серверную проверку в `(app)/layout`.
  */
-const errorLink: TRPCLink<AppRouter> = () => ({ next, op }) =>
+export const errorLink: TRPCLink<AppRouter> = () => ({ next, op }) =>
   observable((observer) =>
     next(op).subscribe({
       next: (value) => observer.next(value),

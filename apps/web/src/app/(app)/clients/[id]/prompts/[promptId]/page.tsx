@@ -39,7 +39,8 @@ export default function PromptResponsesPage({
   }
 
   // «Не найден» — только когда сервер так и ответил; сбой сети — не удаление.
-  if (data.error && data.error.data?.code !== "NOT_FOUND") {
+  // Упавший фоновый перезапрос не прячет уже загруженные ответы.
+  if (data.error && !data.data && data.error.data?.code !== "NOT_FOUND") {
     return (
       <div role="alert" className="flex flex-col items-start gap-3 rounded-lg border border-dashed p-8">
         <h2 className="text-base font-medium">Answers could not be loaded</h2>
@@ -51,7 +52,7 @@ export default function PromptResponsesPage({
     );
   }
 
-  if (data.error || !data.data) {
+  if (!data.data) {
     return <PageHeader title="Prompt not found" description="It may have been removed." />;
   }
 

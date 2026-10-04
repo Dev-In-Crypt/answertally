@@ -4,13 +4,14 @@ import { use } from "react";
 import { api } from "@/trpc/react";
 import { PageHeader } from "@/components/page-header";
 import { ActionsBoard } from "./actions-board";
+import { ClientLoadError } from "../client-load-error";
 
 export default function ActionsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const client = api.clients.get.useQuery({ id });
 
-  if (client.error) {
-    return <PageHeader title="Client not found" description="It may have been removed." />;
+  if (client.error && !client.data) {
+    return <ClientLoadError error={client.error} retry={() => client.refetch()} />;
   }
 
   return (

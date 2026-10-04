@@ -18,9 +18,9 @@ test("the plan screen states what the agency gets and what it cannot do yet", as
   await page.getByRole("link", { name: "Plan" }).click();
   await expect(page).toHaveURL(/\/settings\/billing$/);
 
-  // Новое агентство работает на starter — до всякой оплаты.
-  await expect(page.getByTestId("current-plan")).toHaveText("Starter");
-  await expect(page.getByTestId("plan-reason")).toContainText("starter limits");
+  // До всякой оплаты у нового агентства бесплатный аудит, а не тариф.
+  await expect(page.getByTestId("current-plan")).toHaveText("Free audit");
+  await expect(page.getByTestId("plan-reason")).toContainText("the free audit applies");
 
   // Оплата не подключена: ни одной кнопки, которая упадёт.
   await expect(page.getByTestId("payments-off")).toBeVisible();

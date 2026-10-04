@@ -6,6 +6,7 @@ import { api } from "@/trpc/react";
 import { reportUrl } from "@/app/r/report-url";
 import { EmptyState } from "@/components/page-header";
 import { buttonClass } from "@/components/ui/button";
+import { SkeletonRows } from "@/components/ui/skeleton";
 import { controlClass, inputClass } from "@/components/ui/field";
 import { cn } from "@/lib/utils";
 import { FileText } from "lucide-react";
@@ -115,9 +116,6 @@ export function ReportsView({ clientId }: { clientId: string }) {
     }
   }
 
-  // Сбой генерации, выдачи или отзыва ссылки не должен проходить молча.
-  const actionError = generate.error ?? share.error ?? revoke.error;
-
   const rows = reports.data ?? [];
 
   return (
@@ -137,9 +135,9 @@ export function ReportsView({ clientId }: { clientId: string }) {
         </span>
       </div>
 
-      {actionError && (
+      {generate.error && (
         <p role="alert" data-testid="report-action-error" className="text-sm text-destructive">
-          {actionError.message}
+          {generate.error.message}
         </p>
       )}
 
@@ -150,7 +148,26 @@ export function ReportsView({ clientId }: { clientId: string }) {
         />
       )}
 
-      {rows.length === 0 ? (
+      {reports.isPending ? (
+        <SkeletonRows rows={3} />
+      ) : reports.error && !reports.data ? (
+        // Пустое состояние — утверждение «отчётов нет»; при сбое загрузки это
+        // неправда. Сбой фонового обновления уже загруженный список не прячет.
+        <div
+          role="alert"
+          className="flex flex-col items-start gap-3 rounded-lg border border-dashed p-8"
+        >
+          <h2 className="text-base font-medium">Could not load reports</h2>
+          <p className="max-w-prose text-sm text-muted-foreground">{reports.error.message}</p>
+          <button
+            type="button"
+            onClick={() => reports.refetch()}
+            className={buttonClass("outline", "lg")}
+          >
+            Try again
+          </button>
+        </div>
+      ) : rows.length === 0 ? (
         <EmptyState
           title="No reports yet"
           icon={FileText}
@@ -215,6 +232,18 @@ export function ReportsView({ clientId }: { clientId: string }) {
                 {pdfError?.reportId === report.id && (
                   <p role="alert" className="text-sm text-destructive">
                     {pdfError.message}
+                  </p>
+                )}
+                {/* Сбой выдачи или отзыва ссылки не проходит молча — и виден
+                    у того отчёта, по которому нажали. */}
+                {share.error && share.variables?.reportId === report.id && (
+                  <p role="alert" className="text-sm text-destructive">
+                    {share.error.message}
+                  </p>
+                )}
+                {revoke.error && revoke.variables?.reportId === report.id && (
+                  <p role="alert" className="text-sm text-destructive">
+                    {revoke.error.message}
                   </p>
                 )}
 
@@ -440,12 +469,22 @@ function SendReport({
     },
   });
 
+  // Форма, а не кнопка с onClick: адрес проверяет сам браузер (type=email),
+  // и сервер не возвращает на опечатку сырой отказ схемы.
   return (
-    <div className="flex flex-col gap-2 rounded-md border border-dashed p-3">
+    <form
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (send.isPending) return;
+        send.mutate({ reportId, to: to.trim(), ...(note.trim() ? { note: note.trim() } : {}) });
+      }}
+      className="flex flex-col gap-2 rounded-md border border-dashed p-3"
+    >
       <label className="flex flex-col gap-1.5">
         <span className="text-sm font-medium">Client email</span>
         <input
           type="email"
+          required
           value={to}
           onChange={(event) => setTo(event.target.value)}
           placeholder="finance@ledgerbrook.test"
@@ -458,6 +497,7 @@ function SendReport({
         <textarea
           value={note}
           onChange={(event) => setNote(event.target.value)}
+          maxLength={500}
           rows={2}
           placeholder="Anything you want to say in your own words"
           className={cn(controlClass, "p-2.5")}
@@ -472,12 +512,9 @@ function SendReport({
 
       <div className="flex gap-2">
         <button
-          type="button"
+          type="submit"
           data-testid="confirm-send"
-          disabled={!to.includes("@") || send.isPending}
-          onClick={() =>
-            send.mutate({ reportId, to: to.trim(), ...(note.trim() ? { note: note.trim() } : {}) })
-          }
+          disabled={send.isPending}
           className={buttonClass("primary", "md")}
         >
           {send.isPending ? "Sending…" : "Send"}
@@ -491,6 +528,6 @@ function SendReport({
       <p className="text-xs text-muted-foreground">
         The email is signed with your agency name and carries a link, not an attachment.
       </p>
-    </div>
+    </form>
   );
 }

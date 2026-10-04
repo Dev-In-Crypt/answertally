@@ -1,6 +1,6 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { APIError } from "better-auth/api";
+import { APIError, createAuthMiddleware, isAPIError } from "better-auth/api";
 import {
   canonicalEmail,
   EMAIL_COPY,
@@ -89,15 +89,23 @@ const AUTH_EMAIL_WAIT_MS = 5000;
  * Отправить письмо входа, но не держать форму дольше нескольких секунд.
  *
  * Транспорт повторяет попытки (до трёх по 15 секунд), и при сбое Resend
- * кнопка «Create account» висела почти минуту, а потом всё равно говорила
- * «письмо отправлено»: Better Auth глотает ошибку отправки. Ответ формы от
- * исхода письма не зависит — так же, как и раньше, — но больше не ждёт его;
- * отправка доживает своё в фоне, отказ уходит в журнал.
+ * кнопка «Create account» висела почти минуту. Теперь форма ждёт не дольше
+ * нескольких секунд; отправка доживает своё в фоне, отказ уходит в журнал.
+ *
+ * `true` — транспорт отказал, пока форма ещё ждала. Поздний отказ остаётся
+ * только в журнале: ответ к тому времени уже ушёл.
  */
-async function sendAuthEmail(message: EmailMessage): Promise<void> {
+async function sendAuthEmail(message: EmailMessage): Promise<boolean> {
+  let failed = false;
   const sending = getEmailSender()
     .send(message)
-    .catch((error: unknown) => console.error("[auth] email delivery failed", error));
+    .then(
+      () => undefined,
+      (error: unknown) => {
+        failed = true;
+        console.error("[auth] email delivery failed", error);
+      },
+    );
   let timer: ReturnType<typeof setTimeout> | undefined;
   await Promise.race([
     sending,
@@ -106,7 +114,41 @@ async function sendAuthEmail(message: EmailMessage): Promise<void> {
     }),
   ]);
   clearTimeout(timer);
+  return failed;
 }
+
+/**
+ * Адреса, письмо подтверждения на которые не ушло, — для ответа формы.
+ *
+ * Better Auth глотает ошибку отправки, и форма после отказа Resend говорила
+ * «We sent an email»: человек ждал письма, которого нет. Отказ запоминается
+ * здесь, а хук `after` ниже подменяет ответ регистрации и входа фразой с
+ * выходом. Регистрация на занятый адрес тоже шлёт письмо (`existing`), и
+ * его отказ даёт тот же ответ — по нему не узнать, есть ли аккаунт.
+ *
+ * Сброс пароля сюда не пишет: он отвечает одинаково для любого адреса, и
+ * отказ письма выдал бы, что аккаунт есть. Его форма и так говорит
+ * «если аккаунт есть», а отказ остаётся в журнале.
+ *
+ * Режим без почты (EMAIL_MODE=log) отказом не считается: ссылка в журнале
+ * сервера, и тот, кто так поднял продукт, берёт её оттуда.
+ */
+const unsentVerification = new Map<string, number>();
+const UNSENT_TTL_MS = 60_000;
+
+async function sendVerificationLike(message: EmailMessage): Promise<void> {
+  if (await sendAuthEmail(message)) unsentVerification.set(message.to.toLowerCase(), Date.now());
+}
+
+/** Забрать отметку об отказе: одна отметка — один ответ. */
+function takeUnsentVerification(email: string): boolean {
+  const at = unsentVerification.get(email);
+  unsentVerification.delete(email);
+  return at !== undefined && Date.now() - at < UNSENT_TTL_MS;
+}
+
+export const VERIFICATION_EMAIL_NOT_SENT =
+  "We could not send the confirmation email just now. Wait a minute, then sign in with the same email and password and we will send a new link.";
 
 /**
  * Письмо тому, на чей адрес пытаются завести второй аккаунт.
@@ -191,13 +233,14 @@ export const auth = betterAuth({
      */
     sendResetPassword: async ({ user, url }) => {
       if (!(await mayMailAddress("reset", user.email))) return;
+      // Без отметки об отказе — см. `unsentVerification`.
       await sendAuthEmail(passwordResetEmail({ to: user.email, resetUrl: url }));
     },
     // Ответ формы остаётся тем же, что и для нового адреса; письмо — только
     // владельцу ящика.
     onExistingUserSignUp: async ({ user }) => {
       if (!(await mayMailAddress("exists", user.email))) return;
-      await sendAuthEmail(existingAccountEmail(user.email));
+      await sendVerificationLike(existingAccountEmail(user.email));
     },
     // Сброс пароля выкидывает все остальные входы: иначе укравший сессию
     // оставался внутри и после того, как владелец сменил пароль.
@@ -223,7 +266,7 @@ export const auth = betterAuth({
      */
     sendVerificationEmail: async ({ user, url }) => {
       if (!(await mayMailAddress("verify", user.email))) return;
-      await sendAuthEmail(verifyEmailEmail({ to: user.email, verifyUrl: url }));
+      await sendVerificationLike(verifyEmailEmail({ to: user.email, verifyUrl: url }));
     },
   },
   user: {
@@ -263,6 +306,32 @@ export const auth = betterAuth({
       get: async () => null,
       set: async () => {},
     },
+  },
+  hooks: {
+    /**
+     * Письмо подтверждения не ушло — регистрация и вход говорят это прямо,
+     * а не «We sent an email». Аккаунт при этом уже заведён: вход с тем же
+     * паролем пришлёт новую ссылку (`sendOnSignIn`).
+     */
+    after: createAuthMiddleware(async (ctx) => {
+      const signIn = ctx.path === "/sign-in/email";
+      if (!signIn && ctx.path !== "/sign-up/email") return;
+      // Подменяется только ответ «письмо отправлено»: у входа это отказ
+      // EMAIL_NOT_VERIFIED, у регистрации — успех. Иначе отметка, оставленная
+      // другим запросом на тот же адрес, сорвала бы удачный вход — уже с
+      // выставленной cookie сессии.
+      const returned = ctx.context.returned;
+      const sentReply = signIn
+        ? isAPIError(returned) && returned.body?.code === "EMAIL_NOT_VERIFIED"
+        : !isAPIError(returned);
+      if (!sentReply) return;
+      const email: unknown = ctx.body?.email;
+      if (typeof email !== "string" || !takeUnsentVerification(email.toLowerCase())) return;
+      throw new APIError("UNPROCESSABLE_ENTITY", {
+        message: VERIFICATION_EMAIL_NOT_SENT,
+        code: "VERIFICATION_EMAIL_NOT_SENT",
+      });
+    }),
   },
   databaseHooks: {
     session: {

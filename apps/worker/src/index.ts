@@ -1,5 +1,5 @@
 import { FlowProducer, Queue, Worker } from "bullmq";
-import { createDb, finishRunWithNote } from "@repo/db";
+import { createDb, failRunIfInFlight } from "@repo/db";
 import { measurableAssistants, PLATFORMS, parseAdaptersMode, registerLiveAdapters } from "@repo/core";
 import { ADAPTERS_MODE_RAW } from "./env";
 import {
@@ -128,7 +128,8 @@ async function main(): Promise<void> {
     // Попытки берутся из самой задачи: поставленная до выкатки повторов не
     // имеет, и её первый сбой — уже последний.
     if (!job || job.attemptsMade < (job.opts.attempts ?? 1)) return;
-    void finishRunWithNote(db, job.data.runId, "failed", FINALIZE_FAILED_NOTE).catch((error) =>
+    // Только идущий: запоздавший сбой не затирает уже закончившийся прогон.
+    void failRunIfInFlight(db, job.data.runId, FINALIZE_FAILED_NOTE).catch((error) =>
       errorReporter.captureError(error, { scope: "run.finalize_close", runId: job.data.runId }),
     );
   });

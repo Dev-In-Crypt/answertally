@@ -148,6 +148,21 @@ export function AuditView({ clientId }: { clientId: string }) {
     return <p className="text-sm text-muted-foreground">Loading…</p>;
   }
 
+  // Сбой загрузки — не «вопросов нет»: пустое состояние звало бы генерировать
+  // заново то, что у клиента уже есть. Сбой фонового перечитывания при
+  // загруженном списке экран не подменяет.
+  if (prompts.isError && !prompts.data) {
+    return (
+      <div role="alert" className="flex flex-col items-start gap-3 rounded-lg border border-dashed p-8">
+        <h2 className="text-base font-medium">Prompts could not be loaded</h2>
+        <p className="max-w-prose text-sm text-muted-foreground">{prompts.error.message}</p>
+        <button type="button" onClick={() => void prompts.refetch()} className={buttonClass("outline", "lg")}>
+          Try again
+        </button>
+      </div>
+    );
+  }
+
   if (promptCount === 0) {
     return (
       <EmptyState

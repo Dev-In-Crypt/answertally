@@ -40,7 +40,6 @@ function formatWindow(start: Date, end: Date): string {
 export function OpportunitiesView({ clientId }: { clientId: string }) {
   const router = useRouter();
   const utils = api.useUtils();
-  const client = api.clients.get.useQuery({ id: clientId });
   const opportunities = api.opportunities.list.useQuery({ clientId });
   const [openId, setOpenId] = useState<string | null>(null);
 
@@ -48,15 +47,12 @@ export function OpportunitiesView({ clientId }: { clientId: string }) {
     onSuccess: () => utils.opportunities.list.invalidate({ clientId }),
   });
 
-  if (client.error) {
-    return <p data-testid="form-error">Client not found. It may have been removed.</p>;
-  }
-
+  // «Клиент не найден» решает страница вокруг (opportunities/page.tsx), здесь — только список.
   if (opportunities.isPending) {
     return <SkeletonCards count={4} />;
   }
 
-  if (opportunities.error) {
+  if (opportunities.error && !opportunities.data) {
     return (
       <NotePanel title="Could not load opportunities" testId="form-error">
         {opportunities.error.message}{" "}
@@ -255,10 +251,12 @@ function OpportunityDetail({
       </div>
     );
   }
-  if (detail.error) {
+  // После isPending данных нет только при ошибке; упавший фоновый перезапрос
+  // оставляет загруженное на экране.
+  if (!detail.data) {
     return (
       <p role="alert" className="border-t p-4 text-sm text-destructive">
-        {detail.error.message}
+        {detail.error?.message}
       </p>
     );
   }
@@ -314,7 +312,7 @@ function OpportunityDetail({
 
         {evidence.isPending ? (
           <SkeletonText lines={3} />
-        ) : evidence.error ? (
+        ) : evidence.error && !evidence.data ? (
           <p role="alert" className="text-sm text-destructive">
             {evidence.error.message}
           </p>

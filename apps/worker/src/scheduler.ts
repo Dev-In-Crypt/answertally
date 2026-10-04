@@ -79,10 +79,13 @@ export async function tickSchedules(
   const skipped: SkippedSchedule[] = [];
 
   async function skip(
-    schedule: { id: string; clientId: string },
+    schedule: { id: string; clientId: string; skipReason: string | null },
     reason: string,
     recheck: boolean = true,
   ): Promise<void> {
+    // Без сдвига срока расписание созревает каждый тик: та же причина уже
+    // записана — не переписывать её и не сыпать в лог раз в пять минут.
+    if (!recheck && schedule.skipReason === reason) return;
     skipped.push({ scheduleId: schedule.id, clientId: schedule.clientId, reason });
     await setScheduleOutcome(db, schedule.id, {
       skipReason: reason,
@@ -109,7 +112,7 @@ export async function tickSchedules(
     if (!allowsCadence(entitlements.plan, schedule.cadence)) {
       await skip(
         schedule,
-        `The ${entitlements.plan} plan does not include ${schedule.cadence} checks. Pick another cadence on the measure screen, or upgrade under Settings → Billing.`,
+        `The ${entitlements.plan.charAt(0).toUpperCase() + entitlements.plan.slice(1)} plan does not include ${schedule.cadence} checks. Pick another cadence on the measure screen, or upgrade under Settings → Billing.`,
       );
       continue;
     }

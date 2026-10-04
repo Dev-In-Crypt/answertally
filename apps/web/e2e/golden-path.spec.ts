@@ -60,11 +60,8 @@ test("golden path: from signup to a verifiable visibility number", async ({ page
   });
   await expect(page.getByTestId("import-summary")).toContainText("2 prompts");
 
-  // 4. Настраивает расписание и запускает прогон.
-  await page.getByLabel("Samples per prompt").fill("3");
-  await page.getByRole("button", { name: "Save schedule" }).click();
-  await expect(page.getByTestId("schedule-summary")).toContainText("3 samples per prompt");
-
+  // 4. Запускает бесплатный аудит: расписание — только после оплаты, а
+  // ручной прогон берёт умолчание аудита (3 сэмпла на промпт).
   await page.getByRole("button", { name: "Run now" }).click();
   await expect(page.getByTestId("run-status")).toContainText("done", { timeout: 30_000 });
 

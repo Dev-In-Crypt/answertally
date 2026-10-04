@@ -5,7 +5,10 @@ import { useRouter } from "next/navigation";
 import { api } from "@/trpc/react";
 import { PageHeader } from "@/components/page-header";
 import { ClientForm } from "../../client-form";
+import { ClientLoadError } from "../client-load-error";
 import { buttonClass } from "@/components/ui/button";
+import { ADMIN_ONLY_HINT } from "@/lib/role";
+import { useCan } from "@/lib/role-context";
 
 export default function EditClientPage({
   params,
@@ -22,6 +25,7 @@ export default function EditClientPage({
   const utils = api.useUtils();
 
   const client = api.clients.get.useQuery({ id });
+  const canEdit = useCan("admin");
 
   const update = api.clients.update.useMutation({
     onSuccess: async () => {
@@ -43,6 +47,11 @@ export default function EditClientPage({
     return <p className="text-sm text-muted-foreground">Loading…</p>;
   }
 
+  // Сбой сети или сервера — не «клиент удалён»: причина и повтор.
+  if (client.error && !client.data && client.error.data?.code !== "NOT_FOUND") {
+    return <ClientLoadError error={client.error} retry={() => void client.refetch()} />;
+  }
+
   // Чужой клиент отдаётся как NOT_FOUND — интерфейс не подтверждает его существование.
   if (client.error || !client.data) {
     return (
@@ -56,6 +65,31 @@ export default function EditClientPage({
   }
 
   const clientName = client.data.name;
+
+  // Менять и удалять клиента могут админ и владелец (clients.update/delete):
+  // участнику — те же данные без кнопок, которые закончились бы отказом.
+  if (!canEdit) {
+    const rows: [string, string][] = [
+      ["Name", client.data.name],
+      ["Domain", client.data.domain],
+      ["Industry", client.data.industry || "—"],
+      ["Brand names", client.data.brandNames.join(", ") || "—"],
+      ["Competitors", client.data.competitorNames.join(", ") || "—"],
+    ];
+    return (
+      <>
+        <PageHeader title="Settings" description={ADMIN_ONLY_HINT} />
+        <dl data-testid="client-settings-readonly" className="grid max-w-xl gap-3 text-sm">
+          {rows.map(([label, value]) => (
+            <div key={label} className="flex flex-col gap-0.5">
+              <dt className="text-muted-foreground">{label}</dt>
+              <dd className="break-words">{value}</dd>
+            </div>
+          ))}
+        </dl>
+      </>
+    );
+  }
 
   return (
     <>

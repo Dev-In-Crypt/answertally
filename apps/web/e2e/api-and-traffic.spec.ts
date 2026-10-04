@@ -58,7 +58,8 @@ test("an API key is shown once and then reads the agency's own numbers", async (
   // Без ключа тот же адрес не отдаёт ничего.
   expect((await request.get("/api/v1/clients")).status()).toBe(401);
 
-  // Отозванный ключ перестаёт работать сразу.
+  // Отозванный ключ перестаёт работать сразу. Отзыв необратим и спрашивает подтверждение.
+  page.once("dialog", (dialog) => void dialog.accept());
   await page.getByRole("button", { name: "Revoke" }).first().click();
   await expect(page.getByText("revoked")).toBeVisible();
 

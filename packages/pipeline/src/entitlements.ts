@@ -173,7 +173,9 @@ async function afterDowngradeOrFarming(
 
   const clients = await countClientsByAgency(db, agencyId);
   if (clients > entitlements.clientLimit) {
-    return `The workspace has ${clients} clients and the ${entitlements.plan} plan covers ${entitlements.clientLimit}. Remove clients, or upgrade under Settings → Billing, to keep measuring.`;
+    // Тариф — как на экране («Starter»), как и в отказах core.
+    const plan = entitlements.plan.charAt(0).toUpperCase() + entitlements.plan.slice(1);
+    return `The workspace has ${clients} clients and the ${plan} plan covers ${entitlements.clientLimit}. Remove clients, or upgrade under Settings → Billing, to keep measuring.`;
   }
 
   if (values.adaptersMode === "live" && !entitlements.paying) {

@@ -2,18 +2,25 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getAgencyById } from "@repo/db";
 import { auth } from "@/lib/auth";
+import { toRole } from "@/lib/role";
+import { RoleProvider } from "@/lib/role-context";
 import { AppShell } from "@/components/app-shell";
 import { ClientErrorReporting } from "@/components/client-error-reporting";
 import { db } from "@/server/db";
 
 /** Общий каркас всех защищённых экранов: сессия проверяется здесь, а не в каждой странице. */
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const requestHeaders = await headers();
+  const session = await auth.api.getSession({ headers: requestHeaders });
 
   if (!session) {
-    redirect("/login");
+    // Адрес страницы кладёт middleware: после входа человек вернётся туда,
+    // куда шёл по ссылке, а не на дашборд. Проверяет его /login (safeNextPath).
+    const path = requestHeaders.get("x-pathname");
+    redirect(path ? `/login?next=${encodeURIComponent(path)}` : "/login");
   }
 
+  const role = toRole((session.user as { role?: unknown }).role);
   const agencyId = (session.user as { agencyId?: string }).agencyId;
   let agencyName = "Your agency";
   if (agencyId) {
@@ -21,10 +28,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <AppShell agencyName={agencyName} userEmail={session.user.email}>
-      {/* Сбор ошибок — только на экранах агентства: см. комментарий в корневом layout. */}
-      <ClientErrorReporting />
-      {children}
-    </AppShell>
+    <RoleProvider role={role}>
+      <AppShell agencyName={agencyName} userEmail={session.user.email}>
+        {/* Сбор ошибок — только на экранах агентства: см. комментарий в корневом layout. */}
+        <ClientErrorReporting />
+        {children}
+      </AppShell>
+    </RoleProvider>
   );
 }

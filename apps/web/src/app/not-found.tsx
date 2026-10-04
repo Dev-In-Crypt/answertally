@@ -13,7 +13,7 @@ export const metadata: Metadata = {
  * ссылку из рекламы попадают люди, которых иначе встретила бы голая
  * страница Next.
  *
- * На домене отчётов агентства (`NEXT_PUBLIC_REPORT_HOST`) — та же весть без
+ * На домене отчётов агентства (`NEXT_PUBLIC_REPORT_HOST`) и под /r/ — та же весть без
  * следа продукта: туда заходит клиент агентства (инвариант 3). Остальные
  * адреса на этом домене middleware отсекает сам.
  */
@@ -23,7 +23,14 @@ export default async function NotFound() {
     .split(":")[0]
     ?.toLowerCase();
 
-  if (REPORT_HOST && host === REPORT_HOST.toLowerCase()) {
+  /**
+   * И на отчёте по основному домену: Next кладёт корневой 404 в RSC-разметку
+   * каждой страницы как запасной, и витрина с логотипом продукта уезжала в
+   * HTML отчёта, даже когда отчёт открылся. Путь даёт middleware (x-pathname).
+   */
+  const onReport = requestHeaders.get("x-pathname")?.startsWith("/r/") ?? false;
+
+  if (onReport || (REPORT_HOST && host === REPORT_HOST.toLowerCase())) {
     return (
       <main className="mx-auto flex min-h-[60vh] max-w-md flex-col justify-center gap-3 px-6 py-16">
         <h1 className="text-2xl font-semibold tracking-tight">Page not found</h1>
