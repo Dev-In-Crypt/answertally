@@ -56,6 +56,23 @@ describe("entitlementsFor", () => {
     expect(result.reason).toMatch(/ends at the close/i);
   });
 
+  it("отменённая к концу периода подписка закрывается по дате, даже без вебхука", () => {
+    const periodEnd = new Date("2026-09-10T00:00:00.000Z");
+    const ended = entitlementsFor(
+      snapshot({ cancelAtPeriodEnd: true, currentPeriodEnd: periodEnd }),
+      NOW,
+    );
+    expect(ended.active).toBe(false);
+    expect(ended.paying).toBe(false);
+
+    // В пределах суток после конца периода — ещё ждём событие провайдера.
+    const justEnded = entitlementsFor(
+      snapshot({ cancelAtPeriodEnd: true, currentPeriodEnd: new Date("2026-09-15T00:00:00.000Z") }),
+      NOW,
+    );
+    expect(justEnded.active).toBe(true);
+  });
+
   it("непрошедший платёж оставляет доступ на время отсрочки", () => {
     const periodEnd = new Date("2026-09-10T00:00:00.000Z");
     const result = entitlementsFor(

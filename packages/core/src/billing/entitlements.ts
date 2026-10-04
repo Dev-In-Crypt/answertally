@@ -71,6 +71,8 @@ export const DEFAULT_PLAN: PlanId = "starter";
  */
 export const PAST_DUE_GRACE_DAYS = 14;
 
+const CANCEL_SETTLE_MS = 86_400_000;
+
 export function entitlementsFor(
   subscription: SubscriptionSnapshot | null,
   now: Date = new Date(),
@@ -98,7 +100,19 @@ export function entitlementsFor(
   const planLimits = PLAN_LIMITS[subscription.plan];
   const limits = { ...planLimits, clientLimit: planLimits.clientLimit + extra };
 
-  switch (subscription.status) {
+  /**
+   * Отменённая к концу периода подписка закрывается по дате, а не только по
+   * вебхуку. Событие о закрытии может не прийти (сбой доставки, смена ключей
+   * провайдера), и тогда «active» с отменой оставался бы платным тарифом
+   * навсегда. Сутки запаса — на запоздавшее событие и расхождение часов.
+   */
+  const endedByDate =
+    subscription.cancelAtPeriodEnd &&
+    subscription.currentPeriodEnd !== null &&
+    now.getTime() > subscription.currentPeriodEnd.getTime() + CANCEL_SETTLE_MS;
+  const status = endedByDate ? "canceled" : subscription.status;
+
+  switch (status) {
     case "active":
     case "trialing":
       return {
@@ -153,7 +167,7 @@ export function entitlementsFor(
         active: false,
         paying: false,
         reason:
-          subscription.status === "canceled"
+          status === "canceled"
             ? "The subscription was cancelled."
             : "Checkout was never completed.",
       };
