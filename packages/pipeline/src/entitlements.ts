@@ -1,6 +1,5 @@
 import {
   billingPeriod,
-  billingPeriodBounds,
   canStartMeasurement,
   entitlementsFor,
   type Entitlements,
@@ -15,8 +14,8 @@ import {
   getLifetimeAiChecks,
   getSubscriptionByAgency,
   getUsageCounter,
+  inFlightRemainingChecks,
   lockAgency,
-  sumPlannedChecks,
   type Database,
   type NewRun,
   type Run,
@@ -63,10 +62,10 @@ export async function entitlementsForAgency(
  * блокировкой. Раньше у каждого была своя проверка, и воркерная не знала ни
  * сколько прогон потратит, ни кто его запускает.
  *
- * Израсходованным считается бо́льшее из счётчика ответов и суммы одобренных
- * прогонов: счётчик не видит идущих прогонов и платных вызовов, упавших до
- * записи, а у прогонов, созданных до появления размера, суммы нет.
- * Плательщику — за текущий месяц, неплательщику — за всё время.
+ * Израсходованным считаются записанные ответы плюс то, что идущие прогоны
+ * ещё вправе потратить (`inFlightRemainingChecks`). Упавший до первого
+ * ответа прогон не стоит ничего: иначе сбой у провайдера сжигал бы
+ * бесплатный аудит, которого человек так и не получил.
  */
 export async function measurementAllowedForAgency(
   db: Database,
@@ -80,23 +79,19 @@ export async function measurementAllowedForAgency(
   }
 
   const context = { trigger: run.trigger, runsInFlight: 0 };
-  let used: number;
 
-  if (entitlements.paying) {
-    const period = billingPeriod(now);
-    const [counter, planned] = await Promise.all([
-      getUsageCounter(db, agencyId, period),
-      sumPlannedChecks(db, agencyId, billingPeriodBounds(period).start),
-    ]);
-    used = Math.max(counter?.aiChecksUsed ?? 0, planned);
-  } else {
-    const [counted, planned, inFlight] = await Promise.all([
-      getLifetimeAiChecks(db, agencyId),
-      sumPlannedChecks(db, agencyId),
-      countRunsInFlight(db, agencyId, now),
-    ]);
-    used = Math.max(counted, planned);
-    context.runsInFlight = inFlight;
+  // Израсходовано = записанные ответы + то, что идущие прогоны ещё вправе
+  // потратить. Плательщику — за месяц, неплательщику — за всё время.
+  const [counted, inFlightRemaining] = await Promise.all([
+    entitlements.paying
+      ? getUsageCounter(db, agencyId, billingPeriod(now)).then((row) => row?.aiChecksUsed ?? 0)
+      : getLifetimeAiChecks(db, agencyId),
+    inFlightRemainingChecks(db, agencyId),
+  ]);
+  const used = counted + inFlightRemaining;
+
+  if (!entitlements.paying) {
+    context.runsInFlight = await countRunsInFlight(db, agencyId, now);
   }
 
   return canStartMeasurement(entitlements, used, run.checksPlanned ?? 0, context);

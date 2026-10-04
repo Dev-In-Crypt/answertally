@@ -117,9 +117,9 @@ describe("старт прогона под блокировкой", () => {
     expect(run?.plannedChecks).toBe(144);
   });
 
-  it("упавший прогон считается израсходованным, хотя счётчик его не видел", async () => {
-    // Платные вызовы, упавшие до записи, в счётчик не попадают — а деньги
-    // за них ушли. Сумма одобренных прогонов их видит.
+  it("прогон, упавший до первого ответа, бесплатный аудит не съедает", async () => {
+    // Сбой у провайдера или очереди — человек не получил ничего и должен
+    // иметь возможность запустить аудит снова.
     const { run } = await startRunIfAllowed(db, agencyId, { ...live, clientId }, 144);
     await finishRun(db, run!.id, "failed");
 
@@ -127,6 +127,22 @@ describe("старт прогона под блокировкой", () => {
       trigger: "manual",
       checksPlanned: 144,
     });
+    expect(decision.allowed).toBe(true);
+  });
+
+  it("идущий прогон держит свою долю, пока не допишет ответы", async () => {
+    // Плательщик: правило «один аудит за раз» к нему не относится, и
+    // отказ здесь — только от арифметики потолка.
+    await makePaying(db, agencyId, "starter");
+    const allowance = PLAN_LIMITS.starter.aiCheckAllowance;
+    await incrementAiChecks(db, agencyId, billingPeriod(), allowance - 150);
+    await startRunIfAllowed(db, agencyId, { ...live, clientId }, 100);
+
+    const decision = await measurementAllowedForAgency(db, agencyId, {
+      trigger: "manual",
+      checksPlanned: 60,
+    });
+    // 100 обещано идущему прогону, 60 сверху в оставшиеся 150 не помещаются.
     expect(decision.allowed).toBe(false);
   });
 

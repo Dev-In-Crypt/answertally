@@ -1068,28 +1068,34 @@ export async function lockAgency(db: Database, agencyId: string): Promise<void> 
 }
 
 /**
- * Сколько ответов агентству разрешено живыми прогонами — с `since` или за
- * всё время.
+ * Сколько ответов идущие живые прогоны агентства ещё вправе потратить.
  *
- * Счётчик расхода растёт, когда ответ уже записан, а этот — когда прогон
- * одобрен. Разница — идущие прогоны и платные вызовы, упавшие до записи:
- * по счётчику их не видно, а деньги за них ушли. Прогоны в mock-режиме не
- * стоят ничего и не считаются.
+ * Счётчик расхода растёт, когда ответ записан, а решение о старте
+ * принимается раньше. Без этой суммы прогоны, одобренные, но ещё не
+ * дописанные, были бы невидимы, и параллельные старты проходили бы все.
+ *
+ * Только ожидающие и идущие: законченный прогон уже весь в счётчике, а
+ * упавший до первого ответа не должен съедать бесплатный аудит, которого
+ * человек так и не получил. Прогоны на заглушках не стоят ничего.
  */
-export async function sumPlannedChecks(
-  db: Database,
-  agencyId: string,
-  since: Date | null = null,
-): Promise<number> {
+export async function inFlightRemainingChecks(db: Database, agencyId: string): Promise<number> {
+  const written = db
+    .select({ runId: responses.runId, n: sql<number>`count(*)`.as("n") })
+    .from(responses)
+    .groupBy(responses.runId)
+    .as("written");
   const rows = await db
-    .select({ total: sql<number>`coalesce(sum(${runs.plannedChecks}), 0)::int` })
+    .select({
+      total: sql<number>`coalesce(sum(greatest(${runs.plannedChecks} - coalesce(${written.n}, 0), 0)), 0)::int`,
+    })
     .from(runs)
     .innerJoin(clients, eq(runs.clientId, clients.id))
+    .leftJoin(written, eq(written.runId, runs.id))
     .where(
       and(
         eq(clients.agencyId, agencyId),
         eq(runs.adaptersMode, "live"),
-        since ? gte(runs.startedAt, since) : undefined,
+        inArray(runs.status, ["pending", "running"]),
       ),
     );
   return rows[0]?.total ?? 0;
