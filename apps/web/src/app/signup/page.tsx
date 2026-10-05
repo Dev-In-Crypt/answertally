@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { FREE_CHECK_ALLOWANCE, MARKETING_COPY } from "@repo/core";
+import { MARKETING_COPY } from "@repo/core";
 import { freeAuditAssistantSentence } from "@repo/core/adapters/capacity";
 import { AuthForm } from "@/components/auth-form";
 import { MarketingShell } from "@/components/marketing/chrome";
@@ -20,7 +20,7 @@ import { MarketingShell } from "@/components/marketing/chrome";
 
 export const metadata: Metadata = {
   title: "Create your workspace · Answertally",
-  description: `Run the free audit on one brand: ${FREE_CHECK_ALLOWANCE} AI checks, no card.`,
+  description: "Run the free audit on one brand on ChatGPT and Perplexity. No card.",
 };
 
 /**
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
 const DEFAULT_ASSISTANTS = freeAuditAssistantSentence();
 
 const INCLUDED = [
-  `${FREE_CHECK_ALLOWANCE} free AI checks — one full audit on one brand`,
+  "One full audit on one brand, free",
   `${DEFAULT_ASSISTANTS}, every question asked several times`,
   "The report in your brand, not ours",
   MARKETING_COPY.limits.nothingPublished,

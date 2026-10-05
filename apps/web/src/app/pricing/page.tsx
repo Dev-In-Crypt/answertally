@@ -42,7 +42,7 @@ const clientLimitsText = `${clientLimits.slice(0, -1).join(", ")} or ${clientLim
 const INCLUDED = [
   {
     title: "Measurement",
-    body: `Three assistants on Starter; all five from Growth, switched on per client. ${MARKETING_COPY.sampleFloor} ${MARKETING_COPY.cadence}`,
+    body: `Three assistants on Starter; all four from Growth, switched on per client. ${MARKETING_COPY.sampleFloor} ${MARKETING_COPY.cadence}`,
   },
   {
     title: "Diagnosis",

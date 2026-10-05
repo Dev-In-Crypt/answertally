@@ -171,6 +171,24 @@ describe("пересчёт возможностей", () => {
     }
   });
 
+  it("контрольные вопросы не порождают работу: их не трогают нарочно", async () => {
+    // Все вопросы клиента — контрольные: сравнивать будет не с чем, если
+    // по ним что-то сделать, поэтому и советовать по ним нечего.
+    const clientPrompts = await db
+      .select({ id: prompts.id })
+      .from(prompts)
+      .innerJoin(promptClusters, eq(prompts.clusterId, promptClusters.id))
+      .where(eq(promptClusters.clientId, clientId));
+    for (const prompt of clientPrompts) {
+      await db.update(prompts).set({ isControl: true }).where(eq(prompts.id, prompt.id));
+    }
+
+    await generateOpportunities(db, clientId);
+
+    const open = (await listOpportunities(db, clientId)).filter((item) => item.status === "open");
+    expect(open).toHaveLength(0);
+  });
+
   it("у клиента без измерений ничего не выдумывает", async () => {
     const empty = await createClient(db, {
       agencyId,

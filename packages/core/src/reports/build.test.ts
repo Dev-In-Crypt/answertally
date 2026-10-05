@@ -143,6 +143,11 @@ describe("buildReportPayload", () => {
     expect(payload.results.visibilityDeltaPp).toBe(0);
   });
 
+  it("одно измерение — это начальная точка, а не «без изменений»", () => {
+    expect(buildReportPayload(inputs({ snapshots: [snapshot(9)] })).firstMeasurement).toBe(true);
+    expect(buildReportPayload(inputs()).firstMeasurement).toBeUndefined();
+  });
+
   it("без эксперимента раздел о вкладе пуст, а не заполнен догадкой", () => {
     const payload = buildReportPayload(inputs({ highestImpact: null }));
     expect(payload.highestImpactAction).toBeNull();

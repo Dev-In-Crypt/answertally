@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { FREE_CHECK_ALLOWANCE } from "@repo/core";
 
 /**
  * Условия оплаты, отмены и возврата.
@@ -31,8 +30,8 @@ export default function RefundsPage() {
 
       <h2>Before you pay</h2>
       <p>
-        The free audit runs the product end to end on one brand — {FREE_CHECK_ALLOWANCE} AI checks,
-        the full diagnosis, the ranked work and a report you can send. No card is asked for.
+        The free audit runs the product end to end on one brand — the measurement, the full
+        diagnosis, the ranked work and a report you can send. No card is asked for.
       </p>
       <p>
         This is deliberate, and it is why the rest of this page is not generous about refunds:

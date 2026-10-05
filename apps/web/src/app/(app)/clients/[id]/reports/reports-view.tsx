@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { formatPeriod, PROPOSAL_DEFAULTS } from "@repo/core";
 import { api } from "@/trpc/react";
 import { reportUrl } from "@/app/r/report-url";
@@ -44,6 +45,7 @@ export function ReportsView({ clientId }: { clientId: string }) {
   const utils = api.useUtils();
   const client = api.clients.get.useQuery({ id: clientId });
   const reports = api.reports.list.useQuery({ clientId });
+  const agency = api.agency.get.useQuery();
   const [shareLinks, setShareLinks] = useState<Record<string, string>>({});
   const [sending, setSending] = useState<string | null>(null);
   const [sentTo, setSentTo] = useState<Record<string, { to: string; delivered: boolean }>>({});
@@ -120,6 +122,19 @@ export function ReportsView({ clientId }: { clientId: string }) {
 
   return (
     <div className="flex flex-col gap-4">
+      {/* Шапка отчёта — имя и логотип агентства. Имя по умолчанию берётся из
+          домена почты («Gmail» у личного ящика), и без этой строки отчёт
+          ушёл бы клиенту с чужой подписью. */}
+      {agency.data && !agency.data.logoUrl && (
+        <p data-testid="brand-reminder" className="rounded-lg border border-dashed p-4 text-sm">
+          Clients see your agency&rsquo;s name and logo at the top of every report. Right now it
+          reads &ldquo;{agency.data.name}&rdquo; with no logo.{" "}
+          <Link href="/settings" className="text-primary underline-offset-4 hover:underline">
+            Add them in Settings
+          </Link>{" "}
+          before you send one.
+        </p>
+      )}
       <div className="flex items-center gap-3">
         <button
           type="button"

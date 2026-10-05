@@ -100,7 +100,11 @@ export function ReportView({
           Across the tracked buyer questions, {payload.client.name} was named in an estimated{" "}
           <span className="metric font-medium">{payload.visibility.after}%</span> of answers this
           period
-          {payload.results.visibilityDeltaPp === null ? (
+          {payload.firstMeasurement ? (
+            <>
+              . This is the first measurement, so change over time shows from the next report
+            </>
+          ) : payload.results.visibilityDeltaPp === null ? (
             <>
               {" "}
               — the earlier figure rests on a different set of assistants and is shown on its own at{" "}
@@ -129,13 +133,25 @@ export function ReportView({
           <Stat
             label="Named in answers"
             testId="report-visibility"
-            value={`${payload.visibility.before}% → ${payload.visibility.after}%`}
-            hint={`${formatPp(payload.results.visibilityDeltaPp)} over the period`}
+            value={
+              payload.firstMeasurement
+                ? `${payload.visibility.after}%`
+                : `${payload.visibility.before}% → ${payload.visibility.after}%`
+            }
+            hint={
+              payload.firstMeasurement
+                ? "First measurement"
+                : `${formatPp(payload.results.visibilityDeltaPp)} over the period`
+            }
           />
           <Stat
             label="Competitor gap"
             testId="report-gap"
-            value={`${formatPp(payload.competitorGap.before)} → ${formatPp(payload.competitorGap.after)}`}
+            value={
+              payload.firstMeasurement
+                ? formatPp(payload.competitorGap.after)
+                : `${formatPp(payload.competitorGap.before)} → ${formatPp(payload.competitorGap.after)}`
+            }
             hint="Against the best-performing tracked competitor"
           />
         </div>
@@ -193,7 +209,9 @@ export function ReportView({
           <li className="flex justify-between py-2">
             <span>Visibility change</span>
             <span className="metric font-medium">
-              {formatPp(payload.results.visibilityDeltaPp)}
+              {payload.firstMeasurement
+                ? "first measurement"
+                : formatPp(payload.results.visibilityDeltaPp)}
             </span>
           </li>
         </ul>

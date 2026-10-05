@@ -47,7 +47,7 @@ function faqItems(paymentsOn: boolean) {
   },
   {
     q: "Which assistants does the audit use?",
-    a: `${FREE_TRIO}, each with its own cited sources. Grok comes with any paid plan, Claude with Growth, and both can be switched on per client. ${MARKETING_COPY.notMeasuredSurfaces}`,
+    a: `${FREE_TRIO}, each with its own cited sources. Paid plans measure up to four assistants: Grok on any plan, Claude from Growth, switched on per client. ${MARKETING_COPY.notMeasuredSurfaces}`,
   },
   {
     q: "What happens right after the audit?",

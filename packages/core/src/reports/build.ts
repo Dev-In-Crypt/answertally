@@ -168,6 +168,7 @@ export function buildReportPayload(inputs: ReportInputs): ReportPayload {
       before: first ? competitorGapPp(first) : 0,
       after: last ? competitorGapPp(last) : 0,
     },
+    ...(inputs.snapshots.length <= 1 ? { firstMeasurement: true } : {}),
     workCompleted: summariseWork(inputs.completedActions),
     results: {
       newCitedUrls: inputs.newCitedUrls,

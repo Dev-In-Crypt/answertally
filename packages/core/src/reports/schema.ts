@@ -88,6 +88,13 @@ export const reportPayloadSchema = z.object({
    * функцией buildAuditProposal и означает коммерческое предложение, а НЕ
    * доменную сущность Opportunity из packages/core/src/opportunities/.
    */
+  /**
+   * За период есть только одно измерение: «было» и «стало» — одно и то же
+   * число, и «+0 pp» клиент прочёл бы как «работа ничего не дала». Отчёт
+   * тогда показывает одну цифру и говорит, что сравнение будет дальше.
+   * Необязательное: старые payload'ы без поля читаются как раньше.
+   */
+  firstMeasurement: z.boolean().optional(),
   opportunity: z
     .object({
       currentVisibilityPct: z.number().min(0).max(100),

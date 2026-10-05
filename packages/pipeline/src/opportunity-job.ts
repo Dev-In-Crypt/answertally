@@ -69,10 +69,20 @@ export async function generateOpportunities(
     return { ...EMPTY, generationId, skipped: "no-responses" };
   }
 
-  const [clusters, citationRows] = await Promise.all([
+  const [clusters, allCitationRows] = await Promise.all([
     listPromptClusters(db, clientId),
     listCitationFacts(db, clientId),
   ]);
+
+  /**
+   * Контрольные вопросы в работу не идут. Их не трогают нарочно: по ним
+   * видно, выросла видимость от работы агентства или ассистенты сдвинулись
+   * сами. Совет «сделайте страницу» по контрольной теме, исполненный,
+   * оставил бы эксперименты без сравнения — поэтому ни их строки матрицы,
+   * ни их цитирования не порождают возможностей.
+   */
+  const controlIds = new Set(prompts.filter((prompt) => prompt.isControl).map((prompt) => prompt.id));
+  const citationRows = allCitationRows.filter((row) => !controlIds.has(row.promptId));
 
   const overall = diagnose(toCitationFacts(citationRows));
 
@@ -94,22 +104,26 @@ export async function generateOpportunities(
 
   const promptIdsByCluster = new Map<string, string[]>();
   for (const prompt of prompts) {
+    if (prompt.isControl) continue;
     const bucket = promptIdsByCluster.get(prompt.clusterId);
     if (bucket) bucket.push(prompt.id);
     else promptIdsByCluster.set(prompt.clusterId, [prompt.id]);
   }
 
-  const clusterFacts: ClusterFacts[] = clusters.map((cluster) => ({
-    clusterId: cluster.id,
-    clusterName: cluster.name,
-    intent: cluster.intent,
-    promptIds: promptIdsByCluster.get(cluster.id) ?? [],
-    diagnosis: diagnose(toCitationFacts(rowsByCluster.get(cluster.id) ?? [])),
-  }));
+  // Тема из одних контрольных вопросов в работу не попадает целиком.
+  const clusterFacts: ClusterFacts[] = clusters
+    .filter((cluster) => promptIdsByCluster.has(cluster.id))
+    .map((cluster) => ({
+      clusterId: cluster.id,
+      clusterName: cluster.name,
+      intent: cluster.intent,
+      promptIds: promptIdsByCluster.get(cluster.id) ?? [],
+      diagnosis: diagnose(toCitationFacts(rowsByCluster.get(cluster.id) ?? [])),
+    }));
 
   const detected = detectOpportunities({
-    matrix: visibility,
-    movement: visibility.movement,
+    matrix: { ...visibility, rows: visibility.rows.filter((row) => !controlIds.has(row.promptId)) },
+    movement: visibility.movement.filter((entry) => !controlIds.has(entry.promptId)),
     overall,
     clusters: clusterFacts,
     promptIdsByDomain,

@@ -203,7 +203,7 @@ export default function ProductPage() {
           <div className="facts">
             <div className="card fact">
               <b>3 + 2</b>
-              <span>Three assistants on Starter; all five from Growth, switched on per client.</span>
+              <span>Three assistants on Starter; all four from Growth, switched on per client.</span>
             </div>
             <div className="card fact">
               <b>≥ 3</b>

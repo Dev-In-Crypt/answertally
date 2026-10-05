@@ -66,7 +66,18 @@ export function SamplingCost({
   if (prompts === 0 || assistants === 0) {
     return (
       <span className="text-sm text-muted-foreground">
-        Save a prompt set to see what a schedule will cost.
+        Save a prompt set to see how many answers a run takes.
+      </span>
+    );
+  }
+
+  // Без оплаты расписания нет, а аудит один: месячный расход здесь был бы
+  // ценой того, что бесплатный аккаунт сделать не может.
+  if (!capacity.data?.paying) {
+    return (
+      <span data-testid="sampling-cost" className="metric text-sm text-muted-foreground">
+        {prompts} prompts × {assistants} assistants × {samplesPerPrompt} samples ={" "}
+        <span className="font-medium text-foreground">{perRun} answers</span> in the free audit
       </span>
     );
   }

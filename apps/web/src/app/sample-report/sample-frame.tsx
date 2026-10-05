@@ -54,7 +54,7 @@ export function SampleFrame({
         <div className="wrap">
           <h2 className="h3">Run this for a brand you work on</h2>
           <p className="prose">
-            The free audit asks ChatGPT, Perplexity and Grok your client’s buyer questions, several
+            The free audit asks ChatGPT and Perplexity your client’s buyer questions, several
             times each, and ends on a page like this one, in your agency’s brand.
           </p>
           <div className="ctas">
