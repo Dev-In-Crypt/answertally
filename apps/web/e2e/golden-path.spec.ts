@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { runFreeAudit } from "./free-audit";
 
 /**
  * Verify T25 — золотой путь Phase 1 целиком:
@@ -62,8 +63,7 @@ test("golden path: from signup to a verifiable visibility number", async ({ page
 
   // 4. Запускает бесплатный аудит: расписание — только после оплаты, а
   // ручной прогон берёт умолчание аудита (3 сэмпла на промпт).
-  await page.getByRole("button", { name: "Run now" }).click();
-  await expect(page.getByTestId("run-status")).toContainText("done", { timeout: 30_000 });
+  await runFreeAudit(page);
 
   // 5. Открывает сырые ответы по каждому промпту и считает, где упомянут клиент.
   let total = 0;

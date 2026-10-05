@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { runFreeAudit } from "./free-audit";
 
 /** Verify T23: подсветка упоминаний в сыром ответе после mock-прогона. */
 
@@ -45,8 +46,7 @@ test("raw answers show highlighted client and competitor mentions", async ({ pag
   await expect(page.getByText("No answers yet")).toBeVisible();
 
   await page.goto(`/clients/${clientId}/measure`);
-  await page.getByRole("button", { name: "Run now" }).click();
-  await expect(page.getByTestId("run-status")).toContainText("done", { timeout: 30_000 });
+  await runFreeAudit(page);
 
   await page.getByRole("link", { name: "best CRM for startups" }).click();
 

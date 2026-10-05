@@ -1,4 +1,4 @@
-import { ASSISTANTS, MEASUREMENT_COPY, type ReportPayload } from "@repo/core";
+import { ASSISTANTS, formatDay, formatPeriod, MEASUREMENT_COPY, type ReportPayload } from "@repo/core";
 
 /** Имена ассистентов из каталога: в отчёте клиента идентификаторов быть не должно. */
 const ASSISTANT_LABELS: Record<string, string> = Object.fromEntries(
@@ -86,7 +86,7 @@ export function ReportView({
         <div className="text-right text-sm text-muted-foreground">
           <p className="font-medium text-foreground">{payload.client.name}</p>
           <p className="metric">
-            {payload.period.start} — {payload.period.end}
+            {formatPeriod(payload.period.start, payload.period.end)}
           </p>
         </div>
       </header>
@@ -350,12 +350,7 @@ export function ReportView({
           {/* Формат фиксирован: иначе дата зависит от локали и пояса сервера
               (PDF) или читателя — 10/4/2026 читается по-разному. */}
           <span className="metric">
-            {new Date(approved.at).toLocaleDateString("en-GB", {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-              timeZone: "UTC",
-            })}
+            {formatDay(approved.at)}
           </span>
           .
         </p>

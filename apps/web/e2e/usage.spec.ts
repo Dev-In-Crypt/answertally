@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { runFreeAudit } from "./free-audit";
 
 /**
  * Verify T55: страница usage показывает израсходованные проверки за период.
@@ -41,8 +42,7 @@ test("usage page shows the checks the answers used", async ({ page }) => {
   // Импорт асинхронный: без ожидания «Run now» иногда жмётся раньше, чем
   // промпты доедут до списка, и прогон отказывается стартовать.
   await expect(page.getByText(/Imported \d+ prompts/)).toBeVisible();
-  await page.getByRole("button", { name: "Run now" }).click();
-  await expect(page.getByTestId("run-status")).toContainText("done", { timeout: 30_000 });
+  await runFreeAudit(page);
 
   await page.getByRole("link", { name: "best CRM for startups" }).click();
   const answers = page.getByTestId("responses-list").locator("> li");

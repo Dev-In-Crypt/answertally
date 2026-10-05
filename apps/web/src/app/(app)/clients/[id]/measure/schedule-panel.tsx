@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { MEASUREMENT_COPY, MIN_SAMPLES_PER_CELL, platformLabel, type Platform } from "@repo/core";
+import { formatDateTime, platformLabel, MEASUREMENT_COPY, MIN_SAMPLES_PER_CELL, type Platform } from "@repo/core";
 import { estimateSchedule, type Cadence } from "@repo/core/adapters/capacity";
 import { api } from "@/trpc/react";
 import { buttonClass } from "@/components/ui/button";
@@ -384,14 +384,23 @@ export function SchedulePanel({ clientId }: { clientId: string }) {
           возвращалась через секунду, а прогон шёл минутами, и повторное
           нажатие удваивало расход проверок.
         */}
-        <button
-          type="button"
-          disabled={trigger.isPending || inFlight !== undefined || unsaved}
-          onClick={() => trigger.mutate({ clientId })}
-          className={buttonClass("primary", "lg")}
-        >
-          {trigger.isPending || inFlight ? "Running…" : "Run now"}
-        </button>
+        {/* Без оплаты прогон один — бесплатный аудит, и вход в него один: экран
+            аудита с шагами и переходом к результатам. Второй вход отсюда
+            заканчивался строкой «done» без пути к тому, что найдено. */}
+        {unpaid ? (
+          <Link href={`/clients/${clientId}/audit`} className={buttonClass("primary", "lg")}>
+            Run the free audit
+          </Link>
+        ) : (
+          <button
+            type="button"
+            disabled={trigger.isPending || inFlight !== undefined || unsaved}
+            onClick={() => trigger.mutate({ clientId })}
+            className={buttonClass("primary", "lg")}
+          >
+            {trigger.isPending || inFlight ? "Running…" : "Run now"}
+          </button>
+        )}
 
         {saved?.active && (
           <button
@@ -515,7 +524,7 @@ export function SchedulePanel({ clientId }: { clientId: string }) {
           {/* При пропуске срок держится или переносится на перепроверку — это не
               замер, и дату за «Next run» не выдаём: причина стоит строкой ниже. */}
           {saved.active && saved.nextRunAt && !saved.skipReason && (
-            <> Next run: <span className="metric">{new Date(saved.nextRunAt).toLocaleString()}</span>.</>
+            <> Next run: <span className="metric">{formatDateTime(saved.nextRunAt)}</span>.</>
           )}
         </p>
       )}
@@ -527,7 +536,7 @@ export function SchedulePanel({ clientId }: { clientId: string }) {
           {saved.skippedAt && (
             <>
               {" "}
-              (<span className="metric">{new Date(saved.skippedAt).toLocaleString()}</span>)
+              (<span className="metric">{formatDateTime(saved.skippedAt)}</span>)
             </>
           )}
           : {saved.skipReason}
@@ -553,6 +562,17 @@ export function SchedulePanel({ clientId }: { clientId: string }) {
       {latestRun && (
         <p data-testid="run-status" className="text-sm">
           Latest run: <span className="font-medium">{runStatusText(latestRun)}</span>
+          {latestRun.status === "done" && !inFlight && (
+            <>
+              {" · "}
+              <Link
+                href={`/clients/${clientId}`}
+                className="text-primary underline-offset-4 hover:underline"
+              >
+                See the results
+              </Link>
+            </>
+          )}
           {inFlight && (
             <span className="text-muted-foreground">
               {/* Часы — момент последнего опроса: он обновляется, пока прогон идёт. */}
@@ -569,7 +589,7 @@ export function SchedulePanel({ clientId }: { clientId: string }) {
         <ul data-testid="runs-list" className="flex flex-col gap-1 text-sm text-muted-foreground">
           {(runs.data ?? []).map((run) => (
             <li key={run.id} className="flex gap-3">
-              <span className="metric">{new Date(run.startedAt).toLocaleString()}</span>
+              <span className="metric">{formatDateTime(run.startedAt)}</span>
               <span>{RUN_TRIGGER_LABELS[run.trigger] ?? run.trigger}</span>
               <span className="font-medium text-foreground">{runStatusText(run)}</span>
             </li>

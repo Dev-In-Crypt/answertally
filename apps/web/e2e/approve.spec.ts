@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
+import { runFreeAudit } from "./free-audit";
 
 /**
  * Verify T52: approve из анонимной сессии отражается в приложении агентства.
@@ -38,8 +39,7 @@ async function setUpReport(page: Page): Promise<{ clientId: string; token: strin
   // Импорт асинхронный: без ожидания «Run now» иногда жмётся раньше, чем
   // промпты доедут до списка, и прогон отказывается стартовать.
   await expect(page.getByText(/Imported \d+ prompts/)).toBeVisible();
-  await page.getByRole("button", { name: "Run now" }).click();
-  await expect(page.getByTestId("run-status")).toContainText("done", { timeout: 30_000 });
+  await runFreeAudit(page);
 
   await page.goto(`/clients/${clientId}/reports`);
   await page.getByTestId("generate-report").click();

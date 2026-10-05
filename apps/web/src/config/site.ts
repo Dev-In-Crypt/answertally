@@ -46,3 +46,12 @@ export const REPORT_HOST: string | null = process.env.NEXT_PUBLIC_REPORT_HOST?.t
  */
 export const SUPPORT_EMAIL = "support@answertally.com";
 
+
+/**
+ * Публичный адрес сайта — для поисковиков и превью ссылок.
+ *
+ * Константа, а не переменная окружения: публичные страницы собираются
+ * заранее, и адрес из окружения сборки (localhost в CI) попал бы в карту
+ * сайта и в превью навсегда.
+ */
+export const SITE_URL = "https://answertally.com";

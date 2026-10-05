@@ -1,10 +1,22 @@
 import type { Metadata } from "next";
+import { SITE_URL } from "@/config/site";
 import { TrpcProvider } from "@/trpc/react";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: "Answertally",
   description: "AI visibility measurement and delivery for agencies.",
+  /**
+   * Превью ссылки на сайт. Страница, задающая своё openGraph, заменяет его
+   * целиком — так отчёт клиента остаётся без нашего бренда.
+   */
+  openGraph: {
+    type: "website",
+    siteName: "Answertally",
+    images: [{ url: "/opengraph", width: 1200, height: 630, alt: "Answertally" }],
+  },
+  twitter: { card: "summary_large_image", images: ["/opengraph"] },
 };
 
 /**

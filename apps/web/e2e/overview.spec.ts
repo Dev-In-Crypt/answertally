@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { runFreeAudit } from "./free-audit";
 
 /** Verify T24: график и карточки на обзорном экране строятся из visibility_snapshots. */
 
@@ -41,8 +42,7 @@ test("client overview shows visibility built from a completed run", async ({ pag
   });
   await expect(page.getByTestId("import-summary")).toContainText("2 prompts");
 
-  await page.getByRole("button", { name: "Run now" }).click();
-  await expect(page.getByTestId("run-status")).toContainText("done", { timeout: 30_000 });
+  await runFreeAudit(page);
 
   await page.goto(`/clients/${clientId}`);
 

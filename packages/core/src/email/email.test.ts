@@ -118,7 +118,7 @@ describe("email templates", () => {
     const message = reportReadyEmail({ ...REPORT, note: "Call me if the sources look off." });
 
     expect(message.subject).toContain("Fernpost");
-    expect(message.subject).toContain("2026-04-01");
+    expect(message.subject).toContain("1 Apr – 30 Jun 2026");
     expect(message.text).toContain("https://reports.northwind.test/r/abc");
     expect(message.text).toContain("Call me if the sources look off.");
     expect(message.html).toContain("Call me if the sources look off.");

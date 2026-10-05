@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { PDFParse } from "pdf-parse";
+import { runFreeAudit } from "./free-audit";
 
 async function extractText(bytes: Buffer): Promise<string> {
   const parser = new PDFParse({ data: new Uint8Array(bytes) });
@@ -53,8 +54,7 @@ test("agency downloads a PDF containing the client report", async ({ page }) => 
   // Импорт асинхронный: без ожидания «Run now» иногда жмётся раньше, чем
   // промпты доедут до списка, и прогон отказывается стартовать.
   await expect(page.getByText(/Imported \d+ prompts/)).toBeVisible();
-  await page.getByRole("button", { name: "Run now" }).click();
-  await expect(page.getByTestId("run-status")).toContainText("done", { timeout: 30_000 });
+  await runFreeAudit(page);
 
   await page.goto(`/clients/${clientId}/reports`);
   await page.getByTestId("generate-report").click();
@@ -107,8 +107,7 @@ test("PDF of another agency's report is not reachable", async ({ page, browser }
     buffer: Buffer.from(CSV, "utf8"),
   });
   await expect(page.getByText(/Imported \d+ prompts/)).toBeVisible();
-  await page.getByRole("button", { name: "Run now" }).click();
-  await expect(page.getByTestId("run-status")).toContainText("done", { timeout: 30_000 });
+  await runFreeAudit(page);
 
   await page.goto(`/clients/${clientId}/reports`);
   await page.getByTestId("generate-report").click();

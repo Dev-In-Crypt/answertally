@@ -3,7 +3,7 @@
 import { use, useState } from "react";
 import Link from "next/link";
 import { keepPreviousData } from "@tanstack/react-query";
-import { ASSISTANTS, highlightMentions, startOfIsoWeek } from "@repo/core";
+import { ASSISTANTS, formatDateTime, formatDay, highlightMentions, startOfIsoWeek } from "@repo/core";
 import { api } from "@/trpc/react";
 import { EmptyState, PageHeader } from "@/components/page-header";
 import { buttonClass } from "@/components/ui/button";
@@ -129,7 +129,7 @@ export default function PromptResponsesPage({
             которая стоит на дашборде; здесь её можно пересчитать руками. */}
         {latestWeek && (
           <span data-testid="named-in" className="metric">
-            Week of {latestWeek.toISOString().slice(0, 10)}:{weekCut ? " latest" : ""}{" "}
+            Week of {formatDay(latestWeek)}:{weekCut ? " latest" : ""}{" "}
             {weekResponses.length} {weekResponses.length === 1 ? "answer" : "answers"} · named in{" "}
             {namedIn.length}
           </span>
@@ -160,7 +160,7 @@ export default function PromptResponsesPage({
                 <span className="metric">sample {response.sampleIndex + 1}</span>
                 <span className="metric">{response.modelVersion}</span>
                 <span className="metric">${Number(response.costUsd).toFixed(4)}</span>
-                <span className="metric">{new Date(response.createdAt).toLocaleString()}</span>
+                <span className="metric">{formatDateTime(response.createdAt)}</span>
                 {mentionsClient(response.rawText) ? (
                   <span
                     data-testid="named-rank"

@@ -1,3 +1,4 @@
+import { formatPeriod } from "../format/dates";
 import type { EmailMessage } from "./types";
 
 /**
@@ -150,7 +151,7 @@ export interface ReportReadyEmailInput {
  */
 export function reportReadyEmail(input: ReportReadyEmailInput): EmailMessage {
   const reportUrl = requireAbsoluteUrl(input.reportUrl, "reportUrl");
-  const period = `${input.periodStart} — ${input.periodEnd}`;
+  const period = formatPeriod(input.periodStart, input.periodEnd);
 
   const text = [
     `Your AI answer visibility report for ${input.clientName} is ready.`,

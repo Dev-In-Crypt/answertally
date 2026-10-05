@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { runFreeAudit } from "./free-audit";
 
 /**
  * Verify T34: таблица источников и распределение типов на экране совпадают
@@ -46,8 +47,7 @@ test("diagnose screen shows source mix, presence matrix and reasoned recommendat
   });
   await expect(page.getByTestId("import-summary")).toContainText("2 prompts");
 
-  await page.getByRole("button", { name: "Run now" }).click();
-  await expect(page.getByTestId("run-status")).toContainText("done", { timeout: 30_000 });
+  await runFreeAudit(page);
 
   await page.goto(`/clients/${clientId}/diagnose`);
 
@@ -129,8 +129,7 @@ test("a client missing from the answers gets reasoned recommendations", async ({
   });
   await expect(page.getByTestId("import-summary")).toContainText("2 prompts");
 
-  await page.getByRole("button", { name: "Run now" }).click();
-  await expect(page.getByTestId("run-status")).toContainText("done", { timeout: 30_000 });
+  await runFreeAudit(page);
 
   await page.goto(`/clients/${clientId}/diagnose`);
 

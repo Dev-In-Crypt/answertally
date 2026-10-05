@@ -11,7 +11,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { EXPERIMENT_COPY } from "@repo/core";
+import { EXPERIMENT_COPY, formatDay, formatDayShort } from "@repo/core";
 import { api } from "@/trpc/react";
 import { EmptyState } from "@/components/page-header";
 import { ConfidenceBadge, type ConfidenceLevel } from "@/components/ui/stat";
@@ -132,7 +132,7 @@ export function ExperimentsView({ clientId }: { clientId: string }) {
             >
               <span className="block font-medium">{row.actionTitle ?? "Action"}</span>
               <span className="metric block text-muted-foreground">
-                {new Date(row.actionDate).toLocaleDateString()} ·{" "}
+                {formatDay(row.actionDate)} ·{" "}
                 {STATUS_LABELS[row.status] ?? row.status}
               </span>
             </button>
@@ -231,13 +231,13 @@ function ExperimentDetail({ experimentId }: { experimentId: string }) {
           <div>
             <dt className="text-muted-foreground">Baseline window</dt>
             <dd className="metric">
-              {new Date(baselineWindow.start).toLocaleDateString()} –{" "}
-              {new Date(baselineWindow.end).toLocaleDateString()}
+              {formatDay(baselineWindow.start)} –{" "}
+              {formatDay(baselineWindow.end)}
             </dd>
           </div>
           <div>
             <dt className="text-muted-foreground">Action date</dt>
-            <dd className="metric">{new Date(experiment.actionDate).toLocaleDateString()}</dd>
+            <dd className="metric">{formatDay(experiment.actionDate)}</dd>
           </div>
         </dl>
 
@@ -265,7 +265,12 @@ function ExperimentDetail({ experimentId }: { experimentId: string }) {
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={series} margin={{ top: 8, right: 16, bottom: 8, left: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-              <XAxis dataKey="week" tick={{ fontSize: 12 }} stroke="var(--color-muted-foreground)" />
+              <XAxis
+                  dataKey="week"
+                  tickFormatter={(week: string) => formatDayShort(week)}
+                  tick={{ fontSize: 12 }}
+                  stroke="var(--color-muted-foreground)"
+                />
               <YAxis domain={[0, 100]} unit="%" tick={{ fontSize: 12 }} stroke="var(--color-muted-foreground)" />
               <Tooltip
                 contentStyle={{
@@ -305,7 +310,7 @@ function ExperimentDetail({ experimentId }: { experimentId: string }) {
           {events.map((event) => (
             <li key={event.id} className="flex gap-3 border-l pl-4 text-sm">
               <span className="metric shrink-0 text-muted-foreground">
-                {new Date(event.occurredAt).toLocaleDateString()}
+                {formatDay(event.occurredAt)}
               </span>
               <span className="flex flex-col">
                 <span className="font-medium">{EVENT_LABELS[event.type] ?? event.type}</span>

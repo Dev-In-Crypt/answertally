@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { OPPORTUNITY_COPY, recommendationSchema, type Recommendation } from "@repo/core";
+import { formatPeriod, OPPORTUNITY_COPY, type Recommendation, recommendationSchema } from "@repo/core";
 import { api, type RouterOutputs } from "@/trpc/react";
 import { EmptyState } from "@/components/page-header";
 import { ConfidenceBadge } from "@/components/ui/stat";
@@ -32,9 +32,7 @@ const PRIORITY_STYLE: Record<string, string> = {
 };
 
 function formatWindow(start: Date, end: Date): string {
-  const format = (date: Date) =>
-    date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
-  return `${format(new Date(start))} – ${format(new Date(end))}`;
+  return formatPeriod(start, end);
 }
 
 export function OpportunitiesView({ clientId }: { clientId: string }) {

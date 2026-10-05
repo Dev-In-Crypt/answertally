@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ACTION_TYPES } from "@repo/core";
+import { ACTION_TYPES, formatDateTime, formatDay } from "@repo/core";
 import { api } from "@/trpc/react";
 import { EmptyState } from "@/components/page-header";
 import { buttonClass } from "@/components/ui/button";
@@ -331,7 +331,7 @@ export function ActionsBoard({ clientId }: { clientId: string }) {
                   {row.title}
                 </button>
                 <span className="metric shrink-0 text-xs text-muted-foreground">
-                  {new Date(row.createdAt).toLocaleDateString()}
+                  {formatDay(row.createdAt)}
                 </span>
               </li>
             ))}
@@ -390,12 +390,12 @@ export function ActionsBoard({ clientId }: { clientId: string }) {
             )}
             <div className="col-span-2">
               <dt className="text-muted-foreground">Created</dt>
-              <dd className="metric">{new Date(selected.createdAt).toLocaleString()}</dd>
+              <dd className="metric">{formatDateTime(selected.createdAt)}</dd>
             </div>
             {selected.completedAt && (
               <div className="col-span-2">
                 <dt className="text-muted-foreground">Completed</dt>
-                <dd className="metric">{new Date(selected.completedAt).toLocaleString()}</dd>
+                <dd className="metric">{formatDateTime(selected.completedAt)}</dd>
               </div>
             )}
           </dl>
@@ -666,7 +666,7 @@ function ActionOutcomePanel({ actionId }: { actionId: string }) {
           <div className="flex gap-2">
             <dt className="text-muted-foreground">First seen</dt>
             <dd className="metric font-medium">
-              {new Date(firstSeenAt).toISOString().slice(0, 10)}
+              {formatDay(firstSeenAt)}
             </dd>
           </div>
         )}

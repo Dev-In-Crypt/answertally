@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
+import { runFreeAudit } from "./free-audit";
 
 /**
  * Verify T51: публичная страница отчёта открывается без логина и несёт
@@ -59,8 +60,7 @@ async function setUpAgencyWithReport(page: Page): Promise<{ clientId: string; to
   // Импорт асинхронный: без этого ожидания «Run now» иногда жмётся раньше,
   // чем промпт доехал до списка, и прогон отказывается стартовать.
   await expect(page.getByText(/Imported 1 prompts/)).toBeVisible();
-  await page.getByRole("button", { name: "Run now" }).click();
-  await expect(page.getByTestId("run-status")).toContainText("done", { timeout: 30_000 });
+  await runFreeAudit(page);
 
   await page.goto(`/clients/${clientId}/reports`);
   await page.getByTestId("generate-report").click();

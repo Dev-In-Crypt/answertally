@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { runFreeAudit } from "./free-audit";
 
 /**
  * Verify: путь, ради которого продукт переделан.
@@ -53,8 +54,7 @@ test("an opportunity explains itself and becomes work", async ({ page }) => {
   });
   await expect(page.getByTestId("import-summary")).toContainText("4 prompts");
 
-  await page.getByRole("button", { name: "Run now" }).click();
-  await expect(page.getByTestId("run-status")).toContainText("done", { timeout: 30_000 });
+  await runFreeAudit(page);
 
   await page.goto(`/clients/${clientId}/opportunities`);
 
@@ -107,8 +107,7 @@ test("dismissing an opportunity needs a reason and survives a recompute", async 
   // вопросы доехали, сервер отказывает «добавьте хотя бы один вопрос», и
   // строки со статусом прогона не появляется вовсе.
   await expect(page.getByTestId("import-summary")).toContainText("4 prompts");
-  await page.getByRole("button", { name: "Run now" }).click();
-  await expect(page.getByTestId("run-status")).toContainText("done", { timeout: 30_000 });
+  await runFreeAudit(page);
 
   await page.goto(`/clients/${clientId}/opportunities`);
   const card = page.getByTestId("opportunity-card").first();

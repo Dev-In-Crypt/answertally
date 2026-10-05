@@ -6,6 +6,8 @@
 
 export const CORE_PACKAGE_NAME = "@repo/core";
 
+export { formatDateTime, formatDay, formatDayShort, formatPeriod } from "./format/dates";
+
 export * from "./adapters/types";
 export * from "./adapters/pricing";
 export { MockAdapter, stableHash } from "./adapters/mock";

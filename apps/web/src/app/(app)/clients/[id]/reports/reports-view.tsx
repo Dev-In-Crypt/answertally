@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { PROPOSAL_DEFAULTS } from "@repo/core";
+import { formatPeriod, PROPOSAL_DEFAULTS } from "@repo/core";
 import { api } from "@/trpc/react";
 import { reportUrl } from "@/app/r/report-url";
 import { EmptyState } from "@/components/page-header";
@@ -182,8 +182,7 @@ export function ReportsView({ clientId }: { clientId: string }) {
               <li key={report.id} className="flex flex-col gap-2 rounded-lg border p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <span className="metric text-sm">
-                    {new Date(report.periodStart).toISOString().slice(0, 10)} —{" "}
-                    {new Date(report.periodEnd).toISOString().slice(0, 10)}
+                    {formatPeriod(report.periodStart, report.periodEnd)}
                   </span>
                   <span className="flex items-center gap-3">
                     <span className="rounded-full bg-secondary px-2 py-0.5 text-xs text-muted-foreground">

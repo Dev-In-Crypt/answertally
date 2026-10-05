@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
 import { makeAgencyPaying } from "./paid-plan";
+import { runFreeAudit } from "./free-audit";
 
 /** Verify T22: «Run now» в mock-режиме доходит до done, прогон виден в истории. */
 
@@ -77,13 +78,12 @@ test("the plan decides what is offered, and locked assistants are visible", asyn
   /**
    * Агентство только зарегистрировалось и ещё не платило — это бесплатный
    * аудит. Расписание без оплаты не запустится ни разу, поэтому формы нет
-   * вовсе, а «Run now» работает: аудит запускают вручную.
+   * вовсе, а вход в бесплатный аудит — один, через экран аудита.
    */
   await expect(page.getByTestId("schedule-needs-plan")).toBeVisible();
   await expect(page.getByRole("button", { name: "Save schedule" })).toHaveCount(0);
 
-  await page.getByRole("button", { name: "Run now" }).click();
-  await expect(page.getByTestId("run-status")).toContainText("done", { timeout: 30_000 });
+  await runFreeAudit(page);
 
   // Claude измеряем — у него есть API, он просто не куплен. В заметке
   // «не измеряем» остаются только те, у кого API нет вовсе.
@@ -141,8 +141,10 @@ test("running a check without prompts explains what to do", async ({ page }) => 
   const clientId = page.url().split("/").pop()!;
 
   await page.goto(`/clients/${clientId}/measure`);
-  await page.getByRole("button", { name: "Run now" }).click();
+  await page.getByRole("link", { name: "Run the free audit" }).click();
 
   // Пустой прогон не создаётся: он стоил бы денег и дал бы пустое окно измерения.
-  await expect(page.getByTestId("form-error")).toContainText("at least one prompt");
+  // Экран аудита без вопросов не предлагает запуск, а ведёт их завести.
+  await expect(page.getByText("No prompts to audit yet")).toBeVisible();
+  await expect(page.getByTestId("run-audit")).toHaveCount(0);
 });

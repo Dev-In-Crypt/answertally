@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { runFreeAudit } from "./free-audit";
 
 /**
  * Verify T87/T88: экран клиента ведёт матрицей «промпт × ассистент»,
@@ -40,8 +41,7 @@ test("the client overview leads with the prompt × assistant matrix", async ({ p
     buffer: Buffer.from(CSV, "utf8"),
   });
   await expect(page.getByText(/Imported \d+ prompts/)).toBeVisible();
-  await page.getByRole("button", { name: "Run now" }).click();
-  await expect(page.getByTestId("run-status")).toContainText("done", { timeout: 30_000 });
+  await runFreeAudit(page);
 
   await page.goto(`/clients/${clientId}`);
 

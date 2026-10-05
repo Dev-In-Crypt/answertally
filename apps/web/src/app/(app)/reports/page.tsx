@@ -1,5 +1,6 @@
 "use client";
 
+import { formatPeriod } from "@repo/core";
 import Link from "next/link";
 import { FileText } from "lucide-react";
 import { api } from "@/trpc/react";
@@ -25,9 +26,7 @@ const STATUS_TONE = {
 } as const;
 
 function period(start: Date, end: Date): string {
-  const format = (date: Date) =>
-    new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  return `${format(start)} – ${format(end)}`;
+  return formatPeriod(start, end);
 }
 
 export default function AgencyReportsPage() {

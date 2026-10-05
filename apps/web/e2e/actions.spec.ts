@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { runFreeAudit } from "./free-audit";
 
 /** Verify T42: перевод действия в Done открывает диалог создания эксперимента. */
 
@@ -42,8 +43,7 @@ test("actions board moves cards and offers an experiment on completion", async (
   // Импорт асинхронный: без ожидания «Run now» иногда жмётся раньше, чем
   // промпты доедут до списка, и прогон отказывается стартовать.
   await expect(page.getByText(/Imported \d+ prompts/)).toBeVisible();
-  await page.getByRole("button", { name: "Run now" }).click();
-  await expect(page.getByTestId("run-status")).toContainText("done", { timeout: 30_000 });
+  await runFreeAudit(page);
 
   // Рекомендация превращается в действие.
   await page.goto(`/clients/${clientId}/diagnose`);

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { formatDay } from "@repo/core";
 import { api } from "@/trpc/react";
 import { EmptyState } from "@/components/page-header";
 import { buttonClass } from "@/components/ui/button";
@@ -65,6 +66,12 @@ export function AuditView({ clientId }: { clientId: string }) {
   const inFlight = runs.data?.find(
     (run) => run.adaptersMode === "live" && (run.status === "pending" || run.status === "running"),
   );
+  /**
+   * Законченный аудит не прячется за кнопкой «Run audit»: вернувшись на экран,
+   * человек видит, что результат есть и куда за ним идти.
+   */
+  const lastDone = runs.data?.find((run) => run.status === "done");
+
   useEffect(() => {
     if (inFlight && queuedRunId === null && phase === "idle") {
       setQueuedRunId(inFlight.id);
@@ -237,6 +244,20 @@ export function AuditView({ clientId }: { clientId: string }) {
         </p>
       )}
 
+      {phase === "idle" && lastDone && (
+        <p data-testid="audit-last" className="text-sm">
+          The last audit finished on {formatDay(lastDone.startedAt)}.{" "}
+          <Link href={`/clients/${clientId}/opportunities`} className={linkClass}>
+            Open what it found
+          </Link>{" "}
+          or{" "}
+          <Link href={`/clients/${clientId}/reports`} className={linkClass}>
+            build the client report
+          </Link>
+          .
+        </p>
+      )}
+
       {phase === "error" && (
         <p role="alert" data-testid="form-error" className="text-sm text-destructive">
           {audit.error?.message ??
@@ -315,6 +336,10 @@ export function AuditView({ clientId }: { clientId: string }) {
           Audit complete —{" "}
           <Link href={`/clients/${clientId}/opportunities`} className={linkClass}>
             open the opportunities
+          </Link>{" "}
+          or{" "}
+          <Link href={`/clients/${clientId}/reports`} className={linkClass}>
+            build the client report
           </Link>
           .
           {queuedRun.data?.note && (

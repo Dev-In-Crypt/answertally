@@ -24,6 +24,9 @@ export default function OnboardingPage({ params }: { params: Promise<{ id: strin
 
   const client = api.clients.get.useQuery({ id });
   const prompts = api.prompts.list.useQuery({ clientId: id });
+  // Без оплаты третий шаг — бесплатный аудит, а не расписание.
+  const capacity = api.runs.capacity.useQuery({ clientId: id });
+  const unpaid = capacity.data !== undefined && !capacity.data.paying;
 
   if (client.error && !client.data) {
     return <ClientLoadError error={client.error} retry={() => client.refetch()} />;
@@ -98,10 +101,12 @@ export default function OnboardingPage({ params }: { params: Promise<{ id: strin
             type="button"
             data-testid="onboarding-continue"
             disabled={savedPrompts === 0}
-            onClick={() => router.push(`/clients/${id}/measure?step=3`)}
+            onClick={() =>
+              router.push(unpaid ? `/clients/${id}/audit` : `/clients/${id}/measure?step=3`)
+            }
             className={buttonClass("primary", "lg")}
           >
-            Continue to schedule
+            {unpaid ? "Run the free audit" : "Continue to schedule"}
           </button>
         </div>
       </div>

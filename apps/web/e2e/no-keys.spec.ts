@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { runFreeAudit } from "./free-audit";
 
 /**
  * Verify: продукт полностью работает без единого внешнего ключа.
@@ -53,8 +54,7 @@ test("an agency goes from signup to a client-ready report with no external keys"
     buffer: Buffer.from(CSV, "utf8"),
   });
   await expect(page.getByTestId("import-summary")).toContainText("2 prompts");
-  await page.getByRole("button", { name: "Run now" }).click();
-  await expect(page.getByTestId("run-status")).toContainText("done", { timeout: 60_000 });
+  await runFreeAudit(page, 60_000);
 
   // Отчёт клиенту собирается и открывается по ссылке без входа в продукт.
   await page.goto(`/clients/${clientId}/reports`);

@@ -1,5 +1,6 @@
 "use client";
 
+import { formatDateTime } from "@repo/core";
 import { useState } from "react";
 import { api } from "@/trpc/react";
 import { cn } from "@/lib/utils";
@@ -144,7 +145,7 @@ export function ApiKeysView({ canManage }: { canManage: boolean }) {
                   <td className="py-2">{key.name}</td>
                   <td className="metric py-2">cw_live_{key.prefix}…</td>
                   <td className="metric py-2 text-muted-foreground">
-                    {key.lastUsedAt ? new Date(key.lastUsedAt).toLocaleString() : "never"}
+                    {key.lastUsedAt ? formatDateTime(key.lastUsedAt) : "never"}
                   </td>
                   <td className="py-2 text-right">
                     {key.revokedAt ? (

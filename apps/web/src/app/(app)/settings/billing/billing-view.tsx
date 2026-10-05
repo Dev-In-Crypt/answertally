@@ -1,5 +1,6 @@
 "use client";
 
+import { formatDay } from "@repo/core";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/trpc/react";
@@ -191,7 +192,7 @@ export function BillingView() {
         {data.hasLiveSubscription && !pastDue && data.currentPeriodEnd && (
           <p className="metric text-sm text-muted-foreground">
             {data.cancelAtPeriodEnd ? "Ends" : "Renews"} on{" "}
-            {new Date(data.currentPeriodEnd).toLocaleDateString()}.
+            {formatDay(data.currentPeriodEnd)}.
           </p>
         )}
       </div>

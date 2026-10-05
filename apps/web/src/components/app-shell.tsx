@@ -194,7 +194,9 @@ export function AppShell({
         <header className="flex h-14 items-center justify-between gap-4 border-b px-4 sm:px-6">
           <div className="flex min-w-0 items-center gap-3 md:hidden">
             <Mark className="size-5" />
-            <nav className="-mx-1 flex min-w-0 gap-3 overflow-x-auto px-1">
+            {/* Правый край ряда гаснет: так видно, что пункты продолжаются за
+                краем и до «Plan and usage» и «Settings» можно докрутить. */}
+            <nav className="-mx-1 flex min-w-0 gap-3 overflow-x-auto px-1 pr-6 [mask-image:linear-gradient(to_right,black_calc(100%-2rem),transparent)]">
               {NAV.map(({ href, label }) => {
                 const active = href === current;
                 return (

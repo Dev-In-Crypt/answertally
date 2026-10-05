@@ -12,13 +12,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import {
-  CONFIDENCE_LABELS,
-  MEASUREMENT_COPY,
-  measurableAssistants,
-  shareOfNamed,
-  type Platform,
-} from "@repo/core";
+import { CONFIDENCE_LABELS, formatDateTime, formatDayShort, measurableAssistants, MEASUREMENT_COPY, type Platform, shareOfNamed } from "@repo/core";
 import { api, type RouterOutputs } from "@/trpc/react";
 import { EmptyState } from "@/components/page-header";
 import { buttonClass } from "@/components/ui/button";
@@ -59,7 +53,7 @@ function Meta({
 
 function when(value: Date | string | null | undefined): string {
   if (!value) return "—";
-  return new Date(value).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return formatDayShort(value);
 }
 
 /**
@@ -678,7 +672,12 @@ export function ClientOverview({ clientId }: { clientId: string }) {
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData} margin={{ top: 8, right: 16, bottom: 8, left: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                <XAxis dataKey="week" tick={{ fontSize: 12 }} stroke="var(--color-muted-foreground)" />
+                <XAxis
+                  dataKey="week"
+                  tickFormatter={(week: string) => formatDayShort(week)}
+                  tick={{ fontSize: 12 }}
+                  stroke="var(--color-muted-foreground)"
+                />
                 <YAxis
                   domain={[0, 100]}
                   unit="%"
@@ -763,7 +762,7 @@ function ActivityFeed({ clientId }: { clientId: string }) {
           {entries.map((entry) => (
             <li key={entry.id} className="flex items-baseline gap-3">
               <span className="metric shrink-0 text-muted-foreground">
-                {new Date(entry.createdAt).toLocaleString()}
+                {formatDateTime(entry.createdAt)}
               </span>
               <span className="font-medium">{EVENT_LABELS[entry.eventType] ?? entry.eventType}</span>
               <span className="truncate text-muted-foreground">
