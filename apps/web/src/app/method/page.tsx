@@ -25,7 +25,8 @@ import { LIMITS, SPARKTORO_STUDY } from "@/components/marketing/content";
  */
 
 export const metadata: Metadata = {
-  title: "Method · Answertally",
+  alternates: { canonical: "/method" },
+  title: "How We Measure AI Visibility · Answertally",
   description:
     "How Answertally measures AI visibility: repeated samples per question and assistant, ranges and confidence levels, no rank and no single score, and what we never claim.",
 };

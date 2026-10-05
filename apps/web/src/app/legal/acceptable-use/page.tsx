@@ -12,6 +12,7 @@ import Link from "next/link";
  */
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/legal/acceptable-use" },
   title: "Acceptable use · Answertally",
   description: "What Answertally may not be used for, and what happens if it is.",
 };

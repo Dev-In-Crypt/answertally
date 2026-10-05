@@ -15,6 +15,7 @@ import { SUBPROCESSOR_NOTICE_DAYS } from "@/config/legal";
  */
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/legal/dpa" },
   title: "Data processing terms · Answertally",
   description:
     "How responsibility for your clients' data splits between your agency and Answertally.",

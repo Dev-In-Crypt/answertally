@@ -16,6 +16,7 @@ import { SUPPORT_EMAIL } from "@/config/site";
  */
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/legal/privacy" },
   title: "Privacy policy · Answertally",
   description: "What data Answertally holds, why, for how long, and who else can see it.",
 };

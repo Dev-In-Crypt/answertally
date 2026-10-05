@@ -15,6 +15,7 @@ import Link from "next/link";
  */
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/legal/refunds" },
   title: "Billing and refunds · Answertally",
   description: "How billing works, how to cancel, and when money comes back.",
 };

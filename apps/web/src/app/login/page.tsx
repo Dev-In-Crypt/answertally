@@ -16,6 +16,8 @@ import { safeNextPath, verificationLinkNotice } from "@/lib/auth-client-messages
  */
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/login" },
+  robots: { index: false },
   title: "Sign in · Answertally",
   description: "Sign in to your Answertally workspace.",
 };

@@ -32,7 +32,8 @@ import { ResaleCalculator } from "@/components/marketing/resale-calculator";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Pricing · Answertally",
+  alternates: { canonical: "/pricing" },
+  title: "Pricing: AI Visibility Tracking per Client · Answertally",
   description: `Three plans, billed per client account with your whole team included: ${PLANS.map((p) => `${p.name} ${usd(p.priceUsd)}`).join(", ")} a month, about ${usd(PER_CLIENT_MIN)}–${usd(PER_CLIENT_MAX)} per client.`,
 };
 

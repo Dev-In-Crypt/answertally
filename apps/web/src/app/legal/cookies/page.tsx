@@ -19,6 +19,7 @@ import Link from "next/link";
  */
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/legal/cookies" },
   title: "Cookies · Answertally",
   description: "What Answertally stores in your browser. It is less than you expect.",
 };

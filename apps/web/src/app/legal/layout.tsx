@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { formatDay } from "@repo/core";
 import { LEGAL_ENTITY, LEGAL_LAST_UPDATED } from "@/config/legal";
 import { SUPPORT_EMAIL } from "@/config/site";
 import { MarketingShell } from "@/components/marketing/chrome";
@@ -44,7 +45,7 @@ export default function LegalLayout({ children }: { children: React.ReactNode })
 
             <footer className="legal-foot">
               <p>
-                Last updated <span className="mono">{LEGAL_LAST_UPDATED}</span>.
+                Last updated <span className="mono">{formatDay(LEGAL_LAST_UPDATED)}</span>.
               </p>
               <p>
                 Support and questions about these terms:{" "}

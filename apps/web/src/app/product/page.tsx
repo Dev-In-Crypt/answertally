@@ -27,7 +27,8 @@ import { ReportPreview } from "@/components/marketing/report-preview";
  */
 
 export const metadata: Metadata = {
-  title: "Product · Answertally",
+  alternates: { canonical: "/product" },
+  title: "AI Visibility Platform for Agencies · Answertally",
   description:
     "Measure, diagnose, act, run experiments and report: how Answertally turns sampled AI answers into ranked agency work and white-label reports.",
 };

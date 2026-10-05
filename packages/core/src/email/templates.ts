@@ -110,21 +110,23 @@ export function verifyEmailEmail(input: VerifyEmailInput): EmailMessage {
   const verifyUrl = requireAbsoluteUrl(input.verifyUrl, "verifyUrl");
 
   const text = [
-    `Confirm this address to finish setting up your ${EMAIL_COPY.productName} account.`,
+    `Confirm this address to open your ${EMAIL_COPY.productName} workspace and run your first free audit.`,
     "",
     `Confirm your email: ${verifyUrl}`,
     "",
-    "If you did not sign up, ignore this email — the account stays unusable until the link is opened.",
+    "The link works for one hour. If it has expired, sign in with the same email and password and we will send a new one.",
+    "If you did not sign up, ignore this email — nothing is opened until the link is used.",
   ].join("\n");
 
   return {
     to: input.to,
-    subject: `Confirm your email for ${EMAIL_COPY.productName}`,
+    subject: "Confirm your email to open your workspace",
     text,
     html: paragraphs([
-      `Confirm this address to finish setting up your ${EMAIL_COPY.productName} account.`,
+      `Confirm this address to open your ${EMAIL_COPY.productName} workspace and run your first free audit.`,
       `<a href="${escapeHtml(verifyUrl)}">Confirm your email</a>`,
-      "If you did not sign up, ignore this email — the account stays unusable until the link is opened.",
+      "The link works for one hour. If it has expired, sign in with the same email and password and we will send a new one.",
+      "If you did not sign up, ignore this email — nothing is opened until the link is used.",
     ]),
   };
 }

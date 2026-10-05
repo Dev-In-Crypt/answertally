@@ -6,6 +6,8 @@ import { MARKETING_COPY, SAMPLE_DELIVERY_REPORT } from "@repo/core";
 import { auth } from "@/lib/auth";
 import { Faq, MethodLink, SecHead, SrcChip } from "@/components/marketing/bits";
 import { MarketingShell } from "@/components/marketing/chrome";
+import { JsonLd } from "@/components/marketing/json-ld";
+import { SITE_URL, SUPPORT_EMAIL } from "@/config/site";
 import {
   AUDIENCE,
   checkoutCopy,
@@ -31,7 +33,8 @@ import { ReportPreview } from "@/components/marketing/report-preview";
  */
 
 export const metadata: Metadata = {
-  title: "Answertally · AI visibility for agencies, with the evidence shown",
+  alternates: { canonical: "/" },
+  title: "AI Visibility Reporting for Agencies · Answertally",
   description:
     "Answer your clients’ “are we in ChatGPT?” with sampled AI answers, ranges and confidence levels, ranked work with a reason on every item, and a white-label report the client approves by link.",
 };
@@ -47,6 +50,42 @@ export default async function HomePage() {
 
   return (
     <MarketingShell>
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              "@id": `${SITE_URL}/#organization`,
+              name: "Answertally",
+              url: SITE_URL,
+              logo: `${SITE_URL}/icon.svg`,
+              contactPoint: {
+                "@type": "ContactPoint",
+                contactType: "customer support",
+                email: SUPPORT_EMAIL,
+              },
+            },
+            {
+              "@type": "SoftwareApplication",
+              name: "Answertally",
+              url: SITE_URL,
+              applicationCategory: "BusinessApplication",
+              operatingSystem: "Web",
+              description:
+                "AI visibility measurement for agencies: sampled answers from ChatGPT, Perplexity, Grok and Claude, ranked work with a reason on every item, and white-label client reports.",
+              publisher: { "@id": `${SITE_URL}/#organization` },
+              offers: PLANS.map((plan) => ({
+                "@type": "Offer",
+                name: plan.name,
+                price: String(plan.priceUsd),
+                priceCurrency: "USD",
+                description: `${plan.name}: up to ${plan.clientLimit} client accounts, billed monthly`,
+              })),
+            },
+          ],
+        }}
+      />
       <div className="wrap">
         <section className="hero" aria-labelledby="hero-title">
           <div>

@@ -21,6 +21,7 @@ import { SUPPORT_EMAIL } from "@/config/site";
  */
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/legal/terms" },
   title: "Terms of service · Answertally",
   description: "The agreement between your agency and Answertally, in plain language.",
 };
@@ -131,10 +132,11 @@ export default function TermsPage() {
         one question once.
       </p>
       <p>
-        Going past the included checks does not switch anything off in the middle of a month. We
-        will talk to you about the next step rather than interrupting measurement you are relying
-        on. Before a plan is bought, free use is capped: the free audit covers a set number of
-        checks and then asks you to choose a plan.
+        Measurement runs within the AI-check limit of the plan you chose. When the checks included
+        for the month are used up, new measurement waits until the next billing period starts or
+        you move to a larger plan; nothing already measured is lost, and your reports stay open.
+        Before a plan is bought, free use is capped: the free audit covers a set number of checks
+        and then asks you to choose a plan.
       </p>
       <p>
         Cancellation, refunds and what happens to a downgrade are in{" "}

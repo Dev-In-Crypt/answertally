@@ -16,6 +16,7 @@ import { SUBPROCESSOR_NOTICE_DAYS } from "@/config/legal";
  */
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/legal/subprocessors" },
   title: "Sub-processors · Answertally",
   description:
     "Every third party that can receive data when you use Answertally, what it receives, and why.",

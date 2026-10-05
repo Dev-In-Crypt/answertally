@@ -24,6 +24,7 @@ import "./proposal.css";
  */
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/proposal-template" },
   title: "Proposal template · Answertally",
   description:
     "The structure of an AI-visibility proposal an agency can adapt for its own client: situation, what is measured, the work, reporting, cost, and what is not promised. Example values are invented and marked.",

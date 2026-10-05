@@ -34,7 +34,8 @@ const FREE_TRIO = freeAuditAssistantSentence();
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Free audit · Answertally",
+  alternates: { canonical: "/free-audit" },
+  title: "Free AI Visibility Audit for Your Client · Answertally",
   description:
     `Audit a brand you work on for free: what ${FREE_TRIO} say about it, which sources they cite, ranked work with reasons, and an opportunity report in your brand.`,
 };

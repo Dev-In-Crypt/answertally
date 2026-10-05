@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getAgencyById } from "@repo/db";
@@ -9,6 +10,9 @@ import { ClientErrorReporting } from "@/components/client-error-reporting";
 import { db } from "@/server/db";
 
 /** Общий каркас всех защищённых экранов: сессия проверяется здесь, а не в каждой странице. */
+// Рабочее место за входом: в выдачу поисковиков ему не место.
+export const metadata: Metadata = { robots: { index: false, follow: false } };
+
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const requestHeaders = await headers();
   const session = await auth.api.getSession({ headers: requestHeaders });
