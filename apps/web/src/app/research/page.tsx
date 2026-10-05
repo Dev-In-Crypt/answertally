@@ -263,7 +263,7 @@ export default function ResearchPage() {
             </p>
             <div className="ctas" style={{ marginTop: 22 }}>
               <Link className="btn primary" href="/signup">
-                Start a free audit
+                Run a free audit
               </Link>
               <Link className="link" href="/method">
                 How we measure →

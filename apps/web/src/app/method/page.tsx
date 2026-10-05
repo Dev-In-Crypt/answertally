@@ -357,7 +357,7 @@ export default function MethodPage() {
             </p>
             <div className="ctas" style={{ marginTop: 22 }}>
               <Link className="btn primary" href="/signup">
-                Start a free audit
+                Run a free audit
               </Link>
               <Link className="link" href="/sample-report">
                 See an example report →

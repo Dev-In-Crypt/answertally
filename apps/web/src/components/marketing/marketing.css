@@ -235,6 +235,8 @@
 .mk .hero .kicker { margin-bottom: 22px; }
 .mk .hero .lead { margin-top: 24px; max-width: 560px; }
 .mk .hero .ctas { margin-top: 32px; }
+.mk .plan-guide { margin: 0 0 20px; font-size: 15.5px; color: var(--cw-muted); max-width: 720px; }
+.mk .cta-note { margin-top: 10px; font-size: 13.5px; color: var(--cw-muted); }
 .mk .hero-meta { margin-top: 36px; padding-top: 18px; border-top: 1px dashed var(--cw-rule); display: grid; gap: 10px; }
 .mk .manual { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 56px; align-items: start; }
 .mk .timesheet li { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 10px; align-items: baseline; padding: 14px 18px; border-bottom: 1px solid var(--cw-border); font-size: 15.5px; }

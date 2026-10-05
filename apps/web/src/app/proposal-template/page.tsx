@@ -382,7 +382,7 @@ export default function ProposalTemplatePage() {
             </p>
             <div className="ctas" style={{ marginTop: 22 }}>
               <Link className="btn primary" href="/signup">
-                Start a free audit
+                Run a free audit
               </Link>
               <Link className="link" href="/partners">
                 How agencies sell this →

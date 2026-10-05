@@ -60,6 +60,18 @@ const ASSISTANT_ROWS: Row[] = [
 /** Остальное: платежи, почта, сбор ошибок. */
 const SERVICE_ROWS: Row[] = [
   {
+    name: "Hetzner Online GmbH",
+    purpose: "Hosts the product and its database",
+    data: "Everything stored in your workspace: clients, questions, answers, reports, uploaded logos",
+    where: "Germany (European Union)",
+  },
+  {
+    name: "Cloudflare",
+    purpose: "Handles our domain and forwards mail sent to our support address",
+    data: "Messages you send to our support address, in transit",
+    where: "United States (global network)",
+  },
+  {
     name: "Creem (Armitage Labs OÜ)",
     purpose:
       "Sells the plans to you as merchant of record: takes payment, charges sales tax and issues invoices",
@@ -123,8 +135,9 @@ export default function SubprocessorsPage() {
         the question, not your client&rsquo;s account, contacts or files.
       </p>
       <p>
-        Claude and Grok are off unless you switch them on for a client. Until you do, nothing goes
-        to them.
+        Which assistants are asked depends on your plan: the free audit asks ChatGPT and
+        Perplexity; paid plans add Grok, and Claude from the Growth plan. Claude can be switched
+        off per client, and an assistant that is switched off receives nothing.
       </p>
       <Table rows={ASSISTANT_ROWS} caption="Assistant providers we send tracked questions to" />
 

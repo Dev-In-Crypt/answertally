@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { MARKETING_COPY, REPORT_COPY, SAMPLE_AUDIT_REPORT } from "@repo/core";
 import { freeAuditAssistantSentence } from "@repo/core/adapters/capacity";
-import { Faq, MethodLink, SecHead, TalkOrAudit } from "@/components/marketing/bits";
+import { CtaNote, Faq, MethodLink, SecHead, TalkOrAudit } from "@/components/marketing/bits";
 import { MarketingShell } from "@/components/marketing/chrome";
 import { AUDIT_STEPS, checkoutCopy, SALES_CONTACT } from "@/components/marketing/content";
 import { getPaymentProvider } from "@/server/payments";
@@ -86,12 +86,13 @@ export default function FreeAuditPage() {
             </p>
             <div className="ctas">
               <Link className="btn primary" href="/signup" data-testid="audit-cta">
-                Create your workspace
+                Run a free audit
               </Link>
               <a className="link" href="#how">
                 What happens, step by step ↓
               </a>
             </div>
+            <CtaNote />
             <ul className="fa-facts">
               <li>Free to run, and no card is asked for</li>
               <li>Nothing is published anywhere</li>
@@ -275,7 +276,7 @@ export default function FreeAuditPage() {
             </p>
             <div className="ctas" style={{ marginTop: 22 }}>
               <Link className="btn primary" href="/signup">
-                Create your workspace
+                Run a free audit
               </Link>
               {SALES_CONTACT && <TalkOrAudit />}
             </div>

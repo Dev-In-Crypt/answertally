@@ -2,6 +2,7 @@
 
 import { formatDay } from "@repo/core";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/trpc/react";
 import { cn } from "@/lib/utils";
@@ -176,7 +177,10 @@ export function BillingView() {
           </span>
           {(data.hasLiveSubscription || free) && (
             <span className="metric text-sm text-muted-foreground">
-              {data.clientsUsed} of {entitlements.clientLimit} clients ·{" "}
+              {free
+                ? `${data.clientsUsed} ${data.clientsUsed === 1 ? "client" : "clients"}`
+                : `${data.clientsUsed} of ${entitlements.clientLimit} clients`}{" "}
+              ·{" "}
               {free
                 ? `${data.aiChecks.used.toLocaleString("en-US")} of ${data.aiChecks.allowance.toLocaleString("en-US")} free AI checks used`
                 : `${entitlements.aiCheckAllowance.toLocaleString("en-US")} AI checks a month`}
@@ -285,6 +289,7 @@ export function BillingView() {
                 up to {plan.clientLimit} clients ·{" "}
                 {plan.aiCheckAllowance.toLocaleString("en-US")} checks
               </span>
+              <span className="text-sm text-muted-foreground">Assistants: {plan.assistants}</span>
 
               {/* Закрывающуюся подписку провайдер не двигает: сначала «Keep». */}
               {canChange &&
@@ -322,6 +327,16 @@ export function BillingView() {
           );
         })}
       </div>
+
+      <p data-testid="plan-includes" className="max-w-prose text-sm text-muted-foreground">
+        Every plan includes measurement, diagnosis, ranked work, white-label reports with PDF
+        export, and your whole team at no extra charge. Payments are processed by Creem, our payment
+        provider, which also handles tax and invoices. You can cancel any time: the plan runs to the
+        end of the month you have paid for.{" "}
+        <Link href="/legal/refunds" className="text-primary underline-offset-4 hover:underline">
+          Billing and refunds
+        </Link>
+      </p>
 
       {canChange && target && (
         <div

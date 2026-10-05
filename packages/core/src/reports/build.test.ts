@@ -48,7 +48,7 @@ describe("summariseWork", () => {
 
     expect(summary).toEqual([
       { label: "Pages refreshed", count: 2 },
-      { label: "New pages published", count: 1 },
+      { label: "New pages created", count: 1 },
     ]);
   });
 

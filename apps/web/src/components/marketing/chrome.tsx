@@ -49,7 +49,7 @@ export function MarketingHeader({ active }: { active?: MarketingSection }) {
             Sign in
           </Link>
           <Link className="btn primary sm" href="/signup" data-testid="header-cta">
-            <span className="cta-long">Start a free audit</span>
+            <span className="cta-long">Run a free audit</span>
             <span className="cta-short">Free audit</span>
           </Link>
           <details className="menu" data-testid="mobile-menu">

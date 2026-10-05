@@ -1,4 +1,4 @@
-import type { ReportPayload } from "@repo/core";
+import { leadText, type ReportPayload } from "@repo/core";
 import { AgencyCard } from "./agency-card";
 import { AGENCIES } from "./data";
 
@@ -40,8 +40,8 @@ function DeliveryBody({ payload }: { payload: ReportPayload }) {
       <p className="r-sum">
         Across the tracked buyer questions, {payload.client.name} was named in an estimated{" "}
         {payload.visibility.after}% of answers this period, {up ? "up" : "down"} from{" "}
-        {payload.visibility.before}%. The gap to the strongest tracked competitor stands at{" "}
-        {formatPp(payload.competitorGap.after)}. Every figure is an estimate from repeated samples of
+        {payload.visibility.before}%. Against the strongest tracked competitor, {payload.client.name}{" "}
+        stands {leadText(payload.competitorGap.after)}. Every figure is an estimate from repeated samples of
         assistant answers, not a count of real buyer conversations.
       </p>
       <div className="r-stats">
@@ -53,11 +53,11 @@ function DeliveryBody({ payload }: { payload: ReportPayload }) {
           <span>{formatPp(payload.results.visibilityDeltaPp)} over the period</span>
         </div>
         <div>
-          <span>Competitor gap</span>
+          <span>Against the strongest competitor</span>
           <b className="sm">
-            {formatPp(payload.competitorGap.before)} → {formatPp(payload.competitorGap.after)}
+            {leadText(payload.competitorGap.before)} → {leadText(payload.competitorGap.after)}
           </b>
-          <span>Against the best-performing tracked competitor</span>
+          <span>Versus the best-performing tracked competitor</span>
         </div>
       </div>
       <div className="r-sec">

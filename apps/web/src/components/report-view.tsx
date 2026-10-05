@@ -1,4 +1,4 @@
-import { ASSISTANTS, formatDay, formatPeriod, MEASUREMENT_COPY, type ReportPayload } from "@repo/core";
+import { ASSISTANTS, formatDay, formatPeriod, leadText, MEASUREMENT_COPY, type ReportPayload } from "@repo/core";
 
 /** Имена ассистентов из каталога: в отчёте клиента идентификаторов быть не должно. */
 const ASSISTANT_LABELS: Record<string, string> = Object.fromEntries(
@@ -122,9 +122,8 @@ export function ReportView({
               <span className="metric">{payload.visibility.before}%</span>
             </>
           )}
-          . The gap to the strongest
-          tracked competitor stands at{" "}
-          <span className="metric">{formatPp(payload.competitorGap.after)}</span>. Every figure is
+          . Against the strongest tracked competitor, {payload.client.name} stands{" "}
+          <span className="metric">{leadText(payload.competitorGap.after)}</span>. Every figure is
           an estimate from repeated samples of assistant answers, not a count of real buyer
           conversations.
         </p>
@@ -145,14 +144,14 @@ export function ReportView({
             }
           />
           <Stat
-            label="Competitor gap"
+            label="Against the strongest competitor"
             testId="report-gap"
             value={
               payload.firstMeasurement
-                ? formatPp(payload.competitorGap.after)
-                : `${formatPp(payload.competitorGap.before)} → ${formatPp(payload.competitorGap.after)}`
+                ? leadText(payload.competitorGap.after)
+                : `${leadText(payload.competitorGap.before)} → ${leadText(payload.competitorGap.after)}`
             }
-            hint="Against the best-performing tracked competitor"
+            hint="Versus the best-performing tracked competitor"
           />
         </div>
       </section>
@@ -198,10 +197,13 @@ export function ReportView({
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-medium">Results</h2>
         <ul data-testid="report-results" className="flex flex-col gap-1 text-sm">
-          <li className="flex justify-between border-b py-2">
-            <span>Newly cited sources</span>
-            <span className="metric font-medium">{payload.results.newCitedUrls}</span>
-          </li>
+          {/* В первом измерении «новых» источников нет: сравнивать не с чем. */}
+          {!payload.firstMeasurement && (
+            <li className="flex justify-between border-b py-2">
+              <span>Newly cited sources</span>
+              <span className="metric font-medium">{payload.results.newCitedUrls}</span>
+            </li>
+          )}
           <li className="flex justify-between border-b py-2">
             <span>Brand mentions in AI answers</span>
             <span className="metric font-medium">{payload.results.newBrandMentions}</span>

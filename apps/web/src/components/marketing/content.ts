@@ -51,7 +51,7 @@ export const PRICING_NOTES = {
    * Allowance рассчитан на еженедельный опрос, а по умолчанию продукт опрашивает
    * раз в две недели — названы оба числа, чтобы запас не выглядел выдуманным.
    */
-  checks: `One AI check is one assistant answering one prompt once. A client measured the default way (around two dozen prompts, three samples each, three assistants, every two weeks) uses roughly ${int(TYPICAL_CHECKS_BIWEEKLY)} checks a month. Measured weekly, it uses roughly ${int(TYPICAL_CHECKS_PER_CLIENT)} checks, and each plan still covers every client with about 40% to spare.`,
+  checks: `One AI check is one assistant answering one prompt once. A client measured the default way (around two dozen prompts, three samples each, three assistants, every two weeks) uses roughly ${int(TYPICAL_CHECKS_BIWEEKLY)} checks a month. Measured weekly, it uses roughly ${int(TYPICAL_CHECKS_PER_CLIENT)} checks, and each plan still covers every client, with up to 40% to spare.`,
   /**
    * Лимит — потолок: следующий прогон сверх него не начнётся (решение
    * фаундера, после аудита расходов). Начатый не обрывается. Обещание

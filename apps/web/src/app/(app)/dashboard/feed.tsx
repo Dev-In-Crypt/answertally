@@ -127,6 +127,24 @@ export function DecisionFeed() {
   const rows = portfolio.data ?? [];
   const waiting = rows.filter((row) => row.needsRows.length > 0);
 
+  // Пока клиентов нет, «ничего не ждёт» — пустая новость: человеку нужен
+  // первый шаг, а не отчёт об отсутствии дел.
+  if (rows.length === 0) {
+    return (
+      <Card data-testid="first-steps" className="flex flex-col gap-3">
+        <CardTitle>Your first audit, in three steps</CardTitle>
+        <ol className="flex list-decimal flex-col gap-1.5 pl-5 text-sm">
+          <li>Add a client: its brand names and the competitors to compare it with.</li>
+          <li>Generate the questions its buyers ask, and edit them until they sound right.</li>
+          <li>Run the free audit, then open the report.</li>
+        </ol>
+        <p className="text-sm text-muted-foreground">
+          Start with the <b>Add client</b> button on this page.
+        </p>
+      </Card>
+    );
+  }
+
   const groups = byWork
     ? KIND_ORDER.map((kind) => ({
         key: kind as string,
@@ -241,9 +259,11 @@ export function DashboardRail() {
         {usage.data && checks ? (
           <div className="flex flex-col gap-2 text-sm">
             <span className="flex items-baseline justify-between gap-3 text-muted-foreground">
-              Clients measured
+              {checks.free ? "Brands audited" : "Clients measured"}
               <span className="metric font-medium text-foreground">
-                {usage.data.clients.used} / {usage.data.clients.limit}
+                {checks.free
+                  ? usage.data.clients.used
+                  : `${usage.data.clients.used} / ${usage.data.clients.limit}`}
               </span>
             </span>
             <span className="flex items-baseline justify-between gap-3 text-muted-foreground">

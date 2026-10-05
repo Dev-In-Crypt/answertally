@@ -86,7 +86,7 @@ test("the header takes a visitor to each marketing page", async ({ page }) => {
   const header = page.getByTestId("marketing-header");
   await expect(header.getByRole("link", { name: "Sign in" })).toHaveAttribute("href", "/login");
   await expect(page.getByTestId("header-cta")).toHaveAttribute("href", "/signup");
-  await expect(page.getByTestId("header-cta")).toContainText("Start a free audit");
+  await expect(page.getByTestId("header-cta")).toContainText("Run a free audit");
 
   // Методология доступна и из подвала.
   await expect(page.locator("footer").getByRole("link", { name: "How we measure" })).toHaveAttribute(

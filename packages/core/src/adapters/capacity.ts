@@ -326,6 +326,11 @@ export function defaultAssistantLabels(plan: PlanId): string[] {
   return capabilitiesFor(plan).defaultAssistants.map(assistantLabel);
 }
 
+/** Все ассистенты, которых тариф вообще позволяет включить, — для карточки тарифа. */
+export function allowedAssistantLabels(plan: PlanId): string[] {
+  return capabilitiesFor(plan).assistants.map(assistantLabel);
+}
+
 /**
  * Подписи ассистентов бесплатного аудита — через запятую и «and».
  *

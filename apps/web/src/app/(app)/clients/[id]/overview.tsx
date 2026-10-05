@@ -12,7 +12,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { CONFIDENCE_LABELS, formatDateTime, formatDayShort, measurableAssistants, MEASUREMENT_COPY, type Platform, shareOfNamed } from "@repo/core";
+import { CONFIDENCE_LABELS, formatDateTime, formatDayShort, leadText, measurableAssistants, MEASUREMENT_COPY, type Platform, shareOfNamed } from "@repo/core";
 import { api, type RouterOutputs } from "@/trpc/react";
 import { EmptyState } from "@/components/page-header";
 import { buttonClass } from "@/components/ui/button";
@@ -99,8 +99,8 @@ function MetadataStrip({
           {delta === null ? "—" : `${delta > 0 ? "+" : ""}${delta} pp`}
         </Meta>
 
-        <Meta label="Gap to strongest competitor" tone="competitor">
-          <span data-testid="stat-gap">{latest ? `${latest.competitorGapPp} pp` : "—"}</span>
+        <Meta label="Versus strongest competitor" tone="competitor">
+          <span data-testid="stat-gap">{latest ? leadText(latest.competitorGapPp) : "—"}</span>
         </Meta>
 
         <Meta label="Sample">

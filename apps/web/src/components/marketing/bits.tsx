@@ -23,6 +23,14 @@ export function TalkOrAudit({ fallback = "Start with the free audit →" }: { fa
   );
 }
 
+/**
+ * Строка трения под главной кнопкой: что человек получает и чем платит.
+ * Без неё «Run a free audit» не говорит, нужна ли карта.
+ */
+export function CtaNote({ children = "Free for one brand. No card needed." }: { children?: ReactNode }) {
+  return <p className="cta-note">{children}</p>;
+}
+
 /** Ссылка на методологию рядом с блоками, где много цифр. */
 export function MethodLink({ children = "How we measure →" }: { children?: ReactNode }) {
   return (

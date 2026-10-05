@@ -59,7 +59,7 @@ export function SampleFrame({
           </p>
           <div className="ctas">
             <Link className="btn primary" href="/signup">
-              Start a free audit
+              Run a free audit
             </Link>
             <Link className="link" href="/free-audit">
               How the free audit works →

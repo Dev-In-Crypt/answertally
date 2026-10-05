@@ -69,10 +69,20 @@ function round1(value: number): number {
   return Math.round(value * 10) / 10;
 }
 
+/**
+ * Разрыв с конкурентом словами: «+9 pp» рядом со словом «gap» клиент читает
+ * как отставание, а положительное число значит обратное — клиент впереди.
+ */
+export function leadText(value: number): string {
+  const size = Math.abs(Math.round(value * 10) / 10);
+  if (size === 0) return "level (0 pp)";
+  return `${size} pp ${value > 0 ? "ahead" : "behind"}`;
+}
+
 /** Человекочитаемые названия типов работ для раздела «что сделано». */
 const WORK_LABELS: Record<string, string> = {
   refresh_page: "Pages refreshed",
-  create_page: "New pages published",
+  create_page: "New pages created",
   technical_fix: "Technical fixes",
   structured_data_fix: "Structured data fixes",
   crawler_fix: "Crawlability fixes",

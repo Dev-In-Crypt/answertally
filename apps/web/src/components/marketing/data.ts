@@ -8,6 +8,7 @@ import {
   wilsonInterval,
   type ConfidenceLevel,
 } from "@repo/core";
+import { allowedAssistantLabels } from "@repo/core/adapters/capacity";
 
 /**
  * Данные для графиков и карточек витрины.
@@ -225,6 +226,7 @@ export const PLANS: {
   checksPerClient: number;
   perClientUsd: number;
   typicalUse: number;
+  assistants: string;
 }[] = (["starter", "growth", "scale"] as const).map((id) => {
   const limits = PLAN_LIMITS[id];
   return {
@@ -242,6 +244,7 @@ export const PLANS: {
     // Цена за клиента при полном плане — считается, а не вписывается.
     perClientUsd: Math.round(limits.priceUsd / limits.clientLimit),
     typicalUse: limits.clientLimit * TYPICAL_CHECKS_PER_CLIENT,
+    assistants: allowedAssistantLabels(id).join(", "),
   };
 });
 

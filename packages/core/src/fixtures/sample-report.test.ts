@@ -96,7 +96,7 @@ describe("квартальный отчёт", () => {
     expect(SAMPLE_DELIVERY_REPORT.workCompleted).toEqual([
       { label: "Pages refreshed", count: 4 },
       { label: "Source outreach", count: 3 },
-      { label: "New pages published", count: 2 },
+      { label: "New pages created", count: 2 },
       { label: "Review platform work", count: 2 },
       { label: "Structured data fixes", count: 1 },
     ]);

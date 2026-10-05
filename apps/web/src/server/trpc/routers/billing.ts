@@ -23,6 +23,7 @@ import {
   type Database,
   type Subscription,
 } from "@repo/db";
+import { allowedAssistantLabels } from "@repo/core/adapters/capacity";
 import { protectedProcedure, roleProcedure, router } from "../trpc";
 import { SUPPORT_EMAIL } from "@/config/site";
 import { appUrl } from "../../email";
@@ -95,6 +96,8 @@ export const billingRouter = router({
       plans: (Object.keys(PLAN_LIMITS) as PlanId[]).map((id) => ({
         id,
         ...PLAN_LIMITS[id],
+        /** Кого тариф позволяет включить — карточка называет их, а не «ассистентов вообще». */
+        assistants: allowedAssistantLabels(id).join(", "),
         /** Сколько провайдер спишет сразу при повышении — оценка для подтверждения. */
         estimatedChargeNowUsd: live
           ? estimateUpgradeChargeUsd(

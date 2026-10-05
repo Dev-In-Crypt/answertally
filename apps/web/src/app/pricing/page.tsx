@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { MARKETING_COPY, VOLUME_ACCOUNT_PRICE_USD, VOLUME_DISCOUNT, VOLUME_THRESHOLD } from "@repo/core";
-import { Faq, SecHead, TalkOrAudit } from "@/components/marketing/bits";
+import { CtaNote, Faq, SecHead, TalkOrAudit } from "@/components/marketing/bits";
 import { MarketingShell } from "@/components/marketing/chrome";
 import { checkoutCopy, PRICING_NOTES, RESALE, SALES_CONTACT } from "@/components/marketing/content";
 import { getPaymentProvider } from "@/server/payments";
@@ -131,12 +131,19 @@ export default function PricingPage() {
             <div className="cap">How buying works today</div>
             <p className="h4">{buying.heading}</p>
             <p className="small">{buying.lead}</p>
-            <Link className="btn primary" href="/free-audit">
-              Start with the free audit
+            <Link className="btn primary" href="/signup">
+              Run a free audit
             </Link>
+            <CtaNote>Free for one brand. No card needed. You pick a plan after the audit, inside the product.</CtaNote>
             {SALES_CONTACT && <TalkOrAudit />}
           </aside>
         </section>
+
+        <p className="plan-guide" data-testid="plan-guide">
+          Pick by how many brands you measure at once: up to {PLANS[0]!.clientLimit} on{" "}
+          {PLANS[0]!.name}, up to {PLANS[1]!.clientLimit} on {PLANS[1]!.name}, up to{" "}
+          {PLANS[2]!.clientLimit} on {PLANS[2]!.name}. Not sure yet? Run the free audit first.
+        </p>
 
         <ul className="plans" aria-label="Plans" data-testid="pricing-plans">
           {PLANS.map((plan) => (
@@ -162,6 +169,10 @@ export default function PricingPage() {
                   <dt>AI checks / month</dt>
                   <dd data-testid={`plan-checks-${plan.id}`}>{int(plan.aiCheckAllowance)}</dd>
                 </div>
+                <div>
+                  <dt>Assistants</dt>
+                  <dd data-testid={`plan-assistants-${plan.id}`}>{plan.assistants}</dd>
+                </div>
               </dl>
               <p className="per">≈ {int(plan.checksPerClient)} checks per client a month</p>
               <ul>
@@ -169,8 +180,8 @@ export default function PricingPage() {
                 <li>White-label reports and PDF export</li>
                 <li>No charge per seat</li>
               </ul>
-              <Link className="btn secondary" href="/free-audit">
-                Start with the free audit
+              <Link className="btn secondary" href="/signup">
+                Run a free audit
               </Link>
             </li>
           ))}
@@ -351,7 +362,7 @@ export default function PricingPage() {
             </p>
             <div className="ctas" style={{ marginTop: 22 }}>
               <Link className="btn primary" href="/signup">
-                Start a free audit
+                Run a free audit
               </Link>
             </div>
           </div>

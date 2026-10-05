@@ -4,7 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { MARKETING_COPY, SAMPLE_DELIVERY_REPORT } from "@repo/core";
 import { auth } from "@/lib/auth";
-import { Faq, MethodLink, SecHead, SrcChip } from "@/components/marketing/bits";
+import { CtaNote, Faq, MethodLink, SecHead, SrcChip } from "@/components/marketing/bits";
 import { MarketingShell } from "@/components/marketing/chrome";
 import { JsonLd } from "@/components/marketing/json-ld";
 import { SITE_URL, SUPPORT_EMAIL } from "@/config/site";
@@ -100,12 +100,13 @@ export default async function HomePage() {
             </p>
             <div className="ctas">
               <Link className="btn primary" href="/signup" data-testid="landing-cta-audit">
-                Run a free audit on one client
+                Run a free audit
               </Link>
               <Link className="btn secondary" href="/sample-report">
                 See an example report
               </Link>
             </div>
+            <CtaNote />
             <div className="hero-meta">
               <p className="method-line" data-testid="hero-method">
                 <span className="label">Method</span>
@@ -298,6 +299,15 @@ export default async function HomePage() {
               />
             </div>
           </div>
+          <div className="ctas" style={{ marginTop: 36 }}>
+            <Link className="btn primary" href="/signup">
+              Run a free audit
+            </Link>
+            <Link className="link" href="/sample-report">
+              Open the full example report →
+            </Link>
+          </div>
+          <CtaNote />
         </div>
       </section>
 
@@ -392,6 +402,7 @@ export default async function HomePage() {
                 What the audit produces →
               </Link>
             </div>
+            <CtaNote />
           </div>
         </div>
       </section>
