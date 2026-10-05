@@ -505,6 +505,9 @@ describe("stripe webhook", () => {
         price: "price_growth",
         status: "past_due",
         periodEnd: yesterday,
+        // Событие «сейчас»: отсрочка считается от него, и фиксированная дата
+        // протухала бы сама через две недели после написания теста.
+        created: Math.floor(Date.now() / 1000),
       }),
     );
 
