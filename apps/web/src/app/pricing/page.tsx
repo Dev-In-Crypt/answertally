@@ -78,6 +78,30 @@ function faqItems(paymentsOn: boolean) {
   { q: "Do we have to drop Semrush or Ahrefs?", a: `No. ${PRICING_NOTES.seoSuite}` },
   { q: "Can we pay by card on the site?", a: checkoutCopy(paymentsOn).faqAnswer },
   {
+    q: "Who takes the payment, and what about tax?",
+    a: "Creem, our merchant of record, takes the card payment, adds sales tax or VAT where it applies and issues the invoice. We never see your card number.",
+  },
+  {
+    q: "How do we cancel?",
+    a: (
+      <>
+        In the product, any time, with no notice period. The subscription runs to the end of the
+        month you have already paid for, and the report links you sent keep working until then.{" "}
+        <Link href="/legal/refunds">Billing and refunds</Link>
+      </>
+    ),
+  },
+  {
+    q: "Can we get a refund?",
+    a: (
+      <>
+        Not for a month that has started: the free audit exists so you can decide first. A wrong
+        charge is refunded in full, and if measurement was broken on our side we refund or credit
+        that part. <Link href="/legal/refunds">The full policy</Link>
+      </>
+    ),
+  },
+  {
     q: "Is the free audit really free?",
     a: "Yes. Creating a workspace and running the audit costs nothing, and no card is asked for.",
   },

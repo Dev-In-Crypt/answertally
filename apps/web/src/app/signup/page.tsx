@@ -54,6 +54,10 @@ export default function SignupPage() {
           <div className="auth-cols">
             <div className="auth-form">
               <AuthForm mode="signup" />
+              <p className="small auth-alt" data-testid="signup-consent">
+                By creating an account you agree to the <Link href="/legal/terms">Terms</Link> and
+                the <Link href="/legal/privacy">Privacy policy</Link>.
+              </p>
               <p className="small auth-alt">
                 Already have an account? <Link href="/login">Sign in</Link>
               </p>

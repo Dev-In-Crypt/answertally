@@ -133,10 +133,12 @@ export function MarketingFooter() {
           */}
           <span className="foot-legal">
             <Link href="/legal/terms">Terms</Link>
+            <Link href="/legal/refunds">Billing and refunds</Link>
             <Link href="/legal/privacy">Privacy</Link>
             <Link href="/legal/dpa">Data processing</Link>
             <Link href="/legal/subprocessors">Sub-processors</Link>
             <Link href="/legal/cookies">Cookies</Link>
+            <Link href="/legal/acceptable-use">Acceptable use</Link>
             <a href={`mailto:${SUPPORT_EMAIL}`} data-testid="support-email">
               {SUPPORT_EMAIL}
             </a>
