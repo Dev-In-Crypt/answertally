@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { MARKETING_COPY } from "@repo/core";
 import { SUPPORT_EMAIL } from "@/config/site";
+import { ConsentManager, CookieSettingsLink } from "./consent";
 import { Wordmark } from "./logo";
 import "./marketing.css";
 
@@ -138,6 +139,7 @@ export function MarketingFooter() {
             <Link href="/legal/dpa">Data processing</Link>
             <Link href="/legal/subprocessors">Sub-processors</Link>
             <Link href="/legal/cookies">Cookies</Link>
+            <CookieSettingsLink />
             <Link href="/legal/acceptable-use">Acceptable use</Link>
             <a href={`mailto:${SUPPORT_EMAIL}`} data-testid="support-email">
               {SUPPORT_EMAIL}
@@ -165,6 +167,7 @@ export function MarketingShell({
         {children}
       </main>
       <MarketingFooter />
+      <ConsentManager />
     </>
   );
 }

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { settled, signIn, signUp } from "@/lib/auth-client";
 import { authErrorMessage } from "@/lib/auth-client-messages";
+import { trackSignup } from "@/lib/tracking";
 import { SUPPORT_EMAIL } from "@/config/site";
 import { buttonClass } from "@/components/ui/button";
 import { controlClass } from "@/components/ui/field";
@@ -79,6 +80,9 @@ export function AuthForm({
       setError(authErrorMessage(result.error, mode === "signup" ? "signup" : "other"));
       return;
     }
+
+    // Рекламная конверсия: считается по успешной регистрации, а не по нажатию.
+    if (mode === "signup" && !inviteToken) trackSignup();
 
     /**
      * Пустая сессия после регистрации означает, что адрес ждёт подтверждения:

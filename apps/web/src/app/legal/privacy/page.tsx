@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { LEGAL_ENTITY } from "@/config/legal";
 import { SUPPORT_EMAIL } from "@/config/site";
+import { adVendors, TRACKING_ENABLED } from "@/config/tracking";
 
 /**
  * Политика конфиденциальности.
@@ -34,8 +35,8 @@ export default function PrivacyPage() {
 
       <h2>Two roles, not one</h2>
       <p>
-        Answertally sits between an agency and its clients, so our responsibilities split in two, and
-        it matters which one applies.
+        Answertally sits between an agency and its clients, so our responsibilities split in two,
+        and it matters which one applies.
       </p>
       <p>
         <strong>We decide</strong> what happens to the data that makes the service exist: the
@@ -102,8 +103,8 @@ export default function PrivacyPage() {
 
       <h3>People inside answers</h3>
       <p>
-        We do not ask assistants about people. But an answer about a company sometimes names one —
-        a founder, an author, a reviewer. That text is stored as it came back, because editing it
+        We do not ask assistants about people. But an answer about a company sometimes names one — a
+        founder, an author, a reviewer. That text is stored as it came back, because editing it
         would make it a different answer. We do not build profiles from it, index it by person, or
         use it to find anything out about anyone.
       </p>
@@ -128,13 +129,23 @@ export default function PrivacyPage() {
 
       <h2>What we never do</h2>
       <ul>
-        <li>We do not sell data, and we do not share it for anyone else&rsquo;s advertising.</li>
+        <li>
+          We do not sell data, and we do not share it for anyone else&rsquo;s advertising
+          {TRACKING_ENABLED
+            ? " — apart from the optional ad-measurement tags under Cookies, which load only if you accept them."
+            : "."}
+        </li>
         <li>We do not train models on your data, or let our providers do so.</li>
         <li>
           We do not use one customer&rsquo;s data to improve what another customer sees. There is no
           cross-agency benchmark built from your measurements.
         </li>
-        <li>We do not track people across other websites.</li>
+        <li>
+          We do not track people across other websites
+          {TRACKING_ENABLED
+            ? " ourselves. The optional ad-measurement tags under Cookies are the only exception, and only after you accept."
+            : "."}
+        </li>
       </ul>
 
       <h2>Who else sees it</h2>
@@ -158,11 +169,24 @@ export default function PrivacyPage() {
       </p>
 
       <h2>Cookies</h2>
-      <p>
-        Signed into the product, one cookie keeps you signed in. That is the only one. The marketing
-        site and the client report page set none at all, and there is no advertising or analytics
-        cookie anywhere. Details are on the <Link href="/legal/cookies">cookies page</Link>.
-      </p>
+      {TRACKING_ENABLED ? (
+        <p>
+          Signed into the product, one cookie keeps you signed in. On the marketing site, a banner
+          asks whether we may load ad-measurement tags from {adVendors().join(", ")}. If you accept,
+          they set cookies and receive your browser details and the pages you visit, to show us
+          which ads bring visitors and to let their platforms measure those ads under their own
+          policies. If you reject, none of them load. The client report page and the signed-in
+          product never load them. Details are on the{" "}
+          <Link href="/legal/cookies">cookies page</Link>.
+        </p>
+      ) : (
+        <p>
+          Signed into the product, one cookie keeps you signed in. That is the only one. The
+          marketing site and the client report page set none at all, and there is no advertising or
+          analytics cookie anywhere. Details are on the{" "}
+          <Link href="/legal/cookies">cookies page</Link>.
+        </p>
+      )}
 
       <h2>Your rights</h2>
       <p>
@@ -173,9 +197,9 @@ export default function PrivacyPage() {
       <p>
         {LEGAL_ENTITY ? (
           <>
-            Write to <a href={`mailto:${LEGAL_ENTITY.contactEmail}`}>{LEGAL_ENTITY.contactEmail}</a>.
-            If you are in the EEA or the UK and we have not resolved something, you may complain to
-            your national data protection authority.
+            Write to <a href={`mailto:${LEGAL_ENTITY.contactEmail}`}>{LEGAL_ENTITY.contactEmail}</a>
+            . If you are in the EEA or the UK and we have not resolved something, you may complain
+            to your national data protection authority.
           </>
         ) : (
           <>
@@ -191,9 +215,7 @@ export default function PrivacyPage() {
         This page carries a date. When something changes that affects what we do with your data, we
         change the date and tell workspace owners before it takes effect — not after.
       </p>
-      <p className="mono">
-        Controller for the data described above: {us}.
-      </p>
+      <p className="mono">Controller for the data described above: {us}.</p>
     </>
   );
 }

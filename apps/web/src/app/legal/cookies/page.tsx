@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { adVendors, TRACKING_ENABLED } from "@/config/tracking";
 
 /**
  * Уведомление о куках.
@@ -28,17 +29,43 @@ export default function CookiesPage() {
   return (
     <>
       <h1>Cookies</h1>
-      <p className="lede">
-        There is no cookie banner here because there is nothing to ask you about. This page says
-        exactly what is stored and when.
-      </p>
+      {TRACKING_ENABLED ? (
+        <>
+          <p className="lede">
+            Nothing optional runs until you choose. This page says exactly what is stored and when.
+          </p>
 
-      <h2>The marketing site</h2>
-      <p>
-        Reading this site sets no cookies at all. No analytics, no advertising, no third-party
-        scripts that set their own. You can check in your browser rather than taking our word for
-        it.
-      </p>
+          <h2>The marketing site</h2>
+          <p>
+            A banner asks whether we may load ad-measurement tags from {adVendors().join(", ")}.
+            They tell us which ads bring people to this site and let those platforms measure their
+            own ads. If you choose <strong>Reject all</strong>, or do not choose, none of them load
+            and nothing is stored. If you choose <strong>Accept all</strong>, they load and set
+            their own cookies, which we do not control; each platform describes them in its own
+            privacy policy. You can change the choice at any time with{" "}
+            <strong>Cookie settings</strong> in the footer. Withdrawing takes effect when the page
+            reloads.
+          </p>
+          <p>
+            What we send on accept is a page view on each page you open and one event when you
+            create an account. No names, emails or report contents are sent.
+          </p>
+        </>
+      ) : (
+        <>
+          <p className="lede">
+            There is no cookie banner here because there is nothing to ask you about. This page says
+            exactly what is stored and when.
+          </p>
+
+          <h2>The marketing site</h2>
+          <p>
+            Reading this site sets no cookies at all. No analytics, no advertising, no third-party
+            scripts that set their own. You can check in your browser rather than taking our word
+            for it.
+          </p>
+        </>
+      )}
 
       <h2>The client report page</h2>
       <p>
@@ -71,8 +98,9 @@ export default function CookiesPage() {
 
       <h2>Not cookies, but worth naming</h2>
       <p>
-        Two small preferences live in your browser&rsquo;s local storage rather than in a cookie:
-        whether you chose the dark theme, and how you last grouped the dashboard. They stay in that
+        Small preferences live in your browser&rsquo;s local storage rather than in a cookie:
+        whether you chose the dark theme, how you last grouped the dashboard
+        {TRACKING_ENABLED ? ", and your answer to the cookie banner" : ""}. They stay in that
         browser, are never sent to us, and disappear when you clear site data.
       </p>
 

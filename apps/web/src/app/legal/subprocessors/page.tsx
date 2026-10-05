@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { adVendors, TRACKING_ENABLED } from "@/config/tracking";
 import Link from "next/link";
 import { SUBPROCESSOR_NOTICE_DAYS } from "@/config/legal";
 
@@ -92,6 +93,28 @@ const SERVICE_ROWS: Row[] = [
   },
 ];
 
+/** Рекламные площадки: получают данные о посещении только после согласия на витрине. */
+const AD_ROWS: Row[] = [
+  {
+    name: "Google (Google Ads)",
+    purpose: "Measures which Google ads lead to sign-ups",
+    data: "Page views and the sign-up event from the marketing site, with browser details, only after you accept the cookie banner",
+    where: "United States and other countries where Google operates",
+  },
+  {
+    name: "Meta (Facebook, Instagram)",
+    purpose: "Measures which Meta ads lead to sign-ups",
+    data: "Page views and the sign-up event from the marketing site, with browser details, only after you accept the cookie banner",
+    where: "United States and other countries where Meta operates",
+  },
+  {
+    name: "LinkedIn",
+    purpose: "Measures which LinkedIn ads lead to sign-ups",
+    data: "Page views and the sign-up event from the marketing site, with browser details, only after you accept the cookie banner",
+    where: "United States and other countries where LinkedIn operates",
+  },
+];
+
 function Table({ rows, caption }: { rows: Row[]; caption: string }) {
   return (
     <table>
@@ -135,18 +158,38 @@ export default function SubprocessorsPage() {
         the question, not your client&rsquo;s account, contacts or files.
       </p>
       <p>
-        Which assistants are asked depends on your plan: the free audit asks ChatGPT and
-        Perplexity; paid plans add Grok, and Claude from the Growth plan. Claude can be switched
-        off per client, and an assistant that is switched off receives nothing.
+        Which assistants are asked depends on your plan: the free audit asks ChatGPT and Perplexity;
+        paid plans add Grok, and Claude from the Growth plan. Claude can be switched off per client,
+        and an assistant that is switched off receives nothing.
       </p>
       <Table rows={ASSISTANT_ROWS} caption="Assistant providers we send tracked questions to" />
 
       <h2>Running the product</h2>
       <Table rows={SERVICE_ROWS} caption="Service providers used to run the product" />
 
+      {TRACKING_ENABLED && (
+        <>
+          <h2>Ad measurement, only if you accept</h2>
+          <p>
+            These load on the marketing site after you choose Accept all on the cookie banner, and
+            never on the client report page or inside the product.
+          </p>
+          <Table
+            rows={AD_ROWS.filter((row) => adVendors().some((name) => row.name.startsWith(name)))}
+            caption="Advertising platforms whose tags load only after consent"
+          />
+        </>
+      )}
+
       <h2>What none of them get</h2>
       <ul>
-        <li>We do not sell data to anyone, and none of these providers receive data for their own purposes.</li>
+        <li>
+          We do not sell data to anyone, and none of the providers above receive data for their own
+          purposes
+          {TRACKING_ENABLED
+            ? ". The advertising platforms are the exception: after you accept the cookie banner they handle the measurement data under their own policies."
+            : "."}
+        </li>
         <li>
           We do not send your data, or your clients&rsquo; data, to be used for training models. The
           assistants answer our questions; they do not receive your workspace.
