@@ -14,6 +14,7 @@ test("client overview shows visibility built from a completed run", async ({ pag
 
   await page.goto("/signup");
   await page.getByLabel("Your name").fill("Overview Tester");
+  await page.getByLabel("Agency name").fill("QA Agency");
   await page.getByLabel("Work email").fill(email);
   await page.getByLabel("Password").fill("correct-horse-battery");
   await page.getByRole("button", { name: "Create account" }).click();

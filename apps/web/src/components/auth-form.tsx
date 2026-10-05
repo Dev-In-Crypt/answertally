@@ -27,6 +27,7 @@ export function AuthForm({
 }) {
   const router = useRouter();
   const [name, setName] = useState("");
+  const [agencyName, setAgencyName] = useState("");
   const [email, setEmail] = useState(lockedEmail ?? "");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -59,7 +60,7 @@ export function AuthForm({
               password,
               name,
               callbackURL,
-              ...(inviteToken ? { inviteToken } : {}),
+              ...(inviteToken ? { inviteToken } : { agencyName }),
             }),
           )
         : await settled(signIn.email({ email, password, callbackURL }));
@@ -128,6 +129,27 @@ export function AuthForm({
             autoComplete="name"
             className={cn(controlClass, "h-10 px-3")}
           />
+        </label>
+      )}
+
+      {/* По приглашению человек входит в чужое агентство — своего названия у
+          него нет. */}
+      {mode === "signup" && !inviteToken && (
+        <label className="flex flex-col gap-1.5">
+          <span className="text-sm font-medium">Agency name</span>
+          <input
+            name="agency"
+            value={agencyName}
+            onChange={(e) => setAgencyName(e.target.value)}
+            required
+            maxLength={200}
+            autoComplete="organization"
+            className={cn(controlClass, "h-10 px-3")}
+          />
+          <span className="text-xs text-muted-foreground">
+            Your clients see it at the top of every report. You can change it later, and add a
+            logo, in Settings.
+          </span>
         </label>
       )}
 

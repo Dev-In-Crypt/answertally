@@ -13,6 +13,7 @@ test("actions board moves cards and offers an experiment on completion", async (
 
   await page.goto("/signup");
   await page.getByLabel("Your name").fill("Board Tester");
+  await page.getByLabel("Agency name").fill("QA Agency");
   await page.getByLabel("Work email").fill(email);
   await page.getByLabel("Password").fill("correct-horse-battery");
   await page.getByRole("button", { name: "Create account" }).click();
@@ -131,6 +132,7 @@ test("an action can be dropped, but only with a reason", async ({ page }) => {
 
   await page.goto("/signup");
   await page.getByLabel("Your name").fill("Drop Tester");
+  await page.getByLabel("Agency name").fill("QA Agency");
   await page.getByLabel("Work email").fill(email);
   await page.getByLabel("Password").fill("correct-horse-battery");
   await page.getByRole("button", { name: "Create account" }).click();

@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
 import { MemoryEmailSender } from "@repo/core";
-import { createAgency, createDb, createInvitation, deleteAgency, getUserByEmail } from "@repo/db";
+import { createAgency, createDb, getAgencyById, createInvitation, deleteAgency, getUserByEmail } from "@repo/db";
 import { setEmailSender } from "@/server/email";
 
 /**
@@ -50,6 +50,26 @@ describe("регистрация на занятый адрес", () => {
     expect(message?.subject).toContain("already have");
     expect(message?.text).toContain("/login");
     expect(message?.text).toContain("/forgot-password");
+  });
+});
+
+describe("название агентства при регистрации", () => {
+  it("берётся из формы, а без неё выводится из домена почты", async () => {
+    const named = `named-${crypto.randomUUID().slice(0, 8)}@agency.test`;
+    await auth.api.signUpEmail({
+      body: { email: named, password: "correct-horse-battery", name: "A", agencyName: "  Northwind   Studio " } as never,
+    });
+    const namedUser = await getUserByEmail(db, named);
+    if (namedUser?.agencyId) createdAgencies.push(namedUser.agencyId);
+    const namedAgency = await getAgencyById(db, namedUser!.agencyId!);
+    expect(namedAgency?.name).toBe("Northwind Studio");
+
+    const derived = `derived-${crypto.randomUUID().slice(0, 8)}@acme-agency.test`;
+    await auth.api.signUpEmail({ body: { email: derived, password: "correct-horse-battery", name: "A" } });
+    const derivedUser = await getUserByEmail(db, derived);
+    if (derivedUser?.agencyId) createdAgencies.push(derivedUser.agencyId);
+    const derivedAgency = await getAgencyById(db, derivedUser!.agencyId!);
+    expect(derivedAgency?.name).toBe("Acme Agency");
   });
 });
 

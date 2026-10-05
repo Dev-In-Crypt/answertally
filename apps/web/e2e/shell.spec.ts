@@ -31,6 +31,7 @@ test("app shell renders every route without console errors", async ({ page }) =>
 
   await page.goto("/signup");
   await page.getByLabel("Your name").fill("Shell Tester");
+  await page.getByLabel("Agency name").fill("Northwind Agency");
   await page.getByLabel("Work email").fill(email);
   await page.getByLabel("Password").fill("correct-horse-battery");
   await page.getByRole("button", { name: "Create account" }).click();

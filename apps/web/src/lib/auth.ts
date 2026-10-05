@@ -33,6 +33,23 @@ function inviteTokenFrom(body: unknown): string | null {
   return typeof token === "string" && token.length > 0 ? token : null;
 }
 
+/** Самое длинное имя агентства — как в настройках (`agency.update`). */
+const AGENCY_NAME_MAX = 200;
+
+/**
+ * Название агентства из тела регистрации.
+ *
+ * Необязательное: без него (вызов не из формы) имя выводится из почты. Но
+ * форма его требует — у личного ящика «gmail.com» дал бы агентство «Gmail»,
+ * и клиент увидел бы это слово в шапке отчёта.
+ */
+export function agencyNameFrom(body: unknown): string | null {
+  const raw = (body as { agencyName?: unknown } | undefined)?.agencyName;
+  if (typeof raw !== "string") return null;
+  const name = raw.trim().replace(/\s+/g, " ");
+  return name.length > 0 ? name : null;
+}
+
 /** Имя агентства по умолчанию выводим из домена почты: owner@acme-agency.com -> "Acme Agency". */
 export function deriveAgencyName(email: string): string {
   const domain = email.split("@")[1] ?? "";
@@ -384,9 +401,16 @@ export const auth = betterAuth({
             });
           }
 
+          const agencyName = agencyNameFrom(context?.body);
+          if (agencyName && agencyName.length > AGENCY_NAME_MAX) {
+            throw new APIError("BAD_REQUEST", {
+              message: `The agency name is too long (max ${AGENCY_NAME_MAX} characters).`,
+            });
+          }
+
           const [agency] = await db
             .insert(agencies)
-            .values({ name: deriveAgencyName(email) })
+            .values({ name: agencyName ?? deriveAgencyName(email) })
             .returning({ id: agencies.id });
 
           if (!agency) {

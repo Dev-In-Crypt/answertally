@@ -16,6 +16,7 @@ test("signup creates an agency, then logout and login work", async ({ page }) =>
 
   await page.goto("/signup");
   await page.getByLabel("Your name").fill("Test Owner");
+  await page.getByLabel("Agency name").fill("QA Agency");
   await page.getByLabel("Work email").fill(email);
   await page.getByLabel("Password").fill(password);
   await page.getByRole("button", { name: "Create account" }).click();

@@ -26,6 +26,7 @@ test("agency downloads a PDF containing the client report", async ({ page }) => 
 
   await page.goto("/signup");
   await page.getByLabel("Your name").fill("PDF Tester");
+  await page.getByLabel("Agency name").fill("QA Agency");
   await page.getByLabel("Work email").fill(email);
   await page.getByLabel("Password").fill("correct-horse-battery");
   await page.getByRole("button", { name: "Create account" }).click();
@@ -85,6 +86,7 @@ test("PDF of another agency's report is not reachable", async ({ page, browser }
 
   await page.goto("/signup");
   await page.getByLabel("Your name").fill("Owner");
+  await page.getByLabel("Agency name").fill("QA Agency");
   await page.getByLabel("Work email").fill(email);
   await page.getByLabel("Password").fill("correct-horse-battery");
   await page.getByRole("button", { name: "Create account" }).click();
@@ -123,6 +125,7 @@ test("PDF of another agency's report is not reachable", async ({ page, browser }
 
   await otherPage.goto("/signup");
   await otherPage.getByLabel("Your name").fill("Other");
+  await otherPage.getByLabel("Agency name").fill("QA Agency");
   await otherPage.getByLabel("Work email").fill(otherEmail);
   await otherPage.getByLabel("Password").fill("correct-horse-battery");
   await otherPage.getByRole("button", { name: "Create account" }).click();

@@ -10,6 +10,7 @@ test("prospect client gets generated prompts, edited before saving", async ({ pa
 
   await page.goto("/signup");
   await page.getByLabel("Your name").fill("Audit Tester");
+  await page.getByLabel("Agency name").fill("QA Agency");
   await page.getByLabel("Work email").fill(email);
   await page.getByLabel("Password").fill("correct-horse-battery");
   await page.getByRole("button", { name: "Create account" }).click();

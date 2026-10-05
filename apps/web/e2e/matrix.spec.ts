@@ -18,6 +18,7 @@ test("the client overview leads with the prompt × assistant matrix", async ({ p
 
   await page.goto("/signup");
   await page.getByLabel("Your name").fill("Matrix Tester");
+  await page.getByLabel("Agency name").fill("QA Agency");
   await page.getByLabel("Work email").fill(email);
   await page.getByLabel("Password").fill("correct-horse-battery");
   await page.getByRole("button", { name: "Create account" }).click();
@@ -82,6 +83,7 @@ test("the portfolio replaces the placeholder dashboard", async ({ page }) => {
 
   await page.goto("/signup");
   await page.getByLabel("Your name").fill("Portfolio Tester");
+  await page.getByLabel("Agency name").fill("QA Agency");
   await page.getByLabel("Work email").fill(email);
   await page.getByLabel("Password").fill("correct-horse-battery");
   await page.getByRole("button", { name: "Create account" }).click();

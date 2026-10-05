@@ -15,6 +15,7 @@ test("usage page shows the checks the answers used", async ({ page }) => {
 
   await page.goto("/signup");
   await page.getByLabel("Your name").fill("Usage Tester");
+  await page.getByLabel("Agency name").fill("QA Agency");
   await page.getByLabel("Work email").fill(email);
   await page.getByLabel("Password").fill("correct-horse-battery");
   await page.getByRole("button", { name: "Create account" }).click();

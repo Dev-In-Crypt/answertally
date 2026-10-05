@@ -19,6 +19,7 @@ test("diagnose screen shows source mix, presence matrix and reasoned recommendat
 
   await page.goto("/signup");
   await page.getByLabel("Your name").fill("Diagnose Tester");
+  await page.getByLabel("Agency name").fill("QA Agency");
   await page.getByLabel("Work email").fill(email);
   await page.getByLabel("Password").fill("correct-horse-battery");
   await page.getByRole("button", { name: "Create account" }).click();
@@ -103,6 +104,7 @@ test("a client missing from the answers gets reasoned recommendations", async ({
 
   await page.goto("/signup");
   await page.getByLabel("Your name").fill("Gap Tester");
+  await page.getByLabel("Agency name").fill("QA Agency");
   await page.getByLabel("Work email").fill(email);
   await page.getByLabel("Password").fill("correct-horse-battery");
   await page.getByRole("button", { name: "Create account" }).click();
