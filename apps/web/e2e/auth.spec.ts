@@ -16,12 +16,12 @@ test("signup creates an agency, then logout and login work", async ({ page }) =>
 
   await page.goto("/signup");
   await page.getByLabel("Your name").fill("Test Owner");
-  await page.getByLabel("Agency name").fill("QA Agency");
+  await page.getByLabel("Agency name").fill("Northwind Agency");
   await page.getByLabel("Work email").fill(email);
   await page.getByLabel("Password").fill(password);
   await page.getByRole("button", { name: "Create account" }).click();
 
-  // Регистрация = создание агентства; имя выводится из домена почты.
+  // Регистрация = создание агентства с названием из формы.
   await expect(page).toHaveURL(/\/dashboard$/);
   await expect(page.locator("aside")).toContainText("Northwind Agency");
   await expect(page.locator("aside")).toContainText(email);

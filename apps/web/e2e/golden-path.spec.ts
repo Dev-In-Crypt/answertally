@@ -28,7 +28,7 @@ test("golden path: from signup to a verifiable visibility number", async ({ page
   // 1. Агентство регистрируется — аккаунт агентства создаётся вместе с пользователем.
   await page.goto("/signup");
   await page.getByLabel("Your name").fill("Golden Path");
-  await page.getByLabel("Agency name").fill("QA Agency");
+  await page.getByLabel("Agency name").fill("Northwind Agency");
   await page.getByLabel("Work email").fill(email);
   await page.getByLabel("Password").fill("correct-horse-battery");
   await page.getByRole("button", { name: "Create account" }).click();
