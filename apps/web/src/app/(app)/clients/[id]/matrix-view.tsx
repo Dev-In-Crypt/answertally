@@ -239,6 +239,17 @@ export function MatrixSection({ matrix }: { matrix: Matrix }) {
   const [view, setView] = useState<View>("grid");
 
   const unmeasured = matrix.assistants.filter((assistant) => !assistant.measurable);
+  /**
+   * Неспрашиваемые ассистенты — одной строкой под таблицей, а не пустыми
+   * столбцами: три серых столбца с непонятными сокращениями занимали место и
+   * читались как недоработка.
+   */
+  const keep = matrix.assistants.map((assistant) => assistant.measurable);
+  const shown: Matrix = {
+    ...matrix,
+    assistants: matrix.assistants.filter((_, index) => keep[index]),
+    rows: matrix.rows.map((row) => ({ ...row, cells: row.cells.filter((_, index) => keep[index]) })),
+  };
 
   return (
     // min-w-0 обязателен: без него элемент сетки не сжимается уже своего
@@ -280,9 +291,9 @@ export function MatrixSection({ matrix }: { matrix: Matrix }) {
         </div>
       </div>
 
-      {view === "grid" && <MatrixGrid matrix={matrix} />}
-      {view === "bars" && <PresenceBars matrix={matrix} />}
-      {view === "cards" && <AssistantCards matrix={matrix} />}
+      {view === "grid" && <MatrixGrid matrix={shown} />}
+      {view === "bars" && <PresenceBars matrix={shown} />}
+      {view === "cards" && <AssistantCards matrix={shown} />}
 
       <div className="flex flex-wrap items-center gap-4 border-t pt-3 text-[11px] text-muted-foreground">
         <span className="flex items-center gap-1.5">
@@ -308,8 +319,8 @@ export function MatrixSection({ matrix }: { matrix: Matrix }) {
 
       {unmeasured.length > 0 && (
         <p data-testid="unmeasured-note" className="text-[11px] text-muted-foreground">
-          {unmeasured.map((assistant) => assistant.label).join(", ")} —{" "}
-          {MEASUREMENT_COPY.notMeasured}
+          Not measured: {unmeasured.map((assistant) => assistant.label).join(", ")}. They have
+          no public way to collect answers, so we do not ask them and report nothing either way.
         </p>
       )}
     </section>

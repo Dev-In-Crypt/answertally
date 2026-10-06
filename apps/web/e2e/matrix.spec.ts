@@ -49,15 +49,13 @@ test("the client overview leads with the prompt × assistant matrix", async ({ p
   // Что это за цифры — до самих цифр.
   await expect(page.getByTestId("method-note")).toContainText("estimated");
 
-  // Столбцов восемь, и те, у кого нет публичного API (Copilot, поверхности
-  // Google), честно помечены как неспрошенные. Claude и Grok в их числе нет:
-  // адаптеры у них есть, просто клиенту они не включены — и это другое
-  // состояние, «0 из 3 нужных ответов», а не «не спрашиваем».
-  const unmeasured = page.getByTestId("matrix-cell-unmeasured");
-  await expect(unmeasured.first()).toBeVisible();
+  // У кого нет публичного API (Copilot, поверхности Google), — не столбцами,
+  // а строкой под таблицей. Claude и Grok в их числе нет: адаптеры у них
+  // есть, просто клиенту они не включены.
+  await expect(page.getByTestId("matrix-cell-unmeasured")).toHaveCount(0);
   await expect(page.getByTestId("unmeasured-note")).toContainText("Copilot");
   await expect(page.getByTestId("unmeasured-note")).not.toContainText("Claude");
-  await expect(page.getByTestId("unmeasured-note")).toContainText("not ask");
+  await expect(page.getByTestId("unmeasured-note")).toContainText("do not ask");
 
   // Измеренные ячейки несут проценты.
   await expect(page.getByTestId("matrix-cell").first()).toContainText("%");
