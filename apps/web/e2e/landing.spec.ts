@@ -51,7 +51,10 @@ test("landing gives an anonymous visitor the offer, the plans and a way in", asy
   const report = page.getByTestId("landing-report");
   await expect(report).toContainText("19.4% → 28.6%");
   await expect(report).toContainText("How to read this");
-  await expect(report).toContainText("no untouched topics");
+  await expect(report).toContainText("grouped by week");
+  // Вклад действия показан, значит сравнивать было с чем: оговорка «не с чем»
+  // рядом с ним спорила бы с методом.
+  await expect(report).not.toContainText("no untouched topics");
 
   // Возражения — словами покупателя, включая «у нас уже есть SEO-пакет».
   await expect(page.getByTestId("landing-objections")).toContainText("Semrush");
@@ -99,7 +102,7 @@ test("the audit example shows the ranked work without the agency's internal econ
   expect(await page.content()).not.toContain("estimatedMarginPct");
 });
 
-test("a signed-in user is not shown the landing", async ({ page }) => {
+test("a signed-in user can reach the landing and get back to the dashboard", async ({ page }) => {
   const email = `landing-${Math.random().toString(36).slice(2, 10)}@northwind-agency.test`;
 
   await page.goto("/signup");
@@ -110,6 +113,9 @@ test("a signed-in user is not shown the landing", async ({ page }) => {
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page).toHaveURL(/\/dashboard$/);
 
+  // Знак в кабинете ведёт на сайт; оттуда обратно — «Dashboard» в шапке.
   await page.goto("/");
-  await expect(page).toHaveURL(/\/dashboard$/);
+  await expect(page).toHaveURL(/\/$/);
+  const header = page.getByTestId("marketing-header");
+  await expect(header.getByRole("link", { name: "Dashboard" })).toHaveAttribute("href", "/dashboard");
 });
