@@ -39,7 +39,9 @@ export function runsQueueName(platform: Platform): string {
 /** Запросов в минуту на платформу. Консервативно: цена ошибки — 429 и потерянный прогон. */
 export const PLATFORM_RATE_LIMITS: Record<Platform, { max: number; duration: number }> = {
   chatgpt: { max: 60, duration: 60_000 },
-  perplexity: { max: 30, duration: 60_000 },
+  // 30 в минуту при четырёх параллельных задачах упирались в 429 на первом
+  // живом аудите (06.10.2026); отказы повторяются, но лучше их не вызывать.
+  perplexity: { max: 12, duration: 60_000 },
   gemini: { max: 60, duration: 60_000 },
   // Лимиты новых провайдеров пока неизвестны — берётся консервативная
   // середина. Уточнить по тарифу аккаунта при первом живом прогоне.

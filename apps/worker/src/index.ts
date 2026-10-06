@@ -1,6 +1,12 @@
-import { FlowProducer, Queue, Worker } from "bullmq";
+import { FlowProducer, Queue, UnrecoverableError, Worker } from "bullmq";
 import { createDb, failRunIfInFlight } from "@repo/db";
-import { measurableAssistants, PLATFORMS, parseAdaptersMode, registerLiveAdapters } from "@repo/core";
+import {
+  measurableAssistants,
+  PLATFORMS,
+  parseAdaptersMode,
+  registerLiveAdapters,
+} from "@repo/core";
+import { ProviderHttpError } from "@repo/core/adapters/http";
 import { ADAPTERS_MODE_RAW } from "./env";
 import {
   createConnection,
@@ -27,6 +33,10 @@ const TICK_EVERY_MS = 5 * 60 * 1000;
  * ожидающих прогонов единицы.
  */
 const PICKUP_EVERY_MS = 15 * 1000;
+
+function isRateLimited(error: unknown): boolean {
+  return error instanceof ProviderHttpError && error.status === 429;
+}
 
 async function main(): Promise<void> {
   const mode = parseAdaptersMode(ADAPTERS_MODE_RAW);
@@ -148,7 +158,15 @@ async function main(): Promise<void> {
         runsQueueName(platform),
         async (job) => {
           const startedAt = Date.now();
-          const responseId = await executeRunJob(db, job.data, mode);
+          let responseId: string | null;
+          try {
+            responseId = await executeRunJob(db, job.data, mode);
+          } catch (error) {
+            // Повторяется только «слишком часто»: такой отказ не тарифицируется.
+            // Любой другой сбой мог стоить денег, и повтор оплатил бы его дважды.
+            if (isRateLimited(error)) throw error;
+            throw new UnrecoverableError(error instanceof Error ? error.message : String(error));
+          }
           logger.info("run.job_completed", {
             platform,
             runId: job.data.runId,
@@ -165,6 +183,8 @@ async function main(): Promise<void> {
 
   for (const worker of [tickWorker, finalizeWorker, ...runWorkers]) {
     worker.on("failed", (job, error) => {
+      // Отказ «слишком часто», после которого будет повтор, — не потеря.
+      if (job && isRateLimited(error) && job.attemptsMade < (job.opts.attempts ?? 1)) return;
       // Упавшая задача — единственное место, где теряются измерения:
       // она должна доехать до Sentry, а не остаться строкой в консоли.
       errorReporter.captureError(error, {
