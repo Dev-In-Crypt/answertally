@@ -11,7 +11,8 @@ import { isIP } from "node:net";
 
 const TIMEOUT_MS = 8_000;
 const MAX_BYTES = 400_000;
-const MAX_REDIRECTS = 3;
+// Saucony: apex → www → gateway → регион → home, четыре перехода.
+const MAX_REDIRECTS = 5;
 const MAX_SUMMARY = 3_000;
 
 /** Частные, локальные и служебные диапазоны: туда сервер ходить не должен. */
@@ -70,24 +71,65 @@ function decode(text: string): string {
     .trim();
 }
 
+/** Заголовки интерфейса, а не содержания: корзина, поиск, подвал. */
+const UI_HEADING = /^(search|cart|bag|shopping bag|menu|footer|site footer|sign in|log in|account|support|location settings|edit item|close|newsletter|cookies?)\b/i;
+
+/** Описания из JSON-LD: Organization, WebSite, Product. Читаются до вырезания скриптов. */
+function jsonLdDescriptions(html: string): string[] {
+  const found: string[] = [];
+  for (const match of html.matchAll(/<script[^>]+application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi)) {
+    try {
+      const walk = (node: unknown): void => {
+        if (Array.isArray(node)) node.forEach(walk);
+        else if (node && typeof node === "object") {
+          const record = node as Record<string, unknown>;
+          if (typeof record["description"] === "string") found.push(decode(record["description"]));
+          if (record["@graph"]) walk(record["@graph"]);
+        }
+      };
+      walk(JSON.parse(match[1] ?? ""));
+    } catch {
+      // Битый JSON-LD у чужого сайта — не наша ошибка; пропускаем.
+    }
+  }
+  return found;
+}
+
 /** Заголовок, описание и заголовки разделов — то, что сайт говорит о себе. */
 export function summarizeHtml(html: string): string {
+  const structured = jsonLdDescriptions(html);
   const body = html.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/gi, " ");
   const pick = (re: RegExp) => [...body.matchAll(re)].map((m) => decode((m[1] ?? "").replace(/<[^>]+>/g, " ")));
+  // До той же кавычки, что открыла значение: «HubSpot's platform…» не обрывается на апострофе.
   const meta = (name: string) =>
     decode(
-      body.match(new RegExp(`<meta[^>]+(?:name|property)=["']${name}["'][^>]*content=["']([^"']*)["']`, "i"))?.[1] ??
-        body.match(new RegExp(`<meta[^>]+content=["']([^"']*)["'][^>]*(?:name|property)=["']${name}["']`, "i"))?.[1] ??
+      body.match(new RegExp(`<meta[^>]+(?:name|property)=["']${name}["'][^>]*content=(["'])([\\s\\S]*?)\\1`, "i"))?.[2] ??
+        body.match(new RegExp(`<meta[^>]+content=(["'])([\\s\\S]*?)\\1[^>]*(?:name|property)=["']${name}["']`, "i"))?.[2] ??
         "",
     );
+  // Самое длинное из описаний: у Glossier meta description — одно слово, а og — абзац.
+  const description = [meta("description"), meta("og:description"), ...structured].sort((a, b) => b.length - a.length)[0] ?? "";
+  const headings = [...new Set(pick(/<h[1-3][^>]*>([\s\S]*?)<\/h[1-3]>/gi))].filter(
+    (h) => h.length > 1 && h.length < 120 && !UI_HEADING.test(h),
+  );
+  const links = [
+    ...new Set(
+      [...body.matchAll(/<nav[^>]*>([\s\S]*?)<\/nav>/gi)].flatMap((nav) =>
+        [...(nav[1] ?? "").matchAll(/<a[^>]*>([\s\S]*?)<\/a>/gi)].map((a) => decode((a[1] ?? "").replace(/<[^>]+>/g, " "))),
+      ),
+    ),
+  ].filter((text) => text.length > 1 && text.length < 40 && !UI_HEADING.test(text));
+  const lang = body.match(/<html[^>]+lang=["']([a-z-]+)["']/i)?.[1];
 
   const lines = [
     `Title: ${pick(/<title[^>]*>([\s\S]*?)<\/title>/gi)[0] ?? ""}`,
-    `Description: ${meta("description") || meta("og:description")}`,
-    `Headings: ${[...new Set(pick(/<h[1-3][^>]*>([\s\S]*?)<\/h[1-3]>/gi).filter((h) => h.length > 1 && h.length < 120))].slice(0, 30).join(" | ")}`,
-    `Navigation: ${[...new Set(pick(/<nav[\s\S]*?>([\s\S]*?)<\/nav>/gi).join(" ").split(/\s{2,}|\|/).map((s) => s.trim()).filter((s) => s.length > 1 && s.length < 40))].slice(0, 40).join(", ")}`,
+    `Description: ${description}`,
+    `Headings: ${headings.slice(0, 30).join(" | ")}`,
+    `Navigation: ${links.slice(0, 40).join(", ")}`,
+    // Сервер в Европе, и сайт может отдать региональную версию на чужом языке.
+    lang && !lang.toLowerCase().startsWith("en") ? `Note: this is a regional version of the site (language: ${lang}).` : "",
   ];
-  return lines.join("\n").slice(0, MAX_SUMMARY);
+  return lines.filter(Boolean).join("\n").slice(0, MAX_SUMMARY);
 }
 
 export async function fetchSiteSummary(domain: string, fetchImpl: typeof fetch = fetch): Promise<string | null> {
@@ -100,7 +142,7 @@ export async function fetchSiteSummary(domain: string, fetchImpl: typeof fetch =
       const response: Response = await fetchImpl(url, {
         redirect: "manual",
         signal: AbortSignal.timeout(TIMEOUT_MS),
-        headers: { "User-Agent": "AnswertallyBot/1.0 (+https://answertally.com)", Accept: "text/html" },
+        headers: { "User-Agent": "AnswertallyBot/1.0 (+https://answertally.com)", Accept: "text/html", "Accept-Language": "en-US,en;q=0.9" },
       });
       const location: string | null = response.headers.get("location");
       if (response.status >= 300 && response.status < 400 && location) {

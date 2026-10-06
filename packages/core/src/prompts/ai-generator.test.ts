@@ -28,13 +28,43 @@ describe("finalizeAiDraft", () => {
     expect(prompts.some((p) => p.text === "x")).toBe(false);
     // Не больше двух вопросов с именем клиента: иначе бренд назван самим вопросом.
     expect(prompts.filter((p) => /saucony/i.test(p.text))).toHaveLength(2);
-    // Контроль с брендом — уже не контроль.
-    const hoka = prompts.find((p) => p.text === "are Hoka shoes worth it");
-    expect(hoka?.isControl).toBe(false);
+    // Вопрос о конкуренте без клиента и без «alternatives» не мерит клиента вовсе.
+    expect(prompts.some((p) => p.text === "are Hoka shoes worth it")).toBe(false);
     // Контрольных хватает для сравнения в экспериментах.
     const controls = prompts.filter((p) => p.isControl);
     expect(controls.length).toBeGreaterThanOrEqual(3);
     expect(controls.every((p) => !/saucony|brooks|hoka/i.test(p.text))).toBe(true);
+  });
+
+  it("срезает по долям намерений, а не с хвоста черновика", () => {
+    // Модель пишет группами: сравнения, обучение, покупка, контроль. Срез с
+    // хвоста съедал покупательские вопросы — оставалось 2 из 24.
+    const group = (intent: "comparison" | "learning" | "purchase" | "control", n: number, topic: string) =>
+      Array.from({ length: n }, (_, i) => ({ text: `which ${topic} option number ${i} suits ${intent} buyers`, intent }));
+    const prompts = finalizeAiDraft(
+      [...group("comparison", 12, "road"), ...group("learning", 7, "trail"), ...group("purchase", 6, "budget"), ...group("control", 4, "hiking")],
+      SEED,
+      24,
+    );
+    expect(prompts).toHaveLength(24);
+    expect(prompts.filter((p) => p.intent === "purchase").length).toBeGreaterThanOrEqual(5);
+  });
+
+  it("два конкурента друг против друга и почти-повторы отбрасываются", () => {
+    const prompts = finalizeAiDraft(
+      [
+        { text: "Brooks vs Hoka for long runs", intent: "comparison" },
+        { text: "good alternatives to Brooks for wide feet", intent: "comparison" },
+        { text: "best running shoes for marathon training", intent: "comparison" },
+        { text: "best running shoes for a marathon training plan", intent: "comparison" },
+      ],
+      SEED,
+      20,
+    );
+    const texts = prompts.map((p) => p.text);
+    expect(texts).not.toContain("Brooks vs Hoka for long runs");
+    expect(texts).toContain("good alternatives to Brooks for wide feet");
+    expect(texts).not.toContain("best running shoes for a marathon training plan");
   });
 
   it("лишнее срезает, оставляя контрольные", () => {
@@ -74,7 +104,8 @@ describe("AiPromptGenerator", () => {
   it("инструкция запрещает называть клиента и требует контроль без брендов", () => {
     const text = buildInstructions({ ...SEED, siteSummary: null }, 24);
     expect(text).toContain("Do not name Saucony");
-    expect(text).toContain("name no brand at all");
+    expect(text).toContain("Control questions name no brand");
+    expect(text).toContain("Never compare two competitors");
     expect(text).toContain("homepage could not be read");
   });
 });

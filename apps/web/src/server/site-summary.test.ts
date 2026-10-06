@@ -29,11 +29,20 @@ describe("site summary", () => {
       <html><head><title>Saucony | Running Shoes</title>
       <meta name="description" content="Running shoes &amp; apparel for every runner.">
       <script>var noise = 1;</script></head>
-      <body><nav>Men  Women  Trail  Sale</nav><h1>Run your world</h1><h2>Endorphin Speed 4</h2></body></html>`);
+      <body><nav><a href="/m">Men</a><a href="/t">Trail</a><a href="/s">Search</a></nav><h1>Run your world</h1><h2>Endorphin Speed 4</h2></body></html>`);
     expect(summary).toContain("Title: Saucony | Running Shoes");
     expect(summary).toContain("Running shoes & apparel");
     expect(summary).toContain("Endorphin Speed 4");
     expect(summary).toContain("Trail");
     expect(summary).not.toContain("noise");
+    expect(summary).not.toContain("Search");
+  });
+
+  it("описание не обрывается на апострофе и берётся самое полное", () => {
+    const summary = summarizeHtml(`
+      <meta name="description" content="Glossier">
+      <meta property="og:description" content="Glossier's beauty essentials: skincare and makeup for every day.">
+      <script type="application/ld+json">{"@type":"Organization","description":"short"}</script>`);
+    expect(summary).toContain("Glossier's beauty essentials: skincare and makeup for every day.");
   });
 });
