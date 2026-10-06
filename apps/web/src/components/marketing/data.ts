@@ -147,20 +147,20 @@ export const MATRIX_ASSISTANTS: readonly string[] = ASSISTANTS.filter((a) => a.m
 export type MatrixCell = number | "floor" | null;
 
 export const MATRIX: { prompt: string; cells: MatrixCell[]; competitorOnly?: boolean[] }[] = [
-  { prompt: "best project tool for a small design studio", cells: [44, 33, 22, 33, null] },
-  { prompt: "Fernpost vs Quillstack", cells: [89, 100, 78, 89, null] },
-  { prompt: "project software with a client portal", cells: [22, 11, 33, 11, null] },
+  { prompt: "best project tool for a small design studio", cells: [44, 33, 22, 33] },
+  { prompt: "Fernpost vs Quillstack", cells: [89, 100, 78, 89] },
+  { prompt: "project software with a client portal", cells: [22, 11, 33, 11] },
   {
     prompt: "cheapest way to share timelines with clients",
-    cells: [0, 0, 11, "floor", null],
+    cells: [0, 0, 11, "floor"],
     competitorOnly: [true, true, false, false],
   },
   {
     prompt: "how to move a studio off spreadsheets",
-    cells: [11, 0, 0, 22, null],
+    cells: [11, 0, 0, 22],
     competitorOnly: [false, true, false, false],
   },
-  { prompt: "project tool with time tracking and invoicing", cells: [33, 22, 44, 22, null] },
+  { prompt: "project tool with time tracking and invoicing", cells: [33, 22, 44, 22] },
 ];
 
 /* ---------------- источники ---------------- */

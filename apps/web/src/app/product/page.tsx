@@ -186,24 +186,14 @@ export default function ProductPage() {
                   <i className="sw" style={{ background: "#fff", border: "1px solid #E3E1DA" }} />
                   fewer than 3 answers, so no number
                 </span>
-                <span>
-                  <i
-                    className="sw"
-                    style={{ background: "repeating-linear-gradient(135deg,#F1EFE9 0 3px,#E3E1DA 3px 4px)" }}
-                  />
-                  not measured
-                </span>
               </div>
-              <div className="label">
-                {MEASUREMENT_COPY.matrixBasis} “Not measured” means we do not ask that assistant, so
-                there is nothing to report either way.
-              </div>
+              <div className="label">{MEASUREMENT_COPY.matrixBasis}</div>
               <div className="label only-sm">Scroll the table sideways to see every assistant →</div>
             </div>
           </div>
           <div className="facts">
             <div className="card fact">
-              <b>3 + 2</b>
+              <b>3 / 4</b>
               <span>Three assistants on Starter; all four from Growth, switched on per client.</span>
             </div>
             <div className="card fact">
