@@ -27,6 +27,13 @@ export function GeneratePrompts({
   onSaved: () => Promise<void>;
 }) {
   const [industryInput, setIndustryInput] = useState(industry ?? "");
+  // Карточка клиента грузится после первого рендера: отрасль с первого шага
+  // приходит позже и подставляется, если человек ещё ничего не вписал сам.
+  const [seenIndustry, setSeenIndustry] = useState(industry);
+  if (industry !== seenIndustry) {
+    setSeenIndustry(industry);
+    if (industry && !industryInput) setIndustryInput(industry);
+  }
   // Строкой: очищенное поле иначе становилось нулём и уходило на сервер.
   const [countInput, setCountInput] = useState(String(DEFAULT_GENERATED_PROMPT_COUNT));
   const [draft, setDraft] = useState<GeneratedPrompt[] | null>(null);
