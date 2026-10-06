@@ -97,6 +97,7 @@ export function buildInstructions(seed: AiPromptSeed, count: number): string {
     "Rules:",
     "- Every question must be one an assistant answers by naming specific brands, products or providers. Ask 'which…', 'best… for…', 'what are good options for…', not 'how do I…' or 'how often…'.",
     "- Cover every product line and every buyer type the client serves (both sides of a marketplace, personal and team use). At least a third of the questions carry a concrete constraint: budget, location, condition, skill level, size or use case.",
+    "- Buyers are in the United States: prices in US dollars, US places and seasons. The homepage may be a regional version for another country; ignore its currency, language and locations.",
     "- Use the homepage only to learn which products and audiences exist. Ignore seasonal promotions, navigation labels and slogans, and never reuse homepage phrases.",
     `- Do not name ${brand}: we measure whether assistants bring it up on their own. At most ${MAX_BRANDED} questions may name it, only as ${brand} vs a tracked competitor.`,
     "- Name a competitor only as 'alternatives to <competitor>' or opposite the client. Never compare two competitors with each other: that answer leaves no room for the client. Only pair a competitor with a product it actually sells.",
