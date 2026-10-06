@@ -216,7 +216,11 @@ export function assistantBasisNote(comparison: AssistantSetComparison): string |
     case "same":
       return null;
     case "unknown":
-      return MEASUREMENT_COPY.assistantSetUnknown;
+      // Прошлого окна нет вовсе — это первый замер, а не потерянная запись,
+      // и оговорка про «нет записи» его только путает.
+      return comparison.previous.length === 0 && comparison.current.length > 0
+        ? null
+        : MEASUREMENT_COPY.assistantSetUnknown;
     case "disjoint":
       return MEASUREMENT_COPY.assistantSetDisjoint;
     default:

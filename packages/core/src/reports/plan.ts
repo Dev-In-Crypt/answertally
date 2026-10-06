@@ -95,6 +95,13 @@ export const PLAN_MAX_TASKS_PER_PHASE = 5;
  */
 export function buildNinetyDayPlan(inputs: readonly PlanInput[]): PlanPhase[] {
   const used = new Set<number>();
+  /**
+   * Одна и та же работа из разных возможностей — одна задача. Несколько
+   * разрывов часто ведут к одному источнику, и план повторял
+   * «Get the client covered on nytimes.com» трижды. Остаётся первая: они
+   * отсортированы по оценке.
+   */
+  const titles = new Set<string>();
 
   const phases: PlanPhase[] = PLAN_PHASES.map((phase) => {
     const tasks: PlanTask[] = [];
@@ -104,6 +111,9 @@ export function buildNinetyDayPlan(inputs: readonly PlanInput[]): PlanPhase[] {
       if (!(phase.actionTypes as readonly string[]).includes(input.actionType)) return;
 
       used.add(index);
+      const key = input.title.toLowerCase();
+      if (titles.has(key)) return;
+      titles.add(key);
       tasks.push({
         title: input.title,
         reason: input.reason,

@@ -277,7 +277,7 @@ function clusterRecommendations(cluster: ClusterFacts): Recommendation[] {
   return [
     ...recommendMissingSources(cluster.diagnosis.influential, cluster.clusterId),
     ...recommendOwnedRefresh(cluster.diagnosis.influential, cluster.clusterId),
-    ...recommendOwnedPage(cluster.diagnosis, cluster.clusterId),
+    ...recommendOwnedPage(cluster.diagnosis, cluster.clusterId, cluster.clusterName),
   ];
 }
 
@@ -378,7 +378,7 @@ export function detectContentGaps(input: DetectorInput): DetectedOpportunity[] {
     const samples = clusterSamples(input.matrix, cluster);
 
     // (а) своей страницы среди цитируемых нет вообще.
-    const ownedPage = strongest(recommendOwnedPage(cluster.diagnosis, cluster.clusterId));
+    const ownedPage = strongest(recommendOwnedPage(cluster.diagnosis, cluster.clusterId, cluster.clusterName));
     if (ownedPage && cluster.diagnosis.gap.totalInfluential >= MIN_SOURCES_FOR_STATEMENT) {
       const top = cluster.diagnosis.influential.slice(0, 5);
 

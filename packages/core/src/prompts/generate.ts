@@ -58,23 +58,24 @@ function brandOf(seed: PromptSeed): string {
   return seed.brandNames[0]?.trim() || seed.domain;
 }
 
-const QUALIFIERS = [
-  "for startups",
-  "for small teams",
-  "for agencies",
-  "for enterprise teams",
-  "for remote teams",
-] as const;
+/**
+ * Уточнения, которые читаются в любой категории.
+ *
+ * Прежний набор был написан под SaaS («for startups», «free trial», «easiest
+ * to migrate to»), и первый живой аудит кроссовок спросил ассистентов о
+ * «best running shoes for startups». Вопрос, которого покупатель не задаёт,
+ * меряет не видимость, а странность вопроса.
+ */
+const QUALIFIERS = ["for beginners", "on a budget", "for professionals", "according to reviews"] as const;
 
 function learningPrompts(category: string): string[] {
   return [
-    `what is ${category} and how does it work`,
     `how to choose ${category}`,
-    `${category} pricing explained`,
+    `what to look for in ${category}`,
     `common mistakes when buying ${category}`,
-    `${category} implementation checklist`,
-    `is ${category} worth it for a small business`,
-    `what features matter most in ${category}`,
+    `is expensive ${category} worth it`,
+    `what matters most in ${category}`,
+    `${category} buying guide`,
   ];
 }
 
@@ -95,12 +96,12 @@ function comparisonPrompts(category: string, brand: string, competitors: readonl
 
 function purchasePrompts(category: string): string[] {
   return [
-    `${category} with a free trial`,
     `cheapest ${category} that is still good`,
-    `${category} with the best onboarding`,
-    `which ${category} is easiest to migrate to`,
-    `${category} pricing for a team of ten`,
+    `best value ${category}`,
+    `most reliable ${category} brand`,
+    `which ${category} has the best reviews`,
     `where to buy ${category}`,
+    `${category} worth paying more for`,
   ];
 }
 
@@ -114,7 +115,7 @@ function controlPrompts(category: string): string[] {
     `${category} glossary of terms`,
     `history of ${category}`,
     `${category} industry trends`,
-    `how ${category} is regulated`,
+    `how ${category} has changed in recent years`,
   ];
 }
 

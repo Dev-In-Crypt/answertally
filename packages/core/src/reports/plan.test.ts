@@ -33,6 +33,13 @@ describe("buildNinetyDayPlan", () => {
     expect(buildNinetyDayPlan([])).toEqual([]);
   });
 
+  it("одна и та же работа из разных возможностей — одна задача", () => {
+    const outreach = { actionType: "source_outreach" as const, title: "Get the client covered on nytimes.com" };
+    const plan = buildNinetyDayPlan([task(outreach), task(outreach), task(outreach)]);
+    const expansion = plan.find((phase) => phase.key === "expansion");
+    expect(expansion?.tasks).toHaveLength(1);
+  });
+
   it("сначала то, что клиент контролирует сам, потом чужие площадки", () => {
     const plan = buildNinetyDayPlan([
       task({ actionType: "pr_editorial", title: "Get covered in the category roundup" }),

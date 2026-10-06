@@ -133,6 +133,8 @@ export function recommendMissingSources(
 export function recommendOwnedPage(
   diagnosis: Diagnosis,
   clusterId?: string,
+  /** Имя кластера в заголовке: пять одинаковых «Publish a page…» в плане не различить. */
+  clusterName?: string,
 ): Recommendation[] {
   const ownedCitations = diagnosis.mix.find((entry) => entry.sourceType === "owned")?.citations ?? 0;
   if (ownedCitations > 0 || diagnosis.influential.length === 0) {
@@ -142,7 +144,9 @@ export function recommendOwnedPage(
   return [
     makeRecommendation({
       actionType: "create_page",
-      title: "Publish a page that answers this cluster directly",
+      title: clusterName
+        ? `Publish a page that answers the "${clusterName}" questions directly`
+        : "Publish a page that answers this cluster directly",
       reason: `No page from the client's own domain appears among the ${diagnosis.influential.length} sources cited for this cluster.`,
       estimatedImpact: "medium",
       effort: "medium",

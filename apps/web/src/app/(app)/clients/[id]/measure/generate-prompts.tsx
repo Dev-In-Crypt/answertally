@@ -56,7 +56,10 @@ export function GeneratePrompts({
     onSuccess: async (result) => {
       setDraft(null);
       setSummary(
-        `Saved ${result.createdPrompts} prompts into ${result.createdClusters} new clusters.` +
+        // Повторное сохранение того же набора — не ошибка: «Saved 0» читалось как сбой.
+        result.createdPrompts === 0 && result.alreadyTracked > 0
+          ? `All ${result.alreadyTracked} prompts are already saved for this client. Nothing new to add.`
+          : `Saved ${result.createdPrompts} prompts into ${result.createdClusters} new clusters.` +
           (result.alreadyTracked > 0
             ? ` ${result.alreadyTracked} were already tracked for this client and skipped.`
             : ""),
