@@ -1,39 +1,52 @@
+<div align="center">
+
 # Answertally
 
-The operating system for AI Search retainers. Agencies measure how ChatGPT, Perplexity and Grok
-answer about their clients, find where the client is losing and why, turn that into work, measure
-what moved, and hand the client a white-label report.
+**AI visibility measurement for agencies.**<br>
+How often ChatGPT, Perplexity, Grok and Claude name a brand, which sources they lean on,
+what to fix first, and a white-label report the client approves by link.
 
-The product name never appears on anything the agency's own client sees — reports and PDFs carry
-the agency's logo and colour only.
+[![CI](https://github.com/Dev-In-Crypt/answertally/actions/workflows/ci.yml/badge.svg)](https://github.com/Dev-In-Crypt/answertally/actions/workflows/ci.yml)
+&nbsp;[Website](https://answertally.com) · [Sample report](https://answertally.com/sample-report) · [How we measure](https://answertally.com/method) · [Free audit](https://answertally.com/free-audit)
 
-## What it does
+<img src=".github/assets/client-report.png" alt="A white-label client report: share of answers naming the brand and the distance to the strongest competitor" width="760">
 
-The working object is an **opportunity**: where this client is losing, on which questions, why, and
-what is worth doing about it. Everything else exists to produce one or to act on it.
+<sub>Fictional brand, example data.</sub>
 
-- **Measure.** Repeated samples per prompt across three platforms, aggregated into weekly windows.
-  Visibility is the share of answers mentioning the brand, never a single answer.
-- **Find.** Four detectors over the measured answers — a competitor ahead on a question, a cited
-  source the client is missing from, own pages that are read but do not carry the brand, a topic
-  trailing the rest. Each opportunity is scored 0–100 and stores the breakdown, so "why is this 91
-  and that 43" has an answer that does not require recomputing anything.
-- **Explain.** Every opportunity opens onto the evidence it was built from: the window, the sample
-  size, the affected questions, the competitors named there, and only then example answers.
-- **Deliver.** Convert an opportunity into an action and it carries its reason, evidence and topics
-  with it. Actions board, experiments with a comparison group, activity log.
-- **Report.** A public link the client opens without an account, plus PDF export printed from that
-  same page.
-- **Audit.** A free-audit mode for prospects: generated buyer prompts, one measurement pass, ranked
-  opportunities, a 90-day plan built from them, and conversion to a client that rebuilds nothing.
+</div>
 
-Estimates are labelled as estimates. Words claiming proven causation are banned from the UI and
-reports, and a test enforces it.
+## Why it exists
 
-The 0–100 score is an internal triage number and stays internal: in a white-label report it would
-read as a grade of the client's website.
+Ask an assistant the same buyer question twice and you get a different list. One screenshot of
+ChatGPT naming a client is a coin toss you happened to catch. Answertally asks the same questions
+repeatedly on every assistant and reports a **share of answers**, with a range and a confidence
+level, never a single answer.
 
-## Stack
+## How it works
+
+```mermaid
+flowchart LR
+    Q[Buyer questions] --> M[Measure<br><sub>repeated runs per<br>question × assistant</sub>]
+    M --> D[Diagnose<br><sub>cited sources,<br>where competitors win</sub>]
+    D --> O[Opportunities<br><sub>ranked, each<br>with a reason</sub>]
+    O --> A[Actions<br><sub>the agency's work</sub>]
+    A --> E[Experiments<br><sub>touched vs<br>untouched topics</sub>]
+    E --> R[White-label report<br><sub>client approves<br>by link</sub>]
+    R -. next period .-> M
+```
+
+| | |
+|---|---|
+| <img src=".github/assets/question-by-assistant.png" alt="Prompt by assistant matrix" width="420"> | **Measure.** Every question, on every assistant you switch on. Each cell is an aggregate of repeated answers; with fewer than three, it shows no number. |
+| <img src=".github/assets/cited-sources.png" alt="Cited sources with gaps" width="420"> | **Diagnose.** The pages assistants cite, and where a competitor is named while the client is not. |
+| <img src=".github/assets/before-after.png" alt="Before and after comparison with an estimate band" width="420"> | **Experiments.** After work is marked done, topics it touched are compared with topics it did not. The result is an estimate with a confidence level: evidence of what followed, not a claim of cause. |
+
+**What it will not do:** publish anything to a client's site, show a single "AI score", or put its
+own name on the client's report. Reports and PDFs carry the agency's logo and colour only.
+
+---
+
+## For developers
 
 pnpm workspaces + Turborepo.
 
@@ -41,34 +54,19 @@ pnpm workspaces + Turborepo.
 |---|---|
 | `apps/web` | Next.js 15 App Router, tRPC, Tailwind |
 | `apps/worker` | BullMQ worker: runs, parsing, aggregation |
-| `packages/core` | Pure business logic — adapters, parsing, metrics, experiment math, report schema |
+| `packages/core` | Pure business logic: adapters, parsing, metrics, experiment math, report schema |
 | `packages/db` | Drizzle schema and migrations, the only place tables are defined |
 | `packages/pipeline` | The measurement pipeline shared by web and worker |
-
-## Getting started
 
 ```bash
 cp .env.example .env && docker compose up -d && pnpm install && pnpm db:migrate && pnpm dev
 ```
 
-Platform adapters run in mock mode by default (`ADAPTERS_MODE=mock`) — no network, no API keys, and
+Platform adapters run in mock mode by default (`ADAPTERS_MODE=mock`): no network, no API keys, and
 tests never call out.
 
-Four assistants are measured: ChatGPT, Perplexity, Grok and Claude. A new client is measured on
-the first three; Claude is switched on per client in the schedule, because it adds answers to every
-run and needs its own key (`ANTHROPIC_API_KEY`). All four have been checked with live calls — run
-`live-check` (see `packages/core/src/adapters/live-check.ts`) with a key to repeat that.
-
-Copilot and Google's AI surfaces have no public answer API, so they stay listed as not measured.
-Gemini is listed there too, and for a different reason: the adapter exists and works, but Google's
-terms for grounded search do not allow the results to be analysed, or kept the way every answer
-here is kept so a figure can be rechecked. It is not registered even when a key is set.
-
-Perplexity is measured through its Agent API (`fast` preset), which replaced Sonar on 2026-09-27.
-That preset answers with an OpenAI model over Perplexity's own search, so each answer records the
-actual model in its version string rather than passing it off as Perplexity's.
-
-## Commands
+<details>
+<summary><b>Commands</b></summary>
 
 ```bash
 pnpm dev          # web + worker
@@ -80,19 +78,40 @@ pnpm db:migrate | db:seed | db:studio
 
 `db:seed` also runs one fixture-backed measurement pass through the real pipeline, so a fresh
 database comes up with snapshots, opportunities, actions and an experiment. None of those numbers
-are written by hand — they are produced by the same code that runs in production, only the answers
-come from fixtures.
+are written by hand: they come from the same code that runs in production, only the answers come
+from fixtures.
 
-## Deploying
+</details>
 
-One machine with Docker is enough for the first dozens of agencies:
+<details>
+<summary><b>Assistants and what is not measured</b></summary>
 
-```bash
-docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
-```
+Four assistants are measured: ChatGPT, Perplexity, Grok and Claude. A new client is measured on
+the first three; Claude is switched on per client in the schedule, because it adds answers to every
+run and needs its own key (`ANTHROPIC_API_KEY`). All four have been checked with live calls; run
+`live-check` (see `packages/core/src/adapters/live-check.ts`) with a key to repeat that.
+
+Copilot and Google's AI surfaces have no public answer API, so they stay listed as not measured.
+Gemini is listed there too, for a different reason: the adapter exists and works, but Google's
+terms for grounded search do not allow the results to be analysed, or kept the way every answer
+here is kept so a figure can be rechecked. It is not registered even when a key is set.
+
+Perplexity is measured through its Agent API (`fast` preset), which replaced Sonar on 2026-09-27.
+That preset answers with an OpenAI model over Perplexity's own search, so each answer records the
+actual model in its version string rather than passing it off as Perplexity's.
+
+</details>
+
+<details>
+<summary><b>Deploying</b></summary>
+
+One machine with Docker is enough for the first dozens of agencies. CI builds the `web`, `worker`
+and `migrate` images for every commit that passes its checks; `scripts/deploy.sh`, run on the
+server, pulls the images for the current commit and restarts. Nothing is built on the server, and a
+commit without CI images cannot be deployed.
 
 Four services: Postgres, Redis, web, worker. Migrations run as a one-shot service before the app
-starts — the application never changes the schema itself, or two instances would do it at once.
+starts; the application never changes the schema itself, or two instances would do it at once.
 Web and worker are separate images because a measurement run takes minutes and must not share a
 process with request handling.
 
@@ -102,10 +121,13 @@ instead of serving empty reports.
 `.env.production` needs at minimum `POSTGRES_PASSWORD`, `DATABASE_URL`, `BETTER_AUTH_SECRET`,
 `BETTER_AUTH_URL` and `NEXT_PUBLIC_APP_URL`. Everything else is optional and the product states
 plainly what it cannot do without it: `ADAPTERS_MODE` stays on fixtures until platform keys are
-present, email is written to the log until `RESEND_API_KEY` is set, and payments are simply not
-offered until Stripe is configured.
+present, email is written to the log until `RESEND_API_KEY` is set, and payments are not offered
+until a payment provider (Creem) is configured. Every variable is listed in `.env.example`.
 
-## Public API
+</details>
+
+<details>
+<summary><b>Public API</b></summary>
 
 Read-only, keyed per agency, created in Settings → API. The key is shown once; only its hash is
 stored.
@@ -123,24 +145,29 @@ curl -H "Authorization: Bearer $ANSWERTALLY_KEY" https://your-host/api/v1/client
 | `GET /api/v1/clients/{id}/actions` | Work queue, each row with its reason |
 | `GET /api/v1/reports` | Reports and their status |
 
-Figures come from the same functions that render the screens, and carry the same intervals — a
+Figures come from the same functions that render the screens, and carry the same intervals: a
 number without one becomes "we grew three points" in someone else's dashboard, which the sample
 never claimed.
 
-## Conventions worth knowing
+</details>
+
+<details>
+<summary><b>Conventions worth knowing</b></summary>
 
 - Every data query goes through `protectedProcedure` + `assertTenant`. A resource belonging to
-  another agency returns NOT_FOUND, never FORBIDDEN — the API must not confirm that it exists.
+  another agency returns NOT_FOUND, never FORBIDDEN: the API must not confirm that it exists.
 - Visibility is only ever computed from aggregates: at least three samples per prompt per platform,
   weekly windows. Raw responses are always kept, so a parser change can be replayed.
-- Opportunities are recomputed after every run, and that recompute never writes a human decision.
-  Status, dismissal reason and first-detected date belong to the person; a dismissal records the
-  score it was made at and only comes back if the gap grows well past it.
-- Scoring is deterministic and versioned. Confidence multiplies rather than adds, so a gap nobody
-  has measured properly cannot reach the top of the queue on size alone.
+- Every opportunity carries a non-empty reason, enforced by the schema. Opportunities are
+  recomputed after every run, and that recompute never overwrites a human decision: status,
+  dismissal reason and first-detected date belong to the person.
+- Scoring is deterministic and versioned. The 0–100 score is an internal triage number and stays
+  internal: in a white-label report it would read as a grade of the client's website.
 - Wording that claims proven causation is banned in the UI and in reports; approved phrasings live
   in `packages/core/src/copy.ts` and a test greps for violations.
 - Reports and PDFs carry the agency's brand only. A test asserts the product leaves no trace there.
 - Nothing is ever published to an external system on the client's behalf.
+
+</details>
 
 Planning documents and the product spec are kept outside this repository.
