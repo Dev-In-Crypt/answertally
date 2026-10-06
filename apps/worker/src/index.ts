@@ -35,7 +35,9 @@ const TICK_EVERY_MS = 5 * 60 * 1000;
 const PICKUP_EVERY_MS = 15 * 1000;
 
 function isRateLimited(error: unknown): boolean {
-  return error instanceof ProviderHttpError && error.status === 429;
+  if (error instanceof ProviderHttpError) return error.status === 429;
+  // Адаптер OpenAI старше общего транспорта и кладёт статус только в текст.
+  return error instanceof Error && error.message.startsWith("OpenAI responded 429:");
 }
 
 async function main(): Promise<void> {

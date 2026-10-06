@@ -38,6 +38,8 @@ export function GeneratePrompts({
   const [countInput, setCountInput] = useState(String(DEFAULT_GENERATED_PROMPT_COUNT));
   const [draft, setDraft] = useState<GeneratedPrompt[] | null>(null);
   const [summary, setSummary] = useState<string | null>(null);
+  /** Откуда черновик: модель по сайту или шаблоны. Человеку важно, сколько править. */
+  const [origin, setOrigin] = useState<string | null>(null);
 
   const count = Number(countInput);
   const countValid =
@@ -49,6 +51,13 @@ export function GeneratePrompts({
     onSuccess: (result) => {
       setSummary(null);
       setDraft(result.prompts);
+      setOrigin(
+        result.source === "ai"
+          ? result.siteRead
+            ? "Drafted by AI from the client's homepage, category and competitors."
+            : "Drafted by AI from the category and competitors; the homepage could not be read."
+          : "Drafted from generic templates. Expect to rewrite some of them for this client.",
+      );
     },
   });
 
@@ -125,7 +134,7 @@ export function GeneratePrompts({
           }
           className={buttonClass("primary", "lg")}
         >
-          {generate.isPending ? "Generating…" : "Generate buyer prompts"}
+          {generate.isPending ? "Reading the site and drafting…" : "Generate buyer prompts"}
         </button>
       </div>
 
@@ -154,8 +163,8 @@ export function GeneratePrompts({
             <span data-testid="draft-count" className="metric">
               {draft.length}
             </span>{" "}
-            prompts proposed. Control prompts are kept untouched by actions, so experiments have
-            something to compare against.
+            prompts proposed. {origin} Control prompts are kept untouched by actions, so
+            experiments have something to compare against.
           </p>
 
           <ul data-testid="prompt-draft" className="flex flex-col gap-1.5">

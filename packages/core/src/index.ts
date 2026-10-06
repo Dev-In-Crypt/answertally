@@ -105,6 +105,7 @@ export type { CreemPaymentProviderConfig, CreemProducts } from "./billing/creem"
 export { createPaymentProvider } from "./billing/provider";
 export * from "./import/csv";
 export * from "./prompts/generate";
+export * from "./prompts/ai-generator";
 export * from "./parsing/highlight";
 export * from "./sources/domains";
 export * from "./sources/classifier";

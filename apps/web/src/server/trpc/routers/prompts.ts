@@ -1,7 +1,10 @@
 import { z } from "zod";
 import {
+  AiPromptGenerator,
   DEFAULT_GENERATED_PROMPT_COUNT,
+  DEFAULT_OPENAI_MODEL,
   GENERATED_PROMPT_RANGE,
+  parseAdaptersMode,
   groupByCluster,
   normalizePromptText,
   parsePromptCsv,
@@ -28,6 +31,9 @@ import {
 } from "@repo/db";
 import { TRPCError } from "@trpc/server";
 import { assertTenant, protectedProcedure, roleProcedure, router } from "../trpc";
+import { errorReporter } from "../../observability";
+import { hit } from "../../rate-limit";
+import { fetchSiteSummary } from "../../site-summary";
 
 const INTENTS = ["learning", "comparison", "purchase", "other"] as const;
 
@@ -105,11 +111,20 @@ const generatedPrompt = z.object({
   isControl: z.boolean(),
 });
 
+const templateGenerator = new TemplatePromptGenerator();
+
 /**
- * В mock-режиме промпты собираются из шаблонов. Живой генератор появится
- * вместе с live-адаптерами (T13–T15) — интерфейс для него уже есть в core.
+ * Сколько черновиков от модели агентство получает в сутки. Вызов стоит доли
+ * цента, но кнопку можно жать в цикле; сверх лимита — шаблоны.
  */
-const promptGenerator = new TemplatePromptGenerator();
+const AI_DRAFTS_PER_DAY = 30;
+
+/** Модель — только в живом режиме и с ключом; иначе шаблоны, как в тестах. */
+function aiGenerator(): AiPromptGenerator | null {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (parseAdaptersMode(process.env.ADAPTERS_MODE) !== "live" || !apiKey) return null;
+  return new AiPromptGenerator({ apiKey, model: process.env.OPENAI_MODEL || DEFAULT_OPENAI_MODEL });
+}
 
 export const promptsRouter = router({
   clusters: protectedProcedure
@@ -237,17 +252,27 @@ export const promptsRouter = router({
       const client = await getClientById(ctx.db, input.clientId);
       assertTenant(client, ctx.user.agencyId);
 
-      const prompts = await promptGenerator.generate(
-        {
-          domain: client.domain,
-          industry: input.industry ?? client.industry ?? "",
-          brandNames: client.brandNames.length > 0 ? client.brandNames : [client.name],
-          competitorNames: client.competitorNames,
-        },
-        input.count,
-      );
+      const seed = {
+        domain: client.domain,
+        industry: input.industry ?? client.industry ?? "",
+        brandNames: client.brandNames.length > 0 ? client.brandNames : [client.name],
+        competitorNames: client.competitorNames,
+      };
 
-      return { prompts };
+      const ai = aiGenerator();
+      if (ai && (await hit(`prompt-drafts:${ctx.user.agencyId}`, AI_DRAFTS_PER_DAY, 86_400))) {
+        try {
+          const siteSummary = await fetchSiteSummary(client.domain);
+          const prompts = await ai.generate({ ...seed, siteSummary }, input.count);
+          return { prompts, source: "ai" as const, siteRead: siteSummary !== null };
+        } catch (error) {
+          // Шаблоны вместо ошибки: черновик всё равно правится человеком.
+          errorReporter.captureError(error, { scope: "prompts.generate_ai", clientId: client.id });
+        }
+      }
+
+      const prompts = await templateGenerator.generate(seed, input.count);
+      return { prompts, source: "templates" as const, siteRead: false };
     }),
 
   /** Сохраняет отредактированный черновик: кластеры создаются по именам из него. */
