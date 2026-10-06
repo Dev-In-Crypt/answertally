@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 import { MARKETING_COPY, SAMPLE_DELIVERY_REPORT } from "@repo/core";
-import { auth } from "@/lib/auth";
 import { CtaNote, Faq, MethodLink, SecHead, SrcChip } from "@/components/marketing/bits";
 import { MarketingShell } from "@/components/marketing/chrome";
 import { JsonLd } from "@/components/marketing/json-ld";
@@ -36,18 +33,12 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
   title: "AI Visibility Reporting for Agencies · Answertally",
   description:
-    "Answer your clients’ “are we in ChatGPT?” with sampled AI answers, ranges and confidence levels, ranked work with a reason on every item, and a white-label report the client approves by link.",
+    "Answer “are we in ChatGPT?” with sampled AI answers, ranges and confidence levels, ranked work with reasons, and a white-label report for your client.",
 };
 
 const WL = MARKETING_COPY.whiteLabel;
 
 export default async function HomePage() {
-  const session = await auth.api.getSession({ headers: await headers() });
-
-  if (session) {
-    redirect("/dashboard");
-  }
-
   return (
     <MarketingShell>
       <JsonLd

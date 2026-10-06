@@ -22,6 +22,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/signup" },
   title: "Create your workspace · Answertally",
   description: "Run the free audit on one brand on ChatGPT and Perplexity. No card.",
+  robots: { index: false },
 };
 
 /**

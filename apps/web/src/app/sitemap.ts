@@ -13,7 +13,6 @@ const PAGES = [
   "/partners",
   "/research",
   "/proposal-template",
-  "/signup",
   "/legal/terms",
   "/legal/privacy",
   "/legal/refunds",

@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect } from "react";
 import { BarChart3, CreditCard, FileText, Settings, Users } from "lucide-react";
 import { api } from "@/trpc/react";
 import { cn } from "@/lib/utils";
 import { SignOutButton } from "@/components/sign-out-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Mark } from "@/components/ui/mark";
+import { Wordmark } from "@/components/marketing/logo";
 
 /**
  * Каркас приложения.
@@ -47,6 +49,49 @@ function activeHref(pathname: string): string | undefined {
   return NAV.map((item) => item.href)
     .filter((href) => pathname === href || pathname.startsWith(`${href}/`))
     .sort((a, b) => b.length - a.length)[0];
+}
+
+/**
+ * Имена, которые раньше выводились из домена личной почты. Агентство с таким
+ * именем отправило бы клиенту отчёт с «Gmail» в шапке.
+ */
+const MAILBOX_NAMES = new Set([
+  "gmail", "googlemail", "outlook", "hotmail", "live", "msn", "yahoo", "icloud", "me", "mac",
+  "aol", "proton", "protonmail", "pm", "gmx", "yandex", "mail", "zoho", "fastmail", "my agency",
+]);
+
+function needsRealName(agencyName: string): boolean {
+  return MAILBOX_NAMES.has(agencyName.trim().toLowerCase());
+}
+
+/** Подписи разделов клиента для заголовка вкладки — по последнему сегменту пути. */
+const CLIENT_SECTIONS: Record<string, string> = {
+  measure: "Measure",
+  diagnose: "Diagnose",
+  opportunities: "Opportunities",
+  actions: "Actions",
+  experiments: "Experiments",
+  reports: "Reports",
+  audit: "Audit",
+  onboarding: "Set up",
+  prompts: "Prompt",
+  settings: "Client settings",
+  new: "New client",
+};
+
+/**
+ * Заголовок вкладки по адресу.
+ *
+ * Большинство экранов — клиентские компоненты и не могут объявить metadata,
+ * а вкладки «Answertally», «Answertally», «Answertally» не различить.
+ */
+function tabTitle(pathname: string): string {
+  const parts = pathname.split("/").filter(Boolean);
+  const section =
+    parts[0] === "clients" && parts.length > 1
+      ? (CLIENT_SECTIONS[parts[2] ?? ""] ?? CLIENT_SECTIONS[parts[1] ?? ""] ?? "Client")
+      : NAV.find((item) => item.href === activeHref(pathname))?.label;
+  return section ? `${section} · Answertally` : "Answertally";
 }
 
 /**
@@ -153,15 +198,18 @@ export function AppShell({
   const pathname = usePathname();
   const current = activeHref(pathname);
 
+  useEffect(() => {
+    document.title = tabTitle(pathname);
+  }, [pathname]);
+
   return (
     <div className="flex min-h-screen">
       <aside className="hidden w-56 shrink-0 flex-col border-r bg-secondary/40 px-3 py-4 md:flex">
-        <Link
-          href="/dashboard"
-          className="mb-6 flex items-center gap-2 px-2 py-1 text-sm font-semibold tracking-tight"
-        >
-          <Mark className="size-5" />
-          Answertally
+        {/* Знак ведёт на сайт: иного пути из кабинета на главную нет. */}
+        <Link href="/" className="mb-6 block px-2 py-1" title="Answertally home">
+          <span className="block h-5 text-foreground [&>svg]:h-full [&>svg]:w-auto">
+            <Wordmark />
+          </span>
         </Link>
 
         <nav className="flex flex-col">
@@ -193,7 +241,9 @@ export function AppShell({
         */}
         <header className="flex h-14 items-center justify-between gap-4 border-b px-4 sm:px-6">
           <div className="flex min-w-0 items-center gap-3 md:hidden">
-            <Mark className="size-5" />
+            <Link href="/" aria-label="Answertally home" className="shrink-0">
+              <Mark className="size-5" />
+            </Link>
             {/* Правый край ряда гаснет: так видно, что пункты продолжаются за
                 краем и до «Plan and usage» и «Settings» можно докрутить. */}
             <nav className="-mx-1 flex min-w-0 gap-3 overflow-x-auto px-1 pr-6 [mask-image:linear-gradient(to_right,black_calc(100%-2rem),transparent)]">
@@ -216,13 +266,25 @@ export function AppShell({
             </nav>
           </div>
 
-          <span className="hidden text-sm text-muted-foreground md:inline">AI Search delivery</span>
-          <div className="flex shrink-0 items-center gap-1">
+          <div className="ml-auto flex shrink-0 items-center gap-1">
             <ThemeToggle />
             <SignOutButton />
           </div>
         </header>
 
+        {needsRealName(agencyName) && (
+          <div
+            role="status"
+            data-testid="agency-name-banner"
+            className="border-b bg-competitor/10 px-4 py-2 text-sm sm:px-6"
+          >
+            Your agency is named “{agencyName}”, and clients see this name at the top of every
+            report.{" "}
+            <Link href="/settings" className="font-medium underline underline-offset-2">
+              Change it in Settings
+            </Link>
+          </div>
+        )}
         <main className="min-w-0 flex-1 px-4 py-8 sm:px-6">{children}</main>
       </div>
     </div>

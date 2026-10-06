@@ -282,10 +282,11 @@ export function DashboardRail() {
               One check is one answer from one assistant to one prompt.
             </span>
           </div>
+        ) : usage.error ? (
+          <p className="text-sm text-muted-foreground">Usage could not be loaded.</p>
         ) : (
-          <p className="text-sm text-muted-foreground">
-            {usage.error ? "Usage could not be loaded." : "Usage appears after the first run."}
-          </p>
+          // Пока грузится — место под цифры, а не текст, который тут же сменится.
+          <span aria-hidden className="h-16 animate-pulse rounded-md bg-muted" />
         )}
       </Card>
 

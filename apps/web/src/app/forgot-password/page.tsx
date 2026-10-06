@@ -1,5 +1,11 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ForgotPasswordForm } from "./forgot-password-form";
+
+export const metadata: Metadata = {
+  title: "Reset your password · Answertally",
+  robots: { index: false },
+};
 
 export default function ForgotPasswordPage() {
   return (

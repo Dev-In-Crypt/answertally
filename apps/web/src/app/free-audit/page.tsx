@@ -37,7 +37,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/free-audit" },
   title: "Free AI Visibility Audit for Your Client · Answertally",
   description:
-    `Audit a brand you work on for free: what ${FREE_TRIO} say about it, which sources they cite, ranked work with reasons, and an opportunity report in your brand.`,
+    `Audit a brand for free: what ${FREE_TRIO} say about it, which sources they cite, ranked work with reasons, and a report in your brand.`,
 };
 
 function faqItems(paymentsOn: boolean) {

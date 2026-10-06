@@ -36,13 +36,15 @@ afterAll(async () => {
 describe("регистрация на занятый адрес", () => {
   it("ответ тот же, а владельцу ящика уходит письмо со входом и сбросом пароля", async () => {
     const email = `taken-${crypto.randomUUID().slice(0, 8)}@agency.test`;
-    await auth.api.signUpEmail({ body: { email, password: "correct-horse-battery", name: "A" } });
+    await auth.api.signUpEmail({
+      body: { email, password: "correct-horse-battery", name: "A", agencyName: "Test Agency" } as never,
+    });
     const user = await getUserByEmail(db, email);
     if (user?.agencyId) createdAgencies.push(user.agencyId);
     mailbox.clear();
 
     const again = await auth.api.signUpEmail({
-      body: { email, password: "another-password-1", name: "A" },
+      body: { email, password: "another-password-1", name: "A", agencyName: "Test Agency" } as never,
     });
 
     expect(again.token).toBeNull();
@@ -54,7 +56,7 @@ describe("регистрация на занятый адрес", () => {
 });
 
 describe("название агентства при регистрации", () => {
-  it("берётся из формы, а без неё выводится из домена почты", async () => {
+  it("берётся из формы, а без неё регистрация отказывает", async () => {
     const named = `named-${crypto.randomUUID().slice(0, 8)}@agency.test`;
     await auth.api.signUpEmail({
       body: { email: named, password: "correct-horse-battery", name: "A", agencyName: "  Northwind   Studio " } as never,
@@ -65,11 +67,11 @@ describe("название агентства при регистрации", ()
     expect(namedAgency?.name).toBe("Northwind Studio");
 
     const derived = `derived-${crypto.randomUUID().slice(0, 8)}@acme-agency.test`;
-    await auth.api.signUpEmail({ body: { email: derived, password: "correct-horse-battery", name: "A" } });
-    const derivedUser = await getUserByEmail(db, derived);
-    if (derivedUser?.agencyId) createdAgencies.push(derivedUser.agencyId);
-    const derivedAgency = await getAgencyById(db, derivedUser!.agencyId!);
-    expect(derivedAgency?.name).toBe("Acme Agency");
+    // Имя из почты давало агентство «Gmail» в шапке отчёта клиенту.
+    await expect(
+      auth.api.signUpEmail({ body: { email: derived, password: "correct-horse-battery", name: "A" } }),
+    ).rejects.toThrow(/agency name/);
+    expect(await getUserByEmail(db, derived)).toBeFalsy();
   });
 });
 

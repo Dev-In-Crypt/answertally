@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { MARKETING_COPY } from "@repo/core";
 import { SUPPORT_EMAIL } from "@/config/site";
+import { AccountLink } from "./account-link";
 import { ConsentManager, CookieSettingsLink } from "./consent";
 import { Wordmark } from "./logo";
 import "./marketing.css";
@@ -46,9 +47,7 @@ export function MarketingHeader({ active }: { active?: MarketingSection }) {
           <NavLinks active={active} />
         </nav>
         <div className="head-right">
-          <Link className="signin" href="/login">
-            Sign in
-          </Link>
+          <AccountLink className="signin" />
           <Link className="btn primary sm" href="/signup" data-testid="header-cta">
             <span className="cta-long">Run a free audit</span>
             <span className="cta-short">Free audit</span>
@@ -61,7 +60,7 @@ export function MarketingHeader({ active }: { active?: MarketingSection }) {
             </summary>
             <nav className="panel" aria-label="Main, compact">
               <NavLinks active={active} />
-              <Link href="/login">Sign in</Link>
+              <AccountLink />
             </nav>
           </details>
         </div>
@@ -100,7 +99,7 @@ export function MarketingFooter() {
               <li><Link href="/free-audit">Free audit</Link></li>
               <li><Link href="/sample-report">Sample report</Link></li>
               <li><Link href="/pricing">Pricing</Link></li>
-              <li><Link href="/login">Sign in</Link></li>
+              <li><AccountLink /></li>
             </ul>
           </div>
           <div className="foot-col">

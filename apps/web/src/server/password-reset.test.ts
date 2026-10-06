@@ -33,7 +33,7 @@ async function signUpFresh(): Promise<{ email: string; password: string }> {
   const email = `reset-${crypto.randomUUID().slice(0, 8)}@agency.test`;
   const password = "correct-horse-battery";
 
-  await auth.api.signUpEmail({ body: { email, password, name: "Reset Tester" } });
+  await auth.api.signUpEmail({ body: { email, password, name: "Reset Tester", agencyName: "Test Agency" } as never });
 
   const user = await getUserByEmail(db, email);
   if (user) {

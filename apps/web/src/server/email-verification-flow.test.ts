@@ -48,7 +48,7 @@ function lastVerifyToken(): string {
 async function signUpFresh() {
   const email = `verify-${crypto.randomUUID().slice(0, 8)}@agency.test`;
   const password = "correct-horse-battery";
-  const result = await auth.api.signUpEmail({ body: { email, password, name: "Verify Tester" } });
+  const result = await auth.api.signUpEmail({ body: { email, password, name: "Verify Tester", agencyName: "Test Agency" } as never });
 
   const user = await getUserByEmail(db, email);
   if (user?.agencyId) {
@@ -112,7 +112,7 @@ describe("подтверждение адреса при регистрации"
     const password = "correct-horse-battery";
     try {
       await expect(
-        auth.api.signUpEmail({ body: { email, password, name: "Unsent Tester" } }),
+        auth.api.signUpEmail({ body: { email, password, name: "Unsent Tester", agencyName: "Test Agency" } as never }),
       ).rejects.toMatchObject({ body: { code: "VERIFICATION_EMAIL_NOT_SENT" } });
       const user = await getUserByEmail(db, email);
       if (user?.agencyId) createdAgencies.push(user.agencyId);

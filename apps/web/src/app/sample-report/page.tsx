@@ -11,7 +11,7 @@ import { SampleFrame } from "./sample-frame";
  */
 export const metadata: Metadata = {
   alternates: { canonical: "/sample-report" },
-  title: "Example client report — Answertally",
+  title: "Example client report · Answertally",
   description:
     "A sample of the report an agency hands its client: visibility over the period, the work behind it and what the numbers do not mean.",
 };

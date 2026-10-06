@@ -45,7 +45,7 @@ describe("регистрация по приглашению", () => {
 
   async function signUp(address: string, body: Record<string, unknown> = {}) {
     await auth.api.signUpEmail({
-      body: { email: address, password: "correct-horse-battery", name: "Invitee", ...body },
+      body: { email: address, password: "correct-horse-battery", name: "Invitee", agencyName: "Test Agency", ...body } as never,
     });
     const user = await getUserByEmail(db, address.toLowerCase());
     if (user?.agencyId && user.agencyId !== hostAgencyId) {
@@ -88,7 +88,7 @@ describe("один ящик — один аккаунт", () => {
 
   async function register(email: string) {
     await auth.api.signUpEmail({
-      body: { email, password: "correct-horse-battery", name: "Farmer" },
+      body: { email, password: "correct-horse-battery", name: "Farmer", agencyName: "Test Agency" } as never,
     });
     const user = await getUserByEmail(db, email.toLowerCase());
     if (user?.agencyId) createdAgencies.push(user.agencyId);

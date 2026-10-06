@@ -1,4 +1,4 @@
-import { leadText, type ReportPayload } from "@repo/core";
+import { formatPeriod, leadText, type ReportPayload } from "@repo/core";
 import { AgencyCard } from "./agency-card";
 import { AGENCIES } from "./data";
 
@@ -189,7 +189,7 @@ export function ReportPreview({
         <>
           {payload.client.name}
           <br />
-          {payload.period.start} — {payload.period.end}
+          {formatPeriod(payload.period.start, payload.period.end)}
         </>
       }
     >

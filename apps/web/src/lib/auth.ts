@@ -39,26 +39,15 @@ const AGENCY_NAME_MAX = 200;
 /**
  * Название агентства из тела регистрации.
  *
- * Необязательное: без него (вызов не из формы) имя выводится из почты. Но
- * форма его требует — у личного ящика «gmail.com» дал бы агентство «Gmail»,
- * и клиент увидел бы это слово в шапке отчёта.
+ * Обязательное для своего агентства. Раньше без него имя выводилось из
+ * почты, и личный ящик «gmail.com» давал агентство «Gmail» — это слово
+ * клиент видел в шапке отчёта.
  */
 export function agencyNameFrom(body: unknown): string | null {
   const raw = (body as { agencyName?: unknown } | undefined)?.agencyName;
   if (typeof raw !== "string") return null;
   const name = raw.trim().replace(/\s+/g, " ");
   return name.length > 0 ? name : null;
-}
-
-/** Имя агентства по умолчанию выводим из домена почты: owner@acme-agency.com -> "Acme Agency". */
-export function deriveAgencyName(email: string): string {
-  const domain = email.split("@")[1] ?? "";
-  const label = domain.split(".")[0] ?? "";
-  const words = label
-    .split(/[-_]+/)
-    .filter(Boolean)
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1));
-  return words.length > 0 ? words.join(" ") : "My Agency";
 }
 
 /**
@@ -402,7 +391,12 @@ export const auth = betterAuth({
           }
 
           const agencyName = agencyNameFrom(context?.body);
-          if (agencyName && agencyName.length > AGENCY_NAME_MAX) {
+          if (!agencyName) {
+            throw new APIError("BAD_REQUEST", {
+              message: "Enter your agency name. Your clients see it at the top of every report.",
+            });
+          }
+          if (agencyName.length > AGENCY_NAME_MAX) {
             throw new APIError("BAD_REQUEST", {
               message: `The agency name is too long (max ${AGENCY_NAME_MAX} characters).`,
             });
@@ -410,7 +404,7 @@ export const auth = betterAuth({
 
           const [agency] = await db
             .insert(agencies)
-            .values({ name: agencyName ?? deriveAgencyName(email) })
+            .values({ name: agencyName })
             .returning({ id: agencies.id });
 
           if (!agency) {

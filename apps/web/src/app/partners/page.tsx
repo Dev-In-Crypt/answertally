@@ -39,7 +39,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/partners" },
   title: "White-Label AI Visibility Reports for Agencies · Answertally",
   description:
-    "Run AI-visibility measurement as your own service: a workspace per client, reports in your brand, priced per client account. You set your own price and keep the client relationship.",
+    "Run AI-visibility measurement as your own service: a workspace per client, reports in your brand, priced per client account. You set your price.",
 };
 
 /**

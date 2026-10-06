@@ -1,6 +1,18 @@
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { NextConfig } from "next";
+import { HTML_LIMITED_BOT_UA_RE } from "next/dist/shared/lib/router/utils/html-bots";
+
+/**
+ * Краулеры, которым заголовок и описание страницы нужны внутри `<head>`.
+ *
+ * Next стримит метаданные после `</head>` всем, кроме своего списка ботов.
+ * AI-краулеры JavaScript не исполняют и в этот список не входят, а продукт
+ * про видимость в AI-ответах не может отдавать им страницы без заголовка.
+ * Список Next расширяется, а не заменяется.
+ */
+const AI_CRAWLERS =
+  "GPTBot|OAI-SearchBot|ChatGPT-User|ClaudeBot|Claude-User|Claude-SearchBot|PerplexityBot|Perplexity-User|Googlebot|Applebot-Extended|Amazonbot|CCBot";
 
 /**
  * Заголовки безопасности для всех страниц.
@@ -39,6 +51,7 @@ const nextConfig: NextConfig = {
   images: { unoptimized: true },
   // Версию движка снаружи знать незачем.
   poweredByHeader: false,
+  htmlLimitedBots: new RegExp(`${HTML_LIMITED_BOT_UA_RE.source}|${AI_CRAWLERS}`, "i"),
   transpilePackages: ["@repo/core", "@repo/db"],
   typedRoutes: true,
   /**

@@ -22,10 +22,10 @@ import type { VisibilitySnapshot } from "../metrics/visibility";
  */
 
 export const SAMPLE_AGENCY = {
-  name: "Harbourline",
+  name: "Harbor & Pine",
   /** null — логотипа неоткуда взять: внешние картинки в сборке запрещены. */
   logoUrl: null,
-  brandColor: "#0f766e",
+  brandColor: "#8B2F4E",
 } as const;
 
 export const SAMPLE_CLIENT_NAME = "Fernpost";

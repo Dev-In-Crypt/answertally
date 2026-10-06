@@ -73,7 +73,7 @@ test("the example report is a real report page in a fictional agency's brand", a
   await expect(page.getByTestId("sample-report-notice")).toBeVisible();
 
   // Рендерится тот же компонент, что и клиентский отчёт.
-  await expect(page.getByTestId("agency-name")).toHaveText("Harbourline");
+  await expect(page.getByTestId("agency-name")).toHaveText("Harbor & Pine");
   await expect(page.getByTestId("report-visibility")).toContainText("19.4% → 28.6%");
   await expect(page.getByTestId("report-work").locator("li")).toHaveCount(5);
   await expect(page.getByTestId("report-results")).toContainText("Brand mentions");

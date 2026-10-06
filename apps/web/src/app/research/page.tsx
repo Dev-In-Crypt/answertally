@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/research" },
   title: "AI Answer Research: Method and Findings · Answertally",
   description:
-    "Our first study of how AI assistants answer buyer questions is being run. This page describes the method and what we will publish. No findings yet, and none invented in the meantime.",
+    "Our first study of how AI assistants answer buyer questions is under way. The method and what we will publish; no findings yet, and none invented.",
 };
 
 /** Что будет опубликовано вместе с выводами. Список — и есть обещание. */
