@@ -67,6 +67,25 @@ describe("finalizeAiDraft", () => {
     expect(texts).not.toContain("best running shoes for a marathon training plan");
   });
 
+  it("контроль в нише клиента и вопросы без брендов в ответе отсекаются", () => {
+    const prompts = finalizeAiDraft(
+      [
+        { text: "best running shoes for a rainy commute", intent: "control" },
+        { text: "best rain jackets for cycling to work", intent: "control" },
+        { text: "what should I look for in a trail shoe", intent: "learning" },
+        { text: "which trail shoes grip best on wet rock", intent: "learning" },
+      ],
+      SEED,
+      20,
+    );
+    const byText = new Map(prompts.map((p) => [p.text, p]));
+    // «running shoes» — категория клиента: работа агентства сдвинет и этот вопрос.
+    expect(byText.get("best running shoes for a rainy commute")?.isControl).toBe(false);
+    expect(byText.get("best rain jackets for cycling to work")?.isControl).toBe(true);
+    expect(byText.has("what should I look for in a trail shoe")).toBe(false);
+    expect(byText.has("which trail shoes grip best on wet rock")).toBe(true);
+  });
+
   it("лишнее срезает, оставляя контрольные", () => {
     const draft = Array.from({ length: 40 }, (_, i) => ({
       text: `question number ${i} about trail shoes`,
@@ -104,7 +123,7 @@ describe("AiPromptGenerator", () => {
   it("инструкция запрещает называть клиента и требует контроль без брендов", () => {
     const text = buildInstructions({ ...SEED, siteSummary: null }, 24);
     expect(text).toContain("Do not name Saucony");
-    expect(text).toContain("Control questions name no brand");
+    expect(text).toContain("neighbouring category the client does not sell");
     expect(text).toContain("Never compare two competitors");
     expect(text).toContain("homepage could not be read");
   });
