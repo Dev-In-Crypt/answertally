@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { MARKETING_COPY, VOLUME_ACCOUNT_PRICE_USD, VOLUME_DISCOUNT, VOLUME_THRESHOLD } from "@repo/core";
-import { CtaNote, Faq, SecHead, TalkOrAudit } from "@/components/marketing/bits";
+import { CtaNote, FREE_AUDIT_NOTE, Faq, SecHead, TalkOrAudit } from "@/components/marketing/bits";
 import { MarketingShell } from "@/components/marketing/chrome";
 import { checkoutCopy, PRICING_NOTES, RESALE, SALES_CONTACT } from "@/components/marketing/content";
 import { getPaymentProvider } from "@/server/payments";
@@ -134,7 +134,7 @@ export default function PricingPage() {
             <Link className="btn primary" href="/signup">
               Run a free audit
             </Link>
-            <CtaNote>Free for one brand. No card needed. You pick a plan after the audit, inside the product.</CtaNote>
+            <CtaNote>{FREE_AUDIT_NOTE} You pick a plan after the audit, inside the product.</CtaNote>
             {SALES_CONTACT && <TalkOrAudit />}
           </aside>
         </section>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { freeAuditAssistantSentence } from "@repo/core/adapters/capacity";
 import { SALES_CONTACT } from "./content";
 
 /** Мелкие повторяющиеся куски витрины. */
@@ -27,7 +28,9 @@ export function TalkOrAudit({ fallback = "Start with the free audit →" }: { fa
  * Строка трения под главной кнопкой: что человек получает и чем платит.
  * Без неё «Run a free audit» не говорит, нужна ли карта.
  */
-export function CtaNote({ children = "Free for one brand. No card needed." }: { children?: ReactNode }) {
+export const FREE_AUDIT_NOTE = `Free for one brand, on ${freeAuditAssistantSentence()}. No card needed.`;
+
+export function CtaNote({ children = FREE_AUDIT_NOTE }: { children?: ReactNode }) {
   return <p className="cta-note">{children}</p>;
 }
 

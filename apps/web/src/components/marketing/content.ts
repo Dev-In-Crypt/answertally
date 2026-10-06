@@ -144,7 +144,7 @@ export function checkoutCopy(paymentsOn: boolean): {
  * рыночных цифр витрина не приводит.
  */
 export const MARKET_NOTE = {
-  text: "66% of agencies named AI search as the top new service their clients ask for.",
+  text: "66% of agencies say clients are asking them for AI search work, now the most requested new service.",
   source: "AgencyAnalytics, 2026 agency benchmarks",
   href: "https://agencyanalytics.com/agency-benchmarks-2026",
 };
