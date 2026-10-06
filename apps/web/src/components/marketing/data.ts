@@ -143,24 +143,36 @@ export const MATRIX_ASSISTANTS: readonly string[] = ASSISTANTS.filter((a) => a.m
   (a) => a.label,
 );
 
+/** Ассистенты, которых по умолчанию не спрашивают: в таблице помечены «switched on». */
+export const MATRIX_OPTIONAL: readonly string[] = ASSISTANTS.filter(
+  (a) => a.measurable && !(DEFAULT_PLATFORMS as readonly string[]).includes(a.id),
+).map((a) => a.label);
+
 /** Число — доля ответов; "floor" — ниже порога сэмплов; null — ассистента не спрашивают. */
 export type MatrixCell = number | "floor" | null;
 
+/**
+ * Ответов за ячейку в примере: 28 дней при замере раз в неделю — четыре
+ * прогона по три ответа. Доли ниже кратны 1/12, уровень уверенности на
+ * витрине считается из этого числа той же функцией, что в продукте.
+ */
+export const MATRIX_SAMPLES = 12;
+
 export const MATRIX: { prompt: string; cells: MatrixCell[]; competitorOnly?: boolean[] }[] = [
-  { prompt: "best project tool for a small design studio", cells: [44, 33, 22, 33] },
-  { prompt: "Fernpost vs Quillstack", cells: [89, 100, 78, 89] },
-  { prompt: "project software with a client portal", cells: [22, 11, 33, 11] },
+  { prompt: "best project tool for a small design studio", cells: [42, 33, 25, 33] },
+  { prompt: "Fernpost vs Quillstack", cells: [92, 100, 75, 92] },
+  { prompt: "project software with a client portal", cells: [25, 8, 33, 8] },
   {
     prompt: "cheapest way to share timelines with clients",
-    cells: [0, 0, 11, "floor"],
+    cells: [0, 0, 8, "floor"],
     competitorOnly: [true, true, false, false],
   },
   {
     prompt: "how to move a studio off spreadsheets",
-    cells: [11, 0, 0, 22],
+    cells: [8, 0, 0, 25],
     competitorOnly: [false, true, false, false],
   },
-  { prompt: "project tool with time tracking and invoicing", cells: [33, 22, 44, 22] },
+  { prompt: "project tool with time tracking and invoicing", cells: [33, 25, 42, 25] },
 ];
 
 /* ---------------- источники ---------------- */

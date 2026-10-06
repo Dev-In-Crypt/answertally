@@ -6,6 +6,7 @@ import {
   VOLUME_THRESHOLD,
 } from "@repo/core";
 import {
+  PLANS,
   PER_CLIENT_MAX,
   PER_CLIENT_MIN,
   TYPICAL_CHECKS_BIWEEKLY,
@@ -37,6 +38,22 @@ import {
 export { SALES_CONTACT } from "@/config/site";
 export type { SalesContact } from "@/config/site";
 
+/** Запас лимита при еженедельном замере всех клиентов плана: от худшего плана к лучшему. */
+const spare = PLANS.map((plan) => Math.round((1 - plan.typicalUse / plan.aiCheckAllowance) * 100));
+const SPARE_MIN = Math.min(...spare);
+const SPARE_MAX = Math.max(...spare);
+
+/**
+ * Планы, где все разрешённые ассистенты на всех клиентах раз в неделю не
+ * помещаются в лимит. Считается, а не пишется: лимит или каталог поменяются —
+ * оговорка исчезнет или появится сама.
+ */
+const ALL_ASSISTANTS_OVER = PLANS.filter(
+  (plan) =>
+    plan.assistants.split(", ").length === MEASURABLE_ASSISTANT_COUNT &&
+    plan.clientLimit * TYPICAL_CHECKS_ALL_ASSISTANTS > plan.aiCheckAllowance,
+);
+
 /**
  * Условия тарифов — только утверждённые основателем. Намеренно не сказано,
  * входит ли API в каждый план и считается ли клиент-проспект из бесплатного
@@ -51,7 +68,7 @@ export const PRICING_NOTES = {
    * Allowance рассчитан на еженедельный опрос, а по умолчанию продукт опрашивает
    * раз в две недели — названы оба числа, чтобы запас не выглядел выдуманным.
    */
-  checks: `One AI check is one assistant answering one prompt once. A client measured the default way (around two dozen prompts, three samples each, three assistants, every two weeks) uses roughly ${int(TYPICAL_CHECKS_BIWEEKLY)} checks a month. Measured weekly, it uses roughly ${int(TYPICAL_CHECKS_PER_CLIENT)} checks, and each plan still covers every client, with up to 40% to spare.`,
+  checks: `One AI check is one assistant answering one prompt once. A client measured the default way (around two dozen prompts, three samples each, three assistants, every two weeks) uses roughly ${int(TYPICAL_CHECKS_BIWEEKLY)} checks a month. Measured weekly, it uses roughly ${int(TYPICAL_CHECKS_PER_CLIENT)} checks, and each plan still covers every client, with ${SPARE_MIN}–${SPARE_MAX}% of the allowance to spare.`,
   /**
    * Лимит — потолок: следующий прогон сверх него не начнётся (решение
    * фаундера, после аудита расходов). Начатый не обрывается. Обещание
@@ -64,14 +81,17 @@ export const PRICING_NOTES = {
    * следующего плана уже нет. Пока здесь об этом молчали, ответ на самый
    * частый вопрос агентства с большой книгой был «напишите нам».
    */
-  clientLimit: `The plan sets how many client accounts the workspace can hold at once. Adding one beyond that means moving to the next plan, and the product asks you to rather than failing quietly. Above the top plan there is no next one: from the ${VOLUME_THRESHOLD}th account every further account is ${usd(VOLUME_ACCOUNT_PRICE_USD)} a month, ${Math.round(VOLUME_DISCOUNT * 100)}% off what the top plan works out to per account.`,
+  clientLimit: `The plan sets how many client accounts the workspace can hold at once. Adding one beyond that means moving to the next plan, and the product asks you to rather than failing quietly. Above the top plan there is no next one: from the ${VOLUME_THRESHOLD + 1}th account every further account is ${usd(VOLUME_ACCOUNT_PRICE_USD)} a month, ${Math.round(VOLUME_DISCOUNT * 100)}% off what the top plan works out to per account.`,
   seats: "The number of people on your team is not counted, and there is no charge per seat.",
   /**
    * Числа и имена — из каталога и умолчания, не из текста. Прежняя
    * формулировка говорила «пять вместо трёх» и пережила два решения,
    * которые её опровергли.
    */
-  extraAssistants: `The assistants your plan allows have no separate price. Switching every one of them on for a client means ${MEASURABLE_ASSISTANT_COUNT} assistants instead of the ${DEFAULT_PLATFORMS.length} measured by default, so that client uses about ${MEASURABLE_ASSISTANT_COUNT}/${DEFAULT_PLATFORMS.length} as many AI checks (roughly ${int(TYPICAL_CHECKS_ALL_ASSISTANTS)} a month if measured weekly).`,
+  extraAssistants: `The assistants your plan allows have no separate price. Switching every one of them on for a client means ${MEASURABLE_ASSISTANT_COUNT} assistants instead of the ${DEFAULT_PLATFORMS.length} measured by default, so that client uses about ${MEASURABLE_ASSISTANT_COUNT}/${DEFAULT_PLATFORMS.length} as many AI checks (roughly ${int(TYPICAL_CHECKS_ALL_ASSISTANTS)} a month if measured weekly).${ALL_ASSISTANTS_OVER.map(
+    (plan) =>
+      ` On ${plan.name}, all ${MEASURABLE_ASSISTANT_COUNT} assistants weekly on all ${plan.clientLimit} clients needs about ${int(plan.clientLimit * TYPICAL_CHECKS_ALL_ASSISTANTS)} checks, more than the ${int(plan.aiCheckAllowance)} included: measure some clients every two weeks, or write to us to raise the allowance.`,
+  ).join("")}`,
   /**
    * Как сегодня покупают.
    *

@@ -87,8 +87,6 @@ describe("квартальный отчёт", () => {
 
   it("вклад показан диапазоном и с уровнем уверенности, а не точкой", () => {
     expect(SAMPLE_DELIVERY_REPORT.highestImpactAction?.estimatedContribution).toBe("+2–6 pp");
-    // Сравнивать было не с чем — значит и уверенность низкая, иначе отчёт
-    // спорил бы сам с собой.
     expect(SAMPLE_DELIVERY_REPORT.highestImpactAction?.confidence).toBe("low");
   });
 
@@ -104,7 +102,8 @@ describe("квартальный отчёт", () => {
 
   it("показывает собственный предел вместе с цифрами", () => {
     expect(SAMPLE_DELIVERY_REPORT.caveats).toContain(REPORT_COPY.measurementBasis);
-    expect(SAMPLE_DELIVERY_REPORT.caveats).toContain(REPORT_COPY.noComparisonGroup);
+    // Вклад действия и «сравнивать было не с чем» вместе — отчёт спорит сам с собой.
+    expect(SAMPLE_DELIVERY_REPORT.caveats).not.toContain(REPORT_COPY.noComparisonGroup);
   });
 });
 

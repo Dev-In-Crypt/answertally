@@ -169,7 +169,7 @@ export default function MethodPage() {
                 <span className="a-chip">Grok</span>
               </div>
               <p className="small" style={{ margin: "16px 0 8px" }}>
-                Switched on per client, using more AI checks rather than costing extra
+                Switched on per client from the Growth plan, using more AI checks rather than costing extra
               </p>
               <div className="chip-row">
                 <span className="a-chip opt">Claude</span>

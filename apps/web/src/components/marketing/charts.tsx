@@ -1,4 +1,4 @@
-import { C, CLIENT, EXPERIMENT, MATRIX, MATRIX_ASSISTANTS, type Series } from "./data";
+import { C, CLIENT, EXPERIMENT, MATRIX, MATRIX_ASSISTANTS, MATRIX_OPTIONAL, type Series } from "./data";
 import { MEASUREMENT_COPY } from "@repo/core";
 
 /**
@@ -246,10 +246,10 @@ export function PromptMatrix() {
             <th scope="col">
               Prompt <span className="mono">· client: {CLIENT}</span>
             </th>
-            {MATRIX_ASSISTANTS.map((a, i) => (
+            {MATRIX_ASSISTANTS.map((a) => (
               <th key={a} scope="col">
                 {a}
-                {i >= 3 && <span className="opt">{i === 3 ? "switched on" : "off"}</span>}
+                {MATRIX_OPTIONAL.includes(a) && <span className="opt">switched on</span>}
               </th>
             ))}
           </tr>

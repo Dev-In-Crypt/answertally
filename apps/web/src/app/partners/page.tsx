@@ -138,7 +138,7 @@ function faqItems(paymentsOn: boolean) {
   },
   {
     q: "Can we show a client the measurement before they buy?",
-    a: `Yes — that is what the free audit is for. It runs on a prospect account and produces the same report your paying clients get. ${MARKETING_COPY.auditNotForecast}`,
+    a: `Yes, that is what the free audit is for. It runs on a prospect account and produces the audit report you would send a prospect: where the brand stands today and a ranked plan. Each agency gets one free audit; further prospects are audited on a plan. ${MARKETING_COPY.auditNotForecast}`,
   },
   {
     q: "What do we have to be able to say to a client?",

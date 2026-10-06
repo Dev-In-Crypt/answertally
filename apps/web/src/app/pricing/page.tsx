@@ -103,7 +103,7 @@ function faqItems(paymentsOn: boolean) {
   },
   {
     q: "Is the free audit really free?",
-    a: "Yes. Creating a workspace and running the audit costs nothing, and no card is asked for.",
+    a: "Yes. Creating a workspace and running the audit costs nothing, and no card is asked for. Each agency gets one free audit; auditing further brands, or measuring the first one over time, runs on a plan.",
   },
   ];
 }

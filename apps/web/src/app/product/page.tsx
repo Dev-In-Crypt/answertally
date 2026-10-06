@@ -6,14 +6,23 @@ import {
   MEASUREMENT_COPY,
   OPPORTUNITY_COPY,
   SAMPLE_DELIVERY_REPORT,
+  confidenceFor,
   delta,
   estimateExperiment,
   formatContributionRange,
+  wilsonInterval,
 } from "@repo/core";
 import { Conf, LegendLine, MethodLink, SecHead, SrcChip } from "@/components/marketing/bits";
 import { MarketingShell } from "@/components/marketing/chrome";
 import { ExperimentChart, PromptMatrix } from "@/components/marketing/charts";
-import { CLIENT, EXPERIMENT, SOURCES, periodMean } from "@/components/marketing/data";
+import {
+  CLIENT,
+  EXPERIMENT,
+  MATRIX,
+  MATRIX_SAMPLES,
+  SOURCES,
+  periodMean,
+} from "@/components/marketing/data";
 import { ReportPreview } from "@/components/marketing/report-preview";
 
 /**
@@ -65,6 +74,13 @@ function rangeEnds(range: string): [number, number] {
 const AXIS = { min: -2, max: 10 };
 const toPct = (v: number) => ((v - AXIS.min) / (AXIS.max - AXIS.min)) * 100;
 const [effectLo, effectHi] = rangeEnds(effectRange);
+
+/* Пример ответа API — первая ячейка таблицы выше, интервал той же функцией, что в продукте. */
+const API_CELL_PCT = MATRIX[0]?.cells[0];
+const API_CELL = wilsonInterval(
+  Math.round(((typeof API_CELL_PCT === "number" ? API_CELL_PCT : 0) / 100) * MATRIX_SAMPLES),
+  MATRIX_SAMPLES,
+);
 
 const fmt1 = (v: number) => v.toFixed(1);
 const fmtDelta = (v: number | null) =>
@@ -165,9 +181,9 @@ export default function ProductPage() {
           <div className="card">
             <div className="panel-head">
               <span className="t">
-                Prompt × assistant <span>· {CLIENT} · last 28 days · example data</span>
+                Prompt × assistant <span>· {CLIENT} · last 28 days, measured weekly · example data</span>
               </span>
-              <Conf level="medium" />
+              <Conf level={confidenceFor(MATRIX_SAMPLES)} />
             </div>
             <div className="panel-body">
               <PromptMatrix />
@@ -451,7 +467,7 @@ export default function ProductPage() {
           <div className="card exp" data-testid="experiment-example">
             <div className="exp-chart">
               <div className="ev-title">
-                Migration guide refresh <span>· {CLIENT} · next sprint · example data</span>
+                Migration guide refresh <span>· {CLIENT} · marked done {EXPERIMENT.weeks[EXPERIMENT.after[0]]} · example data</span>
               </div>
               <div className="legend">
                 <span>
@@ -620,7 +636,7 @@ export default function ProductPage() {
             </div>
             <pre className="code" aria-label="Example request and abridged response">
               <span className="c"># window: 7–90 days, default 28</span>
-              {"\ncurl https://app.answertally.example/api/v1/clients/"}
+              {"\ncurl https://answertally.com/api/v1/clients/"}
               <span className="n">cl_8f2a</span>
               {"/visibility?windowDays=28 \\\n  -H "}
               <span className="s">&quot;Authorization: Bearer $ANSWERTALLY_KEY&quot;</span>
@@ -640,12 +656,12 @@ export default function ProductPage() {
               {",\n        "}
               <span className="k">&quot;platform&quot;</span>: <span className="s">&quot;chatgpt&quot;</span>
               {",\n        "}
-              <span className="k">&quot;sharePct&quot;</span>: <span className="n">44.4</span>
+              <span className="k">&quot;sharePct&quot;</span>: <span className="n">{API_CELL?.pct}</span>
               {",\n        "}
-              <span className="k">&quot;interval&quot;</span>: [<span className="n">27.1</span>,{" "}
-              <span className="n">62.9</span>]
+              <span className="k">&quot;interval&quot;</span>: [<span className="n">{API_CELL?.low}</span>,{" "}
+              <span className="n">{API_CELL?.high}</span>]
               {",\n        "}
-              <span className="k">&quot;samples&quot;</span>: <span className="n">36</span>
+              <span className="k">&quot;samples&quot;</span>: <span className="n">{MATRIX_SAMPLES}</span>
               {",\n        "}
               <span className="k">&quot;sufficient&quot;</span>: <span className="n">true</span>
               {"\n      }\n    ]\n  }\n}"}

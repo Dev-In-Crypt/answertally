@@ -169,9 +169,8 @@ export const SAMPLE_DELIVERY_REPORT: ReportPayload = buildReportPayload({
   highestImpact: {
     title: "Refreshed the comparison page",
     incrementalPp: 4,
-    // Оговорка ниже говорит, что нетронутых тем для сравнения не было, и
-    // сборщик сам опустит уверенность до низкой. Здесь она записана такой же,
-    // чтобы пример читался ровно так, как он соберётся.
+    // Вклад показывается только при нетронутых темах для сравнения. Тем
+    // для сравнения было мало, отсюда низкая уверенность.
     confidence: "low",
   },
   nextSprint: [
@@ -179,9 +178,7 @@ export const SAMPLE_DELIVERY_REPORT: ReportPayload = buildReportPayload({
     "Publish the head-to-head comparison the answers keep asking for",
     "Refresh the integrations page with current partners",
   ],
-  // Пример показывает и собственный предел: без нетронутых тем движение
-  // нельзя отделить от общего дрейфа платформ.
-  caveats: [REPORT_COPY.noComparisonGroup],
+  caveats: [],
 });
 
 /**

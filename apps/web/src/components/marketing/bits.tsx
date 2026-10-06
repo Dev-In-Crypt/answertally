@@ -28,7 +28,7 @@ export function TalkOrAudit({ fallback = "Start with the free audit →" }: { fa
  * Строка трения под главной кнопкой: что человек получает и чем платит.
  * Без неё «Run a free audit» не говорит, нужна ли карта.
  */
-export const FREE_AUDIT_NOTE = `Free for one brand, on ${freeAuditAssistantSentence()}. No card needed.`;
+export const FREE_AUDIT_NOTE = `One free audit per agency, on ${freeAuditAssistantSentence()}. No card needed.`;
 
 export function CtaNote({ children = FREE_AUDIT_NOTE }: { children?: ReactNode }) {
   return <p className="cta-note">{children}</p>;

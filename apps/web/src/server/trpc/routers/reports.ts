@@ -210,8 +210,12 @@ export const reportsRouter = router({
       }));
 
       // «Самое влиятельное» — с наибольшим наблюдавшимся движением, а не с
-      // самой крупной задачей: размер работы ничего не измеряет.
-      const leading = [...outcomes].sort(
+      // самой крупной задачей: размер работы ничего не измеряет. Только из
+      // экспериментов с нетронутыми темами: без них «вклад» — это сырое
+      // движение тронутых тем, и метод прямо обещает его вкладом не называть.
+      const leading = outcomes
+        .filter((outcome) => outcome.experiment.controlClusterIds.length > 0)
+        .sort(
         (a, b) => (b.estimate.incrementalPp ?? 0) - (a.estimate.incrementalPp ?? 0),
       )[0];
       const leadingTitle = leading ? actionTitles.get(leading.experiment.actionId) : undefined;

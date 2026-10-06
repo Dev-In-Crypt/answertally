@@ -128,10 +128,10 @@ export const REPORT_COPY = {
    * утверждение, ради запрета которого существует инвариант 2.
    */
   measurementBasis:
-    "Visibility is the share of AI answers mentioning the brand, measured across repeated samples on several platforms over weekly windows.",
+    "Visibility is the share of AI answers mentioning the brand, measured across repeated samples on several platforms and grouped by week.",
   /** Тот же смысл, но для одной платформы; %PLATFORM% подставляется. */
   measurementBasisSinglePlatform:
-    "Visibility is the share of %PLATFORM% answers mentioning the brand, measured across repeated samples over weekly windows. Other assistants were not measured for this report.",
+    "Visibility is the share of %PLATFORM% answers mentioning the brand, measured across repeated samples and grouped by week. Other assistants were not measured for this report.",
   /** Ставится, когда движение нельзя отделить от общего дрейфа платформ. */
   noComparisonGroup:
     "There were no untouched topics to compare against in this period, so movement cannot be separated from platform-wide changes.",
@@ -155,7 +155,7 @@ export const REPORT_COPY = {
     "No assistant was measured across the whole period. Each end is shown on its own, and no change between them is given.",
   /** Оговорка к предложенному объёму работ и деньгам. */
   scopeEstimate:
-    "Retainer and effort are the agency's own estimates for the scope below, shown so the numbers behind the proposal are visible.",
+    "Retainer and effort are the agency's own estimates for the proposed scope, shown so the numbers behind the proposal are visible.",
 } as const;
 
 /**
@@ -387,7 +387,7 @@ export const MARKETING_COPY = {
    * (reports/build.ts), а не интервал из данных. Так и сказано.
    */
   contributionBand:
-    "An action's estimated contribution is shown as a band around the estimate. The band has a fixed width: it marks the figure as rough, it is not a statistical interval.",
+    "An action's estimated contribution is shown as a band of roughly 30% either side of the estimate, rounded outward. It marks the figure as rough; it is not a statistical interval.",
   /**
    * Подпись к примеру эксперимента, где нетронутые темы были. Сравнение идёт
    * с ними, а не с «базовой линией платформы»: такого метода в продукте нет.
@@ -414,7 +414,7 @@ export const MARKETING_COPY = {
     attribution:
       "With one client and no untouched topics to compare against, movement cannot be separated from platform-wide drift, and the report says so where that is the case.",
     ranges:
-      "A share comes with a range that depends on how many answers sit behind it. An action's estimated contribution is shown as a fixed-width band around the estimate, next to a confidence level, so it never reads as an exact number.",
+      "A share comes with a range that depends on how many answers sit behind it. An action's estimated contribution is shown as a rough band around the estimate, next to a confidence level, so it never reads as an exact number.",
     revenue:
       "Visibility is a share of answers. What that share is worth belongs to your client's model, not to ours.",
     nothingPublished:

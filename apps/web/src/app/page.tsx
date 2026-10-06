@@ -117,7 +117,7 @@ export default async function HomePage() {
                 <span className="a-chip">ChatGPT</span>
                 <span className="a-chip">Perplexity</span>
                 <span className="a-chip">Grok</span>
-                <span className="a-chip opt">Claude · per client</span>
+                <span className="a-chip opt">Claude · from Growth</span>
               </div>
             </div>
           </div>
