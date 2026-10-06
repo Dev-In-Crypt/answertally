@@ -120,7 +120,7 @@ export function MarketingFooter() {
             <ul>
               <li><Link href="/partners">Selling it to clients</Link></li>
               <li><Link href="/proposal-template">Proposal template</Link></li>
-              <li><Link href="/research">What the research says</Link></li>
+              <li><Link href="/research">Our study (in progress)</Link></li>
             </ul>
           </div>
         </div>

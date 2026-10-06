@@ -64,6 +64,12 @@ const INCLUDED = [
   { title: "PDF export", body: "Download the same report as a PDF, for clients who forward documents rather than links." },
 ];
 
+/**
+ * Выделенный план — решение основателя: Growth, первый со всеми ассистентами
+ * и запасом на книгу клиентов. «Recommended» — наш совет, а не чужая статистика.
+ */
+const FEATURED_PLAN = "growth";
+
 function faqItems(paymentsOn: boolean) {
   return [
   {
@@ -147,8 +153,13 @@ export default function PricingPage() {
 
         <ul className="plans" aria-label="Plans" data-testid="pricing-plans">
           {PLANS.map((plan) => (
-            <li key={plan.id} className="card plan" data-testid={`plan-${plan.id}`}>
+            <li
+              key={plan.id}
+              className={`card plan${plan.id === FEATURED_PLAN ? " featured" : ""}`}
+              data-testid={`plan-${plan.id}`}
+            >
               <div>
+                {plan.id === FEATURED_PLAN && <span className="plan-badge">Recommended</span>}
                 <h2 className="name">{plan.name}</h2>
                 <p className="aud-line">{plan.audience}</p>
               </div>
@@ -180,7 +191,10 @@ export default function PricingPage() {
                 <li>White-label reports and PDF export</li>
                 <li>No charge per seat</li>
               </ul>
-              <Link className="btn secondary" href="/signup">
+              <Link
+                className={`btn ${plan.id === FEATURED_PLAN ? "primary" : "secondary"}`}
+                href="/signup"
+              >
                 Run a free audit
               </Link>
             </li>
@@ -203,9 +217,6 @@ export default function PricingPage() {
             defaultPriceUsd={RESALE.defaultPriceUsd}
             defaultClients={RESALE.defaultClients}
           />
-          <div className="note" style={{ marginTop: 20 }} data-testid="seo-suite">
-            {PRICING_NOTES.seoSuite}
-          </div>
         </div>
       </section>
 
@@ -317,13 +328,13 @@ export default function PricingPage() {
       <section className="sec">
         <div className="wrap">
           <SecHead n={4} title="How to start">
-            {buying.note} This is the actual path.
+            Three steps, in the order they happen.
           </SecHead>
           <ol className="buy">
             <li className="card">
               <span className="num">1</span>
               <h3>Run the free audit</h3>
-              <p>Create a workspace and audit a brand you work on — a client's, or your own. Nothing is charged to run it.</p>
+              <p>Create a workspace and audit a brand you work on: a client's, or your own. Nothing is charged to run it.</p>
             </li>
             <li className="card">
               <span className="num">2</span>

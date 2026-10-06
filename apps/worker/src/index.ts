@@ -15,6 +15,7 @@ import { tickSchedules } from "./scheduler";
 import { enqueueRun, FINALIZE_FAILED_NOTE, pickUpPendingRuns } from "./enqueue-run";
 import { executeRunJob, finalizeRun } from "@repo/pipeline";
 import { errorReporter, logger } from "./observability";
+import { notifyMeasurementReady } from "./notify-ready";
 
 const TICK_QUEUE = "scheduler-tick";
 const TICK_JOB = "find-due-schedules";
@@ -117,6 +118,12 @@ async function main(): Promise<void> {
         },
       });
       logger.info("run.finalized", { runId: job.data.runId, ...outcome });
+      // Письмо не должно ни ронять, ни повторять сборку: сбой почты — в отчёт об ошибках.
+      if (outcome.status === "done") {
+        await notifyMeasurementReady(db, job.data.runId).catch((error: unknown) =>
+          errorReporter.captureError(error, { scope: "run.notify_ready", runId: job.data.runId }),
+        );
+      }
       return outcome;
     },
     { connection },

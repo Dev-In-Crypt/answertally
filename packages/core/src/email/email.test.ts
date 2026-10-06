@@ -6,6 +6,7 @@ import {
   passwordResetEmail,
   verifyEmailEmail,
   reportReadyEmail,
+  measurementReadyEmail,
   type InviteEmailInput,
   type PasswordResetEmailInput,
   type ReportReadyEmailInput,
@@ -63,6 +64,11 @@ const SAMPLES: Record<string, EmailMessage> = {
   verifyEmailEmail: verifyEmailEmail(VERIFY),
   passwordResetEmail: passwordResetEmail(RESET),
   reportReadyEmail: reportReadyEmail(REPORT),
+  measurementReadyEmail: measurementReadyEmail({
+    to: "owner@northwind.test",
+    clientName: "Fernpost",
+    resultsUrl: "https://app.test/clients/abc/audit",
+  }),
 };
 
 const ALL_MESSAGES: ReadonlyArray<readonly [string, EmailMessage]> = Object.entries(SAMPLES);

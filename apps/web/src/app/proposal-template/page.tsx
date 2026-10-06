@@ -70,7 +70,7 @@ export default function ProposalTemplatePage() {
               The structure of a proposal for the client you want to sell this to: what the
               situation is, what gets measured, what you will do, how you report, what it costs
               and what you are not promising. Every number below is invented and marked as an
-              example — replace them with your own.
+              example: replace them with your own.
             </p>
           </div>
           <aside className="card method" aria-label="How to use this template">
@@ -114,7 +114,7 @@ export default function ProposalTemplatePage() {
           <div className="proposal" data-testid="proposal-template">
             <div className="pt-doc">
               <header className="pt-head">
-                <b>AI visibility — proposal</b>
+                <b>AI visibility proposal</b>
                 <span className="label">[Your agency] for [Client] · [Date]</span>
               </header>
 
@@ -129,11 +129,11 @@ export default function ProposalTemplatePage() {
                 <p className="pt-guide">
                   One short paragraph in the client&rsquo;s own words: why this came up now. Use
                   something they said to you, not a market statistic you cannot source. If you
-                  only have a suspicion, say it is a suspicion — the audit is what turns it into
+                  only have a suspicion, say it is a suspicion. The audit is what turns it into
                   something readable.
                 </p>
                 <div className="pt-ex">
-                  <span className="pt-tag">Example — replace</span>
+                  <span className="pt-tag">Example, replace</span>
                   <p>
                     {CLIENT} sells project software to small design studios. In the last two
                     quarters three inbound leads mentioned that they had asked an AI assistant
@@ -153,7 +153,7 @@ export default function ProposalTemplatePage() {
                   What we measure
                 </h2>
                 <p className="pt-guide">
-                  Two parts. The scope is yours to set — how many questions, which assistants,
+                  Two parts. The scope is yours to set: how many questions, which assistants,
                   which competitors. The definition underneath it is not: keep it as written, so
                   the client reads the same description of the measurement that the reports will
                   use.
@@ -167,7 +167,7 @@ export default function ProposalTemplatePage() {
                   <p>{MARKETING_COPY.notMeasuredSurfaces}</p>
                 </div>
                 <div className="pt-ex">
-                  <span className="pt-tag">Example — replace</span>
+                  <span className="pt-tag">Example, replace</span>
                   <table className="pt-table">
                     <thead>
                       <tr>
@@ -199,10 +199,10 @@ export default function ProposalTemplatePage() {
                   Before the first audit you do not know which pieces of work matter, so list the
                   kinds of work and say plainly that the order comes from the measurement. After
                   the audit, replace this with the ranked list the diagnosis produced, each item
-                  with its reason. Effort is your estimate for your own team — write it as one.
+                  with its reason. Effort is your estimate for your own team; write it as one.
                 </p>
                 <div className="pt-ex">
-                  <span className="pt-tag">Example — replace</span>
+                  <span className="pt-tag">Example, replace</span>
                   <table className="pt-table">
                     <thead>
                       <tr>
@@ -242,7 +242,7 @@ export default function ProposalTemplatePage() {
                   dashboard nobody opens.
                 </p>
                 <div className="pt-ex">
-                  <span className="pt-tag">Example — replace</span>
+                  <span className="pt-tag">Example, replace</span>
                   <ul>
                     <li>
                       A report each month, as a link in our brand, plus a PDF if you prefer to
@@ -264,7 +264,6 @@ export default function ProposalTemplatePage() {
                 <div className="pt-fixed">
                   <span className="pt-tag">Keep this as written</span>
                   <p>{MARKETING_COPY.experimentMethod}</p>
-                  <p>{REPORT_COPY.shortPeriod}</p>
                 </div>
               </section>
 
@@ -279,11 +278,11 @@ export default function ProposalTemplatePage() {
                 <p className="pt-guide">
                   Your price, your terms. Two things are worth stating next to the number: what
                   the retainer buys each month, and the shortest period after which the
-                  measurements say anything at all — quoting a one-month term for something that
+                  measurements say anything at all. Quoting a one-month term for something that
                   moves over a quarter sets the client up to be disappointed.
                 </p>
                 <div className="pt-ex">
-                  <span className="pt-tag">Example — replace</span>
+                  <span className="pt-tag">Example, replace</span>
                   <table className="pt-table">
                     <thead>
                       <tr>
@@ -318,7 +317,7 @@ export default function ProposalTemplatePage() {
                 </h2>
                 <p className="pt-guide">
                   Keep this section. It costs you nothing that was ever deliverable, and it is
-                  the part that makes the rest of the document believable — particularly to a
+                  the part that makes the rest of the document believable, particularly to a
                   client who has been sold an AI-search package before.
                 </p>
                 <div className="pt-fixed">
@@ -347,10 +346,10 @@ export default function ProposalTemplatePage() {
                   the next step is running it.
                 </p>
                 <div className="pt-ex">
-                  <span className="pt-tag">Example — replace</span>
+                  <span className="pt-tag">Example, replace</span>
                   <ul>
                     <li>
-                      [Your name] runs the audit on {CLIENT} and the four competitors — no cost,
+                      [Your name] runs the audit on {CLIENT} and the four competitors, at no cost and with
                       nothing published.
                     </li>
                     <li>

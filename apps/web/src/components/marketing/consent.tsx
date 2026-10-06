@@ -143,9 +143,11 @@ export function ConsentManager() {
           Cookies for ad measurement
         </p>
         <p className="consent-text">
-          With your OK we load measurement tags from {adVendors().join(", ")} to see which ads bring
-          people to this site. They set cookies. Nothing loads until you choose, and you can change
-          your mind any time from “Cookie settings” in the footer.{" "}
+          With your OK we load ad measurement tags from {adVendors().join(", ")}. They set cookies.{" "}
+          <span className="long">
+            Nothing loads until you choose, and you can change your mind any time from “Cookie
+            settings” in the footer.{" "}
+          </span>
           <Link href="/legal/cookies">Cookie policy</Link>
         </p>
         <div className="consent-actions">

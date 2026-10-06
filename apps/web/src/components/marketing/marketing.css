@@ -396,6 +396,8 @@
 .mk .plan ul li { display: grid; grid-template-columns: 18px 1fr; gap: 6px; }
 .mk .plan ul li::before { content: "\2713"; color: var(--client-ink); font-weight: 600; }
 .mk .plan .btn { margin-top: auto; }
+.mk .plan.featured { border: 2px solid var(--cw-indigo); box-shadow: 0 10px 30px rgb(79 57 246 / .12); }
+.mk .plan-badge { display: inline-block; margin-bottom: 10px; padding: 3px 10px; border-radius: 999px; background: var(--cw-indigo); color: #fff; font: 500 11px/1.4 var(--font-mono); letter-spacing: 0.04em; text-transform: uppercase; }
 .mk .defs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
 .mk .def { padding: 28px; display: flex; flex-direction: column; gap: 14px; }
 .mk .def .big { font: 500 24px/1.3 var(--font-serif); }
@@ -744,4 +746,15 @@
 .mk .consent-text { margin: 0 0 14px; font-size: 14px; line-height: 1.5; color: var(--cw-muted); }
 .mk .consent-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 .mk .consent-actions .btn { flex: 1 1 140px; }
+/* На телефоне баннер — полоса снизу: текст короче, кнопки в ряд, меню страницы видно. */
+@media (max-width: 640px) {
+  .mk .consent { left: 8px; right: 8px; bottom: 8px; padding: 12px 14px; }
+  .mk .consent-title { display: none; }
+  .mk .consent-text { margin-bottom: 10px; font-size: 13px; }
+  .mk .consent-text .long { display: none; }
+  .mk .consent-actions .btn { flex: 1 1 0; padding-top: 8px; padding-bottom: 8px; }
+}
+@media (min-width: 900px) {
+  .mk .consent { left: auto; max-width: 440px; }
+}
 .foot-link-button { background: none; border: 0; padding: 0; font: inherit; color: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }

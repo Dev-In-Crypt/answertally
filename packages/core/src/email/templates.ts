@@ -185,6 +185,41 @@ export function reportReadyEmail(input: ReportReadyEmailInput): EmailMessage {
   };
 }
 
+export interface MeasurementReadyEmailInput {
+  to: string;
+  clientName: string;
+  resultsUrl: string;
+}
+
+/**
+ * Письмо агентству: запущенный вручную замер закончился.
+ *
+ * Аудит идёт дольше загрузки страницы, и без письма человек не знал, когда
+ * вернуться. Письмо сотруднику агентства, а не клиенту, — от продукта.
+ */
+export function measurementReadyEmail(input: MeasurementReadyEmailInput): EmailMessage {
+  const resultsUrl = requireAbsoluteUrl(input.resultsUrl, "resultsUrl");
+
+  const text = [
+    `The measurement of ${input.clientName} has finished.`,
+    "",
+    `See the results: ${resultsUrl}`,
+    "",
+    "The figures are estimates from repeated samples of assistant answers. Nothing is sent to the client until you send it.",
+  ].join("\n");
+
+  return {
+    to: input.to,
+    subject: `${input.clientName}: measurement results are ready`,
+    text,
+    html: paragraphs([
+      `The measurement of <strong>${escapeHtml(input.clientName)}</strong> has finished.`,
+      `<a href="${escapeHtml(resultsUrl)}">See the results</a>`,
+      "The figures are estimates from repeated samples of assistant answers. Nothing is sent to the client until you send it.",
+    ]),
+  };
+}
+
 function paragraphs(lines: readonly string[]): string {
   return lines.map((line) => `<p>${line}</p>`).join("\n");
 }

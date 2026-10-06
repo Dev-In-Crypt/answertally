@@ -40,7 +40,7 @@ export const MEASUREMENT_COPY = {
    * «не спрашивали» от «спросили и не нашли» — второе было бы неправдой.
    */
   notMeasured:
-    "Not measured yet — we do not ask this assistant, so there is nothing to report either way.",
+    "Not measured yet: we do not ask this assistant, so there is nothing to report either way.",
   /** Ячейка, где конкурента назвали, а клиента нет. */
   competitorOnly: "A tracked competitor was named in answers where the client was not.",
   /** Ячейка ниже порога сэмплов. */
@@ -73,7 +73,7 @@ export const MEASUREMENT_COPY = {
     "The set of assistants measured changed between these periods, so the two figures do not rest on the same answers.",
   /** По какому набору посчитано изменение; %ASSISTANTS% подставляется. */
   assistantSetComparedOn:
-    "Change worked out over %ASSISTANTS% — the assistants measured in both periods.",
+    "Change worked out over %ASSISTANTS%, the assistants measured in both periods.",
   /** Общих ассистентов нет вовсе. */
   assistantSetDisjoint:
     "No assistant was measured in both periods, so there is no like-for-like change to show.",
@@ -140,7 +140,7 @@ export const REPORT_COPY = {
     "Models typically take weeks to re-crawl and shift citations, so a short period shows early signal rather than settled results.",
   /** Идёт в каждый аудит: снимок «как сейчас», а не прогноз. */
   opportunityBasis:
-    "This audit is a single measurement of how assistants answer today. The ranked work is what the current sources suggest, with expected effort — not a forecast of results.",
+    "This audit is a single measurement of how assistants answer today. The ranked work is what the current sources suggest, with expected effort, not a forecast of results.",
   /**
    * Состав ассистентов менялся внутри периода отчёта.
    *
@@ -270,7 +270,7 @@ export const PARTNER_COPY = {
    * напечатанная на сайте, и спорить о ней потом будет поздно.
    */
   volume:
-    "Once you are past %THRESHOLD% client accounts, every further account is $%PRICE% a month — %DISCOUNT%% off the rate the top plan works out to. It applies only to the accounts above %THRESHOLD%, never to the ones the plan already covers, so adding a client never makes your bill jump sideways.",
+    "Once you are past %THRESHOLD% client accounts, every further account is $%PRICE% a month, %DISCOUNT%% off the rate the top plan works out to. It applies only to the accounts above %THRESHOLD%, never to the ones the plan already covers, so adding a client never makes your bill jump sideways.",
   /** Почему скидка марджинальная, а не на всё сразу. */
   volumeShape:
     "We price it this way because the alternative has a cliff in it: if the discount applied to every account at once, your 26th client would cost us more than your 25th, and we would end up discouraging the thing we want.",
@@ -310,7 +310,7 @@ export const OPPORTUNITY_COPY = {
     "Each opportunity is derived from measured answers: where the client is losing, on which questions, and what the cited sources suggest doing about it. Ranked by an internal score, not by certainty of outcome.",
   /** Пояснение к оценке. Никакого обещания результата. */
   scoreBasis:
-    "The score ranks work against work for this client. It is not a rating of the site and not a forecast — it combines how large the gap is, how much of the tracked question set it touches, how commercial those questions are, and how well it was measured.",
+    "The score ranks work against work for this client. It is not a rating of the site and not a forecast. It combines how large the gap is, how much of the tracked question set it touches, how commercial those questions are, and how well it was measured.",
   /** Подписи множителей — ровно то, чем они являются. */
   factorLabels: {
     impact: "Size of the gap",
@@ -324,7 +324,7 @@ export const OPPORTUNITY_COPY = {
    * Данных о спросе у продукта нет, и подпись обязана это показывать.
    */
   coverageBasis:
-    "Share of the questions this client tracks, not search demand — the product does not measure how often people ask them.",
+    "Share of the questions this client tracks, not search demand; the product does not measure how often people ask them.",
   /** Оговорка над примерами ответов в доказательстве. */
   evidenceBasis:
     "Examples from the sample, shown after the aggregate. A single answer is never a result on its own.",
@@ -437,9 +437,9 @@ export const MARKETING_COPY = {
    */
   whiteLabel: {
     page: "The client sees your logo and colour. The report page does not name us, link to us or mention a plan.",
-    link: "The link opens without an account. It can be served from a domain you own — ask us and we set it up — and on that domain nothing but the report exists.",
+    link: "The link opens without an account. It can be served from a domain you own (ask us and we set it up), and on that domain nothing but the report exists.",
     email:
-      "Sent from the product, the email goes out under your agency's name from our sending address.",
+      "Sent from the product, the email shows your agency's name as the sender, comes from noreply@answertally.com, and replies go to whoever on your team sent it. To keep even that address out of sight, send the link from your own mailbox.",
     pdf: "You can download the same page as a PDF to forward. The client's link has an approve step, not a download button.",
     approve:
       "The client approves the report, and the next sprint in it, by typing their name on the page. The name and the date are recorded.",

@@ -33,7 +33,7 @@ const WILL_PUBLISH = [
   },
   {
     title: "The counts",
-    body: "How many answers were collected per question per assistant, per week — not only the shares worked out from them.",
+    body: "How many answers were collected per question per assistant, per week, not only the shares worked out from them.",
   },
   {
     title: "The ranges",
@@ -156,7 +156,7 @@ export default function ResearchPage() {
               <li>
                 <span>
                   <b>How many answers does it take?</b> How large a sample has to be before a
-                  share stops moving around — which is the number that decides what the product
+                  share stops moving around. That is the number that decides what the product
                   is allowed to show.
                 </span>
               </li>

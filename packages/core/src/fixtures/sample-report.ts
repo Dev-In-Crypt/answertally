@@ -79,7 +79,7 @@ const RANKED_ACTIONS = [
   {
     title: "Refresh the fernpost.example pricing page",
     reason:
-      "The page is cited 6 times here, but the brand is not mentioned in those answers — it is being read without carrying the name.",
+      "The page is cited 6 times here, but the brand is not mentioned in those answers: it is being read without carrying the name.",
     estimatedImpact: "medium" as const,
     effort: "low" as const,
   },

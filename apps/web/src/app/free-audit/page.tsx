@@ -44,7 +44,7 @@ function faqItems(paymentsOn: boolean) {
   return [
   {
     q: "How long does it take?",
-    a: `Longer than a page load, and we do not promise a time. ${MARKETING_COPY.auditTakesTime}`,
+    a: `Usually minutes rather than seconds; it depends on how fast the assistants answer that day. ${MARKETING_COPY.auditTakesTime} We email you when the results are ready, so you do not have to wait on the page.`,
   },
   {
     q: "Which assistants does the audit use?",

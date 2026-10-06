@@ -141,7 +141,7 @@ test("pricing figures are the ones the API enforces", async ({ page }) => {
   await expect(faq).toContainText("no separate price");
   await expect(faq).toContainText("not counted");
   await expect(faq).toContainText("moving to the next plan");
-  await expect(page.getByTestId("seo-suite")).toContainText("Keep your SEO suite");
+  await expect(faq).toContainText("Keep your SEO suite");
   // Не утверждено: входит ли API в каждый план и считается ли проспект в лимит.
   const text = await page.locator("main").innerText();
   expect(text).not.toMatch(/\bAPI\b/i);

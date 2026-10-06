@@ -122,7 +122,7 @@ function faqItems(paymentsOn: boolean) {
   },
   {
     q: "What should we charge for this?",
-    a: "That is yours to decide, and we deliberately do not publish a recommended rate — we have no market data that would make one honest. The calculator above does arithmetic on the numbers you type in, so you can see what a price would mean against the plan that covers those clients.",
+    a: "That is yours to decide, and we deliberately do not publish a recommended rate: we have no market data that would make one honest. The calculator above does arithmetic on the numbers you type in, so you can see what a price would mean against the plan that covers those clients.",
   },
   {
     q: "Is there a partner programme or revenue share?",
@@ -146,7 +146,7 @@ function faqItems(paymentsOn: boolean) {
   },
   {
     q: "Do we need a specialist to run it?",
-    a: "Someone on the team has to read the diagnosis and decide what work is worth doing — the product ranks opportunities and writes the reason for each, but it does not choose for you, and it never changes a client's site.",
+    a: "Someone on the team has to read the diagnosis and decide what work is worth doing. The product ranks opportunities and writes the reason for each, but it does not choose for you, and it never changes a client's site.",
   },
   ];
 }
@@ -242,8 +242,8 @@ export default function PartnersPage() {
       <section className="sec" id="get">
         <div className="wrap">
           <SecHead n={1} title="What an agency gets">
-            Not a reseller portal — the same product your team works in, with the client-facing
-            half carrying your brand instead of ours.
+            Not a reseller portal: the same product your team works in, with the report your client
+            opens carrying your brand.
           </SecHead>
           <ul className="incl" data-testid="partners-get">
             {WHAT_YOU_GET.map((item, i) => (
@@ -264,7 +264,7 @@ export default function PartnersPage() {
         <div className="wrap">
           <SecHead n={2} title="How the money works on your side">
             You buy a plan at a listed price and charge your client whatever your own offer is
-            worth. The difference is yours, and it is not a number we can promise you — it
+            worth. The difference is yours, and it is not a number we can promise you. It
             depends on your price and on how many clients say yes.
           </SecHead>
           <ResaleCalculator
@@ -380,8 +380,8 @@ export default function PartnersPage() {
               <ul className="rules">
                 <li>
                   <span>
-                    <b>The proposal template.</b> The structure of an AI-visibility proposal —
-                    what to measure, what to report, what not to promise — with example values
+                    <b>The proposal template.</b> The structure of an AI-visibility proposal
+                    (what to measure, what to report, what not to promise) with example values
                     you replace. <Link href="/proposal-template">Open it →</Link>
                   </span>
                 </li>
@@ -406,7 +406,7 @@ export default function PartnersPage() {
       {/* 6 · чего мы не утверждаем — агентство перепродаёт и эти пределы тоже */}
       <section className="sec" id="never">
         <div className="wrap">
-          <SecHead n={6} title="What we never claim — and neither should your pitch">
+          <SecHead n={6} title="What we never claim, and neither should your pitch">
             You are going to repeat these lines to your own client, so they are here rather than
             in a footnote.
           </SecHead>
