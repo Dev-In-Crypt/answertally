@@ -85,7 +85,7 @@ export function entitlementsFor(
       paying: false,
       // Месячный лимит starter до оплаты не действует: неплательщика
       // ограничивает бесплатный аудит (`canStartMeasurement`), о нём и речь.
-      reason: `No plan yet — the free audit applies: one brand, up to ${FREE_CHECK_ALLOWANCE} AI checks in total.`,
+      reason: `No plan yet, so the free audit applies: one brand, up to ${FREE_CHECK_ALLOWANCE} AI checks in total.`,
     };
   }
 
@@ -227,7 +227,7 @@ export function canSwitchToPlan(
   const extra = currentClients - target.clientLimit;
   return {
     allowed: false,
-    message: `The ${planLabel(target.plan)} plan covers ${target.clientLimit} clients and you have ${currentClients}. Archive ${extra} ${extra === 1 ? "client" : "clients"} first — switching would not remove them, and we will not measure more clients than the plan covers.`,
+    message: `The ${planLabel(target.plan)} plan covers ${target.clientLimit} clients and you have ${currentClients}. Archive ${extra} ${extra === 1 ? "client" : "clients"} first. Switching would not remove them, and we will not measure more clients than the plan covers.`,
   };
 }
 
@@ -335,7 +335,7 @@ export function canStartMeasurement(
     return {
       allowed: false,
       message:
-        "Your audit is still running. It covers one brand — once it finishes, you can read it in full.",
+        "Your audit is still running. It covers one brand; once it finishes, you can read it in full.",
     };
   }
 
@@ -344,7 +344,7 @@ export function canStartMeasurement(
   if (remaining <= 0) {
     return {
       allowed: false,
-      message: `The free audit covers ${FREE_CHECK_ALLOWANCE} AI checks and they are used up. Pick a plan to keep measuring — nothing measured so far is lost.`,
+      message: `The free audit covers ${FREE_CHECK_ALLOWANCE} AI checks and they are used up. Pick a plan to keep measuring. Nothing measured so far is lost.`,
     };
   }
 

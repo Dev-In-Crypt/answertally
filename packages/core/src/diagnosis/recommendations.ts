@@ -171,7 +171,7 @@ export function recommendOwnedRefresh(
       makeRecommendation({
         actionType: "refresh_page",
         title: `Refresh ${source.domain} content used for this cluster`,
-        reason: `${source.domain} is cited ${source.citations} times here, but the client is not mentioned in those answers — the page is being read without carrying the brand.`,
+        reason: `${source.domain} is cited ${source.citations} times here, but the client is not mentioned in those answers: the page is being read without carrying the brand.`,
         estimatedImpact: impactFromShare(source.sharePct),
         effort: "low",
         sourceDomain: source.domain,

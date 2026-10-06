@@ -229,7 +229,7 @@ export function AuditView({ clientId }: { clientId: string }) {
               <span className="metric">{promptCount}</span> prompts, several samples each.
             </>
           )}{" "}
-          Repeated samples are what makes the number readable at all — one answer is not a
+          Repeated samples are what makes the number readable at all. One answer is not a
           measurement.
         </span>
       </div>
@@ -284,14 +284,14 @@ export function AuditView({ clientId }: { clientId: string }) {
       {phase === "running" && queuedRunId !== null && (
         <p data-testid="audit-queued" className="text-sm text-muted-foreground">
           The assistants are being asked now. This takes a few minutes, because every prompt is
-          asked several times on each assistant. You can leave this page — the results appear on
+          asked several times on each assistant. You can leave this page. The results appear on
           the opportunities screen when the run finishes.
         </p>
       )}
 
       {phase === "stalled" && (
         <p data-testid="audit-stalled" className="text-sm text-muted-foreground">
-          This audit is taking longer than usual. It keeps going in the background — its status is
+          This audit is taking longer than usual. It keeps going in the background; its status is
           on the {measureLink}, and the results appear on the opportunities screen when it
           finishes.
         </p>
@@ -303,7 +303,7 @@ export function AuditView({ clientId }: { clientId: string }) {
           const state = phase === "running" ? "running" : phase === "done" ? "done" : "waiting";
           const detail =
             step.key === "measure" && plan.data
-              ? `${plan.data.assistants.join(", ")} — ${plan.data.samplesPerPrompt} samples per prompt`
+              ? `${plan.data.assistants.join(", ")} · ${plan.data.samplesPerPrompt} samples per prompt`
               : step.detail;
           return (
             <li
@@ -333,7 +333,7 @@ export function AuditView({ clientId }: { clientId: string }) {
 
       {phase === "done" && (
         <p data-testid="audit-done" className="text-sm">
-          Audit complete —{" "}
+          Audit complete:{" "}
           <Link href={`/clients/${clientId}/opportunities`} className={linkClass}>
             open the opportunities
           </Link>{" "}

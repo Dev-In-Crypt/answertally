@@ -72,7 +72,7 @@ export default function PrivacyPage() {
           </tr>
           <tr>
             <td>Card details</td>
-            <td>We never receive them — they are entered on Creem, our merchant of record</td>
+            <td>We never receive them. They are entered on Creem, our merchant of record</td>
             <td>Not held by us at all</td>
           </tr>
           <tr>
@@ -103,7 +103,7 @@ export default function PrivacyPage() {
 
       <h3>People inside answers</h3>
       <p>
-        We do not ask assistants about people. But an answer about a company sometimes names one — a
+        We do not ask assistants about people. But an answer about a company sometimes names one: a
         founder, an author, a reviewer. That text is stored as it came back, because editing it
         would make it a different answer. We do not build profiles from it, index it by person, or
         use it to find anything out about anyone.
@@ -123,7 +123,7 @@ export default function PrivacyPage() {
       </p>
       <p>
         Report links are unguessable and are not indexed by search engines. Anyone with the link can
-        open the report, so treat it as you would any document you send by email — and ask your
+        open the report, so treat it as you would any document you send by email, and ask your
         agency to revoke it if it goes somewhere it should not.
       </p>
 
@@ -132,7 +132,7 @@ export default function PrivacyPage() {
         <li>
           We do not sell data, and we do not share it for anyone else&rsquo;s advertising
           {TRACKING_ENABLED
-            ? " — apart from the optional ad-measurement tags under Cookies, which load only if you accept them."
+            ? ", apart from the optional ad-measurement tags under Cookies, which load only if you accept them."
             : "."}
         </li>
         <li>We do not train models on your data, or let our providers do so.</li>
@@ -192,7 +192,7 @@ export default function PrivacyPage() {
       <p>
         You can ask what we hold about you, ask for it to be corrected, ask for a copy, or ask us to
         delete it. If the data belongs to an agency&rsquo;s workspace rather than to you personally,
-        ask that agency first — they decide, and we act on their instruction.
+        ask that agency first. They decide, and we act on their instruction.
       </p>
       <p>
         {LEGAL_ENTITY ? (
@@ -213,7 +213,7 @@ export default function PrivacyPage() {
       <h2>Changes</h2>
       <p>
         This page carries a date. When something changes that affects what we do with your data, we
-        change the date and tell workspace owners before it takes effect — not after.
+        change the date and tell workspace owners before it takes effect, not after.
       </p>
       <p className="mono">Controller for the data described above: {us}.</p>
     </>

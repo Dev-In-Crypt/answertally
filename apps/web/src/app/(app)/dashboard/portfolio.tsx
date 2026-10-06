@@ -21,11 +21,11 @@ import { Users } from "lucide-react";
  */
 
 function formatPct(value: number | null): string {
-  return value === null ? "—" : `${Math.round(value)}%`;
+  return value === null ? "–" : `${Math.round(value)}%`;
 }
 
 function formatPp(value: number | null): string {
-  if (value === null) return "—";
+  if (value === null) return "–";
   return `${value > 0 ? "+" : ""}${value} pp`;
 }
 
@@ -150,7 +150,7 @@ export function Portfolio() {
               </TD>
               <TD>
                 {row.needs.length === 0 ? (
-                  <span className="text-muted-foreground">—</span>
+                  <span className="text-muted-foreground">–</span>
                 ) : (
                   <Link
                     href={`/clients/${row.clientId}`}

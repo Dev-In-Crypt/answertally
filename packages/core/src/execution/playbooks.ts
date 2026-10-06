@@ -83,7 +83,7 @@ export const PLAYBOOKS: Record<ActionType, Playbook> = {
       "It answers the question a reader arrived with, on its own.",
     ],
     pitfalls: [
-      "Undisclosed promotion gets accounts banned and the domain filtered — the damage outlives the post.",
+      "Undisclosed promotion gets accounts banned and the domain filtered, and the damage outlives the post.",
       "You cannot buy your way into a community; participation is the only route.",
     ],
   },
@@ -109,7 +109,7 @@ export const PLAYBOOKS: Record<ActionType, Playbook> = {
     steps: [
       "Open the page as the assistant reads it: strip navigation and look at what the text actually states.",
       "Check whether the brand is named inside the passages that answer the question, or only in the layout around them.",
-      "Update prices, limits and dates that have gone stale — outdated specifics are why a page gets read and then ignored.",
+      "Update prices, limits and dates that have gone stale. Outdated specifics are why a page gets read and then ignored.",
       "Add the missing specifics the cluster's questions ask for.",
     ],
     acceptance: [
@@ -122,7 +122,7 @@ export const PLAYBOOKS: Record<ActionType, Playbook> = {
   technical_fix: {
     steps: [
       "Reproduce what a crawler receives: fetch the page without JavaScript and compare with what a visitor sees.",
-      "Fix the specific barrier found — server errors, redirect chains, content that only exists after client-side rendering.",
+      "Fix the specific barrier found: server errors, redirect chains, content that only exists after client-side rendering.",
       "Re-fetch and confirm the answering text is present in the raw response.",
     ],
     acceptance: [
@@ -145,7 +145,7 @@ export const PLAYBOOKS: Record<ActionType, Playbook> = {
   crawler_fix: {
     steps: [
       "Read robots.txt and the meta directives on the page for rules that block assistant crawlers specifically.",
-      "Decide with the client which crawlers should be allowed — this is their call, not ours.",
+      "Decide with the client which crawlers should be allowed. This is their call, not ours.",
       "Apply the change and confirm with a fetch that the page is now allowed.",
     ],
     acceptance: [

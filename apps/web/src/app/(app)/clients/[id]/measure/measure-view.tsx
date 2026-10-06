@@ -238,7 +238,7 @@ function PromptList({
               {prompt.isControl && (
                 <span
                   data-testid="control-badge"
-                  title="Control prompt — untouched by actions, used as a comparison baseline"
+                  title="Control prompt: untouched by actions, used as a comparison baseline"
                   className="rounded-full border px-2 py-0.5 text-xs text-muted-foreground"
                 >
                   control

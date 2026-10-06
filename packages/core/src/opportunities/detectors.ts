@@ -223,7 +223,7 @@ export function detectCompetitorGaps(input: DetectorInput): DetectedOpportunity[
           competitor,
         }),
         title,
-        reason: `${competitor} is named in ${competitorPct}% of sampled answers to ${rows.length} tracked ${questions} here, the client in ${clientPct}% — ${gapPp} pp behind across ${samples} answers.`,
+        reason: `${competitor} is named in ${competitorPct}% of sampled answers to ${rows.length} tracked ${questions} here, the client in ${clientPct}%: ${gapPp} pp behind across ${samples} answers.`,
         evidence: {
           kind: "competitor_gap",
           clusterId: cluster.clusterId,
@@ -438,7 +438,7 @@ export function detectContentGaps(input: DetectorInput): DetectedOpportunity[] {
           kind: "content_gap",
           dedupeKey: dedupeKeyFor({ kind: "content_gap", domain }),
           title: `${domain} is read but does not carry the brand`,
-          reason: `${domain} is cited ${source.citations} times (${source.sharePct}% of citations here), but the client is not named in those answers — the page is being read without carrying the brand.`,
+          reason: `${domain} is cited ${source.citations} times (${source.sharePct}% of citations here), but the client is not named in those answers: the page is being read without carrying the brand.`,
           evidence: {
             kind: "content_gap",
             variant: "owned_without_brand",
@@ -533,7 +533,7 @@ export function detectClusterGaps(input: DetectorInput): DetectedOpportunity[] {
         kind: "cluster_gap",
         dedupeKey: dedupeKeyFor({ kind: "cluster_gap", clusterId: cluster.clusterId }),
         title: `"${cluster.clusterName}" trails the rest of the set`,
-        reason: `The client is named in ${clusterPct}% of answers on this topic against ${overallPct}% across all tracked questions — ${gapPp} pp lower, on ${samples} answers.`,
+        reason: `The client is named in ${clusterPct}% of answers on this topic against ${overallPct}% across all tracked questions, ${gapPp} pp lower on ${samples} answers.`,
         evidence: {
           kind: "cluster_gap",
           clusterId: cluster.clusterId,

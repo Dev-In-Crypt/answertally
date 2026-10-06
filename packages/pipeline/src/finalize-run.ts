@@ -61,7 +61,7 @@ export function runOutcome(
   }
   if (written * 2 < expected) {
     notes.unshift(
-      `Only ${written} of ${expected} answers came back — too few to measure from. The assistants were not responding reliably.`,
+      `Only ${written} of ${expected} answers came back, too few to measure from. The assistants were not responding reliably.`,
     );
     return { status: "failed", note: notes.join(" ") };
   }

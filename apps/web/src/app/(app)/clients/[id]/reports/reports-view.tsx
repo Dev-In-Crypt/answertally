@@ -36,7 +36,7 @@ export function proposalProblem(values: ProposalValues): string | null {
   if (effortMin > 1000 || effortMax > 1000) return "Effort can be at most 1,000 hours.";
   if (hourlyCost > 10_000) return "Your cost can be at most $10,000 an hour.";
   if (effortMin > effortMax) {
-    return "The effort range is inverted — the lower bound is above the upper one.";
+    return "The effort range is inverted: the lower bound is above the upper one.";
   }
   return null;
 }
@@ -240,7 +240,7 @@ export function ReportsView({ clientId }: { clientId: string }) {
 
                 {pdfBusy === report.id && (
                   <p className="text-sm text-muted-foreground">
-                    Preparing the PDF — this can take up to a minute.
+                    Preparing the PDF. This can take up to a minute.
                   </p>
                 )}
                 {pdfError?.reportId === report.id && (
@@ -282,7 +282,7 @@ export function ReportsView({ clientId }: { clientId: string }) {
                 {sentTo[report.id]?.delivered && (
                   <p data-testid="send-done" className="text-sm text-muted-foreground">
                     Sent to <span className="metric">{sentTo[report.id]?.to}</span>. The client
-                    opens the report by link — no account needed, and approves it there.
+                    opens the report by link (no account needed) and approves it there.
                   </p>
                 )}
                 {sentTo[report.id]?.delivered === false && (
@@ -368,7 +368,7 @@ function OpportunityForm({
       <h2 className="text-base font-medium">Opportunity report (audit)</h2>
       <p className="max-w-prose text-sm text-muted-foreground">
         Shows where this prospect stands today, the ranked work behind it and what you propose to
-        charge. Your margin stays here — the client report never shows it.
+        charge. Your margin stays here; the client report never shows it.
       </p>
 
       <div className="flex flex-wrap items-end gap-3">

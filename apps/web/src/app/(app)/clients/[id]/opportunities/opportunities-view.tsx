@@ -144,7 +144,7 @@ export function OpportunitiesView({ clientId }: { clientId: string }) {
                   {row.status}
                 </span>
                 {row.dismissedReason && (
-                  <span className="text-xs text-muted-foreground">— {row.dismissedReason}</span>
+                  <span className="text-xs text-muted-foreground">({row.dismissedReason})</span>
                 )}
               </li>
             ))}

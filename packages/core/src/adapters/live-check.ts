@@ -25,7 +25,7 @@ async function main(): Promise<void> {
 
   const registered = registerLiveAdapters();
   if (!registered.includes(platform)) {
-    throw new Error(`No API key for "${platform}" — nothing to check.`);
+    throw new Error(`No API key for "${platform}", so there is nothing to check.`);
   }
 
   const prompt = process.argv[3] ?? "best CRM for startups";

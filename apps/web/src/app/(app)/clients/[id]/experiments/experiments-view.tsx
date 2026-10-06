@@ -37,7 +37,7 @@ function GroupRow({
   deltaPp: number | null;
   testId: string;
 }) {
-  const pct = (value: number | null) => (value === null ? "—" : `${value}%`);
+  const pct = (value: number | null) => (value === null ? "–" : `${value}%`);
 
   return (
     <tr data-testid={testId} className="border-b last:border-0">
@@ -45,7 +45,7 @@ function GroupRow({
       <td className="metric py-2 text-right">{pct(group.beforePct)}</td>
       <td className="metric py-2 text-right">{pct(group.afterPct)}</td>
       <td className="metric py-2 text-right">
-        {deltaPp === null ? "—" : `${deltaPp >= 0 ? "+" : ""}${deltaPp} pp`}
+        {deltaPp === null ? "–" : `${deltaPp >= 0 ? "+" : ""}${deltaPp} pp`}
       </td>
       <td className="metric py-2 text-right">
         {group.samplesAfter}
@@ -224,7 +224,7 @@ function ExperimentDetail({ experimentId }: { experimentId: string }) {
             <dt className="text-muted-foreground">Relative movement</dt>
             <dd data-testid="relative-movement" className="metric">
               {estimate.incrementalPp === null
-                ? "—"
+                ? "–"
                 : `${estimate.incrementalPp >= 0 ? "+" : ""}${estimate.incrementalPp} pp`}
             </dd>
           </div>

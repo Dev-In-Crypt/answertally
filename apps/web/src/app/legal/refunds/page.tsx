@@ -31,7 +31,7 @@ export default function RefundsPage() {
 
       <h2>Before you pay</h2>
       <p>
-        The free audit runs the product end to end on one brand — the measurement, the full
+        The free audit runs the product end to end on one brand: the measurement, the full
         diagnosis, the ranked work and a report you can send. No card is asked for.
       </p>
       <p>
@@ -48,11 +48,11 @@ export default function RefundsPage() {
         </li>
         <li>
           Moving up a plan takes effect at once, and you pay the difference for the rest of the
-          month immediately — the new limits are available the same day.
+          month immediately. The new limits are available the same day.
         </li>
         <li>
           Moving down takes effect the same way. If you have more client accounts than the smaller
-          plan holds, the product will not let the change through until you archive the extras —
+          plan holds, the product will not let the change through until you archive the extras;
           nothing is deleted for you.
         </li>
       </ul>
@@ -63,7 +63,7 @@ export default function RefundsPage() {
         subscription runs to the end of the month you have already paid for, and then stops.
       </p>
       <p>
-        Until it stops, everything keeps working — including the report links your clients already
+        Until it stops, everything keeps working, including the report links your clients already
         have. Cancelling does not cut off a report you sent last week.
       </p>
       <p>
@@ -82,7 +82,7 @@ export default function RefundsPage() {
       <ul>
         <li>
           <strong>We charged you wrongly.</strong> Double charge, a plan you did not choose, billing
-          after you cancelled — we refund it in full.
+          after you cancelled: we refund it in full.
         </li>
         <li>
           <strong>The product did not work.</strong> If measurement was broken for a meaningful part
@@ -100,8 +100,8 @@ export default function RefundsPage() {
       <p>
         A card that expires or a payment a bank rejects does not switch you off that day. There is a
         grace period, the product tells you what happened, and your clients&rsquo; report links keep
-        working throughout it. After the grace period runs out without payment, measurement stops —
-        stored data is not deleted.
+        working throughout it. After the grace period runs out without payment, measurement stops,
+        but stored data is not deleted.
       </p>
 
       <h2>Invoices and tax</h2>

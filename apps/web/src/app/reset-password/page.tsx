@@ -17,7 +17,7 @@ export default async function ResetPasswordPage({
         <p className="text-sm text-muted-foreground">
           {token && !error
             ? "Choose a password you do not use anywhere else."
-            : "This link is no longer valid. Ask for a new one — it takes a moment."}
+            : "This link is no longer valid. Ask for a new one; it takes a moment."}
         </p>
       </div>
 

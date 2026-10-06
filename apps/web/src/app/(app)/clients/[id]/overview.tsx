@@ -52,7 +52,7 @@ function Meta({
 }
 
 function when(value: Date | string | null | undefined): string {
-  if (!value) return "—";
+  if (!value) return "–";
   return formatDayShort(value);
 }
 
@@ -87,7 +87,7 @@ function MetadataStrip({
     <div className="-mx-4 -mt-6 flex flex-wrap items-center justify-between gap-x-8 gap-y-3 border-b bg-secondary/40 px-4 py-3 sm:-mx-6 sm:px-6">
       <dl data-testid="client-meta" className="flex min-w-0 flex-wrap gap-x-8 gap-y-3">
         <Meta label="Named in answers">
-          <span data-testid="stat-visibility">{latest ? `${latest.visibilityPct}%` : "—"}</span>
+          <span data-testid="stat-visibility">{latest ? `${latest.visibilityPct}%` : "–"}</span>
         </Meta>
 
         <Meta
@@ -96,15 +96,15 @@ function MetadataStrip({
             delta === null ? undefined : delta > 0 ? "client" : delta < 0 ? "competitor" : undefined
           }
         >
-          {delta === null ? "—" : `${delta > 0 ? "+" : ""}${delta} pp`}
+          {delta === null ? "–" : `${delta > 0 ? "+" : ""}${delta} pp`}
         </Meta>
 
         <Meta label="Versus strongest competitor" tone="competitor">
-          <span data-testid="stat-gap">{latest ? leadText(latest.competitorGapPp) : "—"}</span>
+          <span data-testid="stat-gap">{latest ? leadText(latest.competitorGapPp) : "–"}</span>
         </Meta>
 
         <Meta label="Sample">
-          {totals ? `${totals.samples} answers · ${totals.confidence}` : "—"}
+          {totals ? `${totals.samples} answers · ${totals.confidence}` : "–"}
         </Meta>
 
         <Meta label="Last run">{when(lastRun?.finishedAt ?? lastRun?.startedAt)}</Meta>
@@ -113,7 +113,7 @@ function MetadataStrip({
           {/* «not scheduled» — это утверждение о настройке, а не о сбое сети:
               на ошибке загрузки нельзя делать вид, что расписание выключено. */}
           {schedule.error
-            ? "—"
+            ? "–"
             : schedule.data?.active
               ? !schedule.data.skipReason && when(schedule.data.nextRunAt)
               : "not scheduled"}
@@ -433,7 +433,7 @@ function OneLineRead({ matrix }: { matrix: RouterOutputs["measurement"]["matrix"
                 )}
                 {/* Пересекающиеся интервалы — это «не различить», а не «выросло». */}
                 {!matrix.totalsDistinguishable && (
-                  <span data-testid="within-noise"> — {MEASUREMENT_COPY.withinNoise}</span>
+                  <span data-testid="within-noise">, {MEASUREMENT_COPY.withinNoise}</span>
                 )}
               </>
             )}
@@ -501,13 +501,13 @@ function ProminenceCard({ matrix }: { matrix: RouterOutputs["measurement"]["matr
             <div className="flex flex-col gap-0.5">
               <dt className="text-muted-foreground">Named first</dt>
               <dd data-testid="prominence-first" className="metric text-lg font-semibold">
-                {first === null ? "—" : `${Math.round(first)}%`}
+                {first === null ? "–" : `${Math.round(first)}%`}
               </dd>
             </div>
             <div className="flex flex-col gap-0.5">
               <dt className="text-muted-foreground">After a competitor</dt>
               <dd data-testid="prominence-behind" className="metric text-lg font-semibold">
-                {behind === null ? "—" : `${Math.round(behind)}%`}
+                {behind === null ? "–" : `${Math.round(behind)}%`}
               </dd>
             </div>
           </dl>
@@ -616,7 +616,7 @@ export function ClientOverview({ clientId }: { clientId: string }) {
           className="rounded-md border border-dashed p-3 text-sm text-muted-foreground"
         >
           Fewer than {latest.minSamples} answers in this window. Treat the number as indicative
-          until more runs land — a single answer is not a measurement.
+          until more runs land: a single answer is not a measurement.
         </p>
       )}
 

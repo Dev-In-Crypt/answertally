@@ -68,7 +68,7 @@ export function ApiKeysView({ canManage }: { canManage: boolean }) {
           <h2 className="text-base font-medium">Create a key</h2>
           <p className="text-sm text-muted-foreground">
             The key is shown once, right after it is created. We store only a hash of it, so a
-            second look is impossible — keep it somewhere safe or create a new one.
+            second look is impossible. Keep it somewhere safe or create a new one.
           </p>
 
           <div className="flex flex-wrap items-end gap-2">
@@ -102,7 +102,7 @@ export function ApiKeysView({ canManage }: { canManage: boolean }) {
               data-testid="issued-key"
               className="flex flex-col gap-1.5 rounded-md border border-dashed p-3"
             >
-              <span className="text-sm font-medium">Copy it now — this is the only time.</span>
+              <span className="text-sm font-medium">Copy it now. This is the only time.</span>
               <code className="metric break-all text-sm">{issued.token}</code>
             </div>
           )}

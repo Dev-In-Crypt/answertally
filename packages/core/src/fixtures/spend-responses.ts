@@ -84,9 +84,9 @@ export const SPEND_FIXTURES: ResponseFixture[] = [
     [
       "At 300 people the shortlist usually comes down to three:",
       "",
-      "1. **Outlay** — strongest card controls, and the approval rules scale well.",
-      "2. **Spendhaven** — pairs cards with expense reports and closes the month quickly.",
-      "3. **Ledgerbrook** — lighter to roll out, and the NetSuite sync is the reason",
+      "1. **Outlay**: strongest card controls, and the approval rules scale well.",
+      "2. **Spendhaven**: pairs cards with expense reports and closes the month quickly.",
+      "3. **Ledgerbrook**: lighter to roll out, and the NetSuite sync is the reason",
       "   finance teams tend to shortlist it.",
       "",
       "Teams closing on NetSuite often end up comparing Ledgerbrook and Outlay directly.",
@@ -115,8 +115,8 @@ export const SPEND_FIXTURES: ResponseFixture[] = [
     [
       "Shortlist for a 300-person finance team:",
       "",
-      "- **Outlay** — the default answer for mid-market card programmes.",
-      "- **Tallyard** — deeper approval chains, slower to configure.",
+      "- **Outlay**: the default answer for mid-market card programmes.",
+      "- **Tallyard**: deeper approval chains, slower to configure.",
       "",
       "Both integrate with the usual ERPs; pricing is quoted per active card.",
     ],
@@ -184,7 +184,7 @@ export const SPEND_FIXTURES: ResponseFixture[] = [
     NETSUITE,
     "brand-mentioned",
     [
-      "For a native NetSuite sync, **Ledgerbrook** is the one that comes up most often —",
+      "For a native NetSuite sync, **Ledgerbrook** is the one that comes up most often:",
       "it posts expenses without a middleware layer. **Outlay** supports NetSuite too,",
       "through a connector that most teams set up once and forget.",
     ],

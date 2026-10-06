@@ -93,7 +93,7 @@ export default function TermsPage() {
       </p>
       <p>
         The assistant providers set their own rules for the answers they produce, and those rules
-        reach you through us. You agree not to use the product in a way that would breach them —
+        reach you through us. You agree not to use the product in a way that would breach them;
         see the <Link href="/legal/acceptable-use">acceptable use policy</Link>, which is part of
         these terms.
       </p>
@@ -107,7 +107,7 @@ export default function TermsPage() {
       <p>
         What you may not do is describe the underlying answers as your own output, or present the
         measurement as something other than what it is if asked directly. If a client asks how the
-        numbers were produced, you are free to name the assistants and the method — the{" "}
+        numbers were produced, you are free to name the assistants and the method. The{" "}
         <Link href="/method">method page</Link> exists for exactly that.
       </p>
 
@@ -155,8 +155,8 @@ export default function TermsPage() {
         filling it with something that looks like a measurement.
       </p>
       <p>
-        We may change these terms. If a change matters to you — what we may do with your data, what
-        you pay, what you are promised — we will tell you before it takes effect, and you may leave
+        We may change these terms. If a change matters to you (what we may do with your data, what
+        you pay, what you are promised), we will tell you before it takes effect, and you may leave
         rather than accept it.
       </p>
 
@@ -167,8 +167,8 @@ export default function TermsPage() {
         acceptable use policy, or if we are required to.
       </p>
       <p>
-        Where we can, we will warn you first and give you a chance to fix it. Where we cannot —
-        because the use is causing harm or we are compelled — we will explain afterwards.
+        Where we can, we will warn you first and give you a chance to fix it. Where we cannot,
+        because the use is causing harm or we are compelled, we will explain afterwards.
       </p>
 
       <h2>9. Liability</h2>
@@ -196,7 +196,7 @@ export default function TermsPage() {
       <p>
         {LEGAL_ENTITY
           ? `These terms are governed by the law of ${LEGAL_ENTITY.governingLaw}, and its courts have jurisdiction.`
-          : `If something goes wrong between us, write to ${SUPPORT_EMAIL} first — we answer every message and settle most things that way.`}
+          : `If something goes wrong between us, write to ${SUPPORT_EMAIL} first. We answer every message and settle most things that way.`}
       </p>
     </>
   );

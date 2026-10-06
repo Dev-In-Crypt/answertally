@@ -91,7 +91,7 @@ export function UsageView() {
           {/* Прогоны на фикстурах не стоят проверок: показывать их в расходе
               значило бы называть израсходованным то, чего не было. */}
           <span className="metric">{data.fixtureAnswers}</span> answers in this period came from
-          fixtures — no assistant was asked and nothing was counted, so they are not in the totals
+          fixtures. No assistant was asked and nothing was counted, so they are not in the totals
           below.
         </p>
       )}
@@ -108,7 +108,7 @@ export function UsageView() {
             <div className="flex flex-col gap-1 rounded-lg border p-5">
               <span className="text-sm text-muted-foreground">Checks used</span>
               <span data-testid="usage-total" className="metric text-3xl font-semibold tracking-tight">
-                {data ? data.totalResponses.toLocaleString("en-US") : "—"}
+                {data ? data.totalResponses.toLocaleString("en-US") : "–"}
               </span>
               {allowance && (
                 <span
@@ -143,7 +143,7 @@ export function UsageView() {
                 data-testid="usage-share"
                 className="metric text-3xl font-semibold tracking-tight"
               >
-                {allowance ? `${Math.round(allowance.ratio * 100)}%` : "—"}
+                {allowance ? `${Math.round(allowance.ratio * 100)}%` : "–"}
               </span>
               <span className="text-sm text-muted-foreground">
                 {/* Лимит — потолок: так же сказано на странице тарифов. Бесплатный
@@ -178,7 +178,7 @@ export function UsageView() {
                     <td className="metric py-2 text-right text-muted-foreground">
                       {data && data.totalResponses > 0
                         ? `${Math.round((row.responses / data.totalResponses) * 100)}%`
-                        : "—"}
+                        : "–"}
                     </td>
                   </tr>
                 ))}

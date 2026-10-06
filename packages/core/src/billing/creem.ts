@@ -80,7 +80,7 @@ export class CreemPaymentProvider implements PaymentProvider {
     }
     if (!config.webhookSecret) {
       // Без секрета вебхука любой желающий мог бы выдать себе план.
-      throw new Error("CREEM_WEBHOOK_SECRET is not set — webhooks cannot be trusted without it.");
+      throw new Error("CREEM_WEBHOOK_SECRET is not set; webhooks cannot be trusted without it.");
     }
 
     this.endpoint =

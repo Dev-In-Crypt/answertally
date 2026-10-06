@@ -170,7 +170,7 @@ function existingAccountEmail(to: string): EmailMessage {
     `Someone tried to create a new ${EMAIL_COPY.productName} account with this address, but it already has one.`,
     `Sign in: ${base}/login`,
     `Forgot the password? Set a new one: ${base}/forgot-password`,
-    "If it was not you, ignore this email — nothing changed in your account.",
+    "If it was not you, ignore this email. Nothing changed in your account.",
   ];
   return {
     to,

@@ -40,7 +40,7 @@ export function inviteEmail(input: InviteEmailInput): EmailMessage {
     "",
     `Accept the invitation: ${inviteUrl}`,
     "",
-    "The link works for seven days. If you were not expecting this, ignore the email — nothing happens until you open it.",
+    "The link works for seven days. If you were not expecting this, ignore the email. Nothing happens until you open it.",
   ].join("\n");
 
   return {
@@ -50,7 +50,7 @@ export function inviteEmail(input: InviteEmailInput): EmailMessage {
     html: paragraphs([
       `${escapeHtml(invitedBy)}invited you to join <strong>${escapeHtml(input.agencyName)}</strong> on ${EMAIL_COPY.productName} as ${role}.`,
       `<a href="${escapeHtml(inviteUrl)}">Accept the invitation</a>`,
-      "The link works for seven days. If you were not expecting this, ignore the email — nothing happens until you open it.",
+      "The link works for seven days. If you were not expecting this, ignore the email. Nothing happens until you open it.",
     ]),
     ...(input.invitedByEmail ? { replyTo: input.invitedByEmail } : {}),
   };
@@ -76,7 +76,7 @@ export function passwordResetEmail(input: PasswordResetEmailInput): EmailMessage
     "",
     `Set a new password: ${resetUrl}`,
     "",
-    "If it was not you, ignore this email — the password stays as it is until the link is opened.",
+    "If it was not you, ignore this email. The password stays as it is until the link is opened.",
   ].join("\n");
 
   return {
@@ -86,7 +86,7 @@ export function passwordResetEmail(input: PasswordResetEmailInput): EmailMessage
     html: paragraphs([
       `Someone asked to reset the password for this ${EMAIL_COPY.productName} account.`,
       `<a href="${escapeHtml(resetUrl)}">Set a new password</a>`,
-      "If it was not you, ignore this email — the password stays as it is until the link is opened.",
+      "If it was not you, ignore this email. The password stays as it is until the link is opened.",
     ]),
   };
 }
@@ -115,7 +115,7 @@ export function verifyEmailEmail(input: VerifyEmailInput): EmailMessage {
     `Confirm your email: ${verifyUrl}`,
     "",
     "The link works for one hour. If it has expired, sign in with the same email and password and we will send a new one.",
-    "If you did not sign up, ignore this email — nothing is opened until the link is used.",
+    "If you did not sign up, ignore this email. Nothing is opened until the link is used.",
   ].join("\n");
 
   return {
@@ -126,7 +126,7 @@ export function verifyEmailEmail(input: VerifyEmailInput): EmailMessage {
       `Confirm this address to open your ${EMAIL_COPY.productName} workspace and run your first free audit.`,
       `<a href="${escapeHtml(verifyUrl)}">Confirm your email</a>`,
       "The link works for one hour. If it has expired, sign in with the same email and password and we will send a new one.",
-      "If you did not sign up, ignore this email — nothing is opened until the link is used.",
+      "If you did not sign up, ignore this email. Nothing is opened until the link is used.",
     ]),
   };
 }

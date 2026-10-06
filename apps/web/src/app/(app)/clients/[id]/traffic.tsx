@@ -110,7 +110,7 @@ export function TrafficCard({
       ) : (
         <p data-testid="traffic-empty" className="text-sm text-muted-foreground">
           No referred sessions imported yet. Export the referral report from the client&apos;s
-          analytics and drop it here — columns: date, source, sessions. A GA4 CSV download works as
+          analytics and drop it here. Columns: date, source, sessions. A GA4 CSV download works as
           is, once Date is added as a dimension.
         </p>
       )}

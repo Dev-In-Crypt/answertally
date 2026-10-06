@@ -27,25 +27,25 @@ export default function DpaPage() {
       <h1>Data processing terms</h1>
       <p className="lede">
         These terms apply whenever we handle data on your behalf. They form part of the{" "}
-        <Link href="/legal/terms">terms of service</Link> and apply automatically — you do not need
+        <Link href="/legal/terms">terms of service</Link> and apply automatically. You do not need
         to ask for them or sign anything separate.
       </p>
 
       <h2>1. Who does what</h2>
       <p>
-        For the material in your workspace — the brands you measure, the questions you ask, the
-        answers that come back, the reports you produce and who you send them to — you decide and we
+        For the material in your workspace (the brands you measure, the questions you ask, the
+        answers that come back, the reports you produce and who you send them to), you decide and we
         carry out. In data protection terms you are the controller and we are the processor.
       </p>
       <p>
-        For the data that makes the service exist — team accounts, billing, security logs, error
-        reports — we decide, and the <Link href="/legal/privacy">privacy policy</Link> is the notice
+        For the data that makes the service exist (team accounts, billing, security logs, error
+        reports), we decide, and the <Link href="/legal/privacy">privacy policy</Link> is the notice
         for it.
       </p>
       <p>
         We do not step outside the processor role for your workspace data. If we ever wanted to use
-        it for something of our own — a benchmark across agencies, an improvement to the parser
-        trained on real answers — that would make us a controller, and we would have to ask you
+        it for something of our own, such as a benchmark across agencies or an improvement to the parser
+        trained on real answers, that would make us a controller, and we would have to ask you
         first. We have not, and the product is built so that we do not need to.
       </p>
 
@@ -102,7 +102,7 @@ export default function DpaPage() {
           and error reports.
         </li>
         <li>
-          We help you meet your own obligations — answering a person who asks what is held, and
+          We help you meet your own obligations: answering a person who asks what is held, and
           giving you what you need if you have to report a breach.
         </li>
         <li>
@@ -131,7 +131,7 @@ export default function DpaPage() {
       <h2>5. The person who never signed anything</h2>
       <p>
         A client of yours receives a report link, opens it without an account, and may approve it by
-        typing their name. They have no agreement with us, and they did not give us their data —
+        typing their name. They have no agreement with us, and they did not give us their data;
         you did.
       </p>
       <p>Because of that, three things apply, and they are ours to get right:</p>
@@ -162,14 +162,14 @@ export default function DpaPage() {
       <h2>7. Deletion, and the one exception</h2>
       <p>
         When you close a workspace or end the agreement, we delete your workspace data within 30
-        days, except where we are required to keep something — billing records for tax, for example.
+        days, except where we are required to keep something (billing records for tax, for example).
       </p>
       <p>
         One exception is deliberate and worth stating plainly, because most templates promise the
         opposite. While a workspace is open we keep the raw answers assistants gave, in full, for as
         long as the workspace exists. Every figure the product shows is derived from them, and
         without them an old number could never be recomputed when the parser improves, or checked
-        when someone disputes it. They are deleted with the workspace like everything else — but
+        when someone disputes it. They are deleted with the workspace like everything else, but
         they are not deleted while it is open, and no retention setting will do it, because that
         would leave figures on screen that nothing supports.
       </p>
@@ -181,8 +181,8 @@ export default function DpaPage() {
       <h2>8. Audit</h2>
       <p>
         You may ask us for the information you need to show that we are meeting these terms, and we
-        will provide it. For an on-site audit, ask and we will agree a reasonable scope and time —
-        we would rather answer questions than have you take our word for it.
+        will provide it. For an on-site audit, ask and we will agree a reasonable scope and time.
+        We would rather answer questions than have you take our word for it.
       </p>
     </>
   );

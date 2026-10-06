@@ -30,7 +30,7 @@ export default function AcceptableUsePage() {
       <h2>Measure companies, not people</h2>
       <p>
         Answertally is for measuring how brands appear in assistant answers. Do not use it to track,
-        profile or build a picture of a private individual — by making a person the subject of the
+        profile or build a picture of a private individual, whether by making a person the subject of the
         tracked questions, or by using the stored answers to find things out about someone.
       </p>
       <p>
@@ -46,7 +46,7 @@ export default function AcceptableUsePage() {
       </p>
       <p>In practice: do not use the product to</p>
       <ul>
-        <li>generate content that the providers prohibit — harassment, deception, illegal material;</li>
+        <li>generate content that the providers prohibit, such as harassment, deception or illegal material;</li>
         <li>extract model output at volume for some other purpose, or as a way around a provider&rsquo;s own pricing;</li>
         <li>present an assistant&rsquo;s answer as a statement of fact about a company when it is not.</li>
       </ul>
@@ -60,7 +60,7 @@ export default function AcceptableUsePage() {
       <p>
         Specifically: do not present an estimate as a measured fact, do not describe a figure as
         showing that your work made something happen, and do not remove the caveats from a report
-        before sending it. You are free to disagree with our method in public — the{" "}
+        before sending it. You are free to disagree with our method in public. The{" "}
         <Link href="/method">method page</Link> exists so that argument can be had properly.
       </p>
 
@@ -79,7 +79,7 @@ export default function AcceptableUsePage() {
       </p>
       <p>
         We would rather have the conversation. If something you want to do sits near a line here,
-        ask — the answer is often yes with a caveat, and we would prefer to say so in advance than
+        ask. The answer is often yes with a caveat, and we would prefer to say so in advance than
         to find out afterwards.
       </p>
     </>

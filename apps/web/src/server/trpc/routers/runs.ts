@@ -211,7 +211,7 @@ export const runsRouter = router({
         throw new TRPCError({
           code: "BAD_REQUEST",
           message:
-            "Scheduled checks need a paid plan. Pick one under Settings → Billing — the free audit runs from the Run audit page.",
+            "Scheduled checks need a paid plan. Pick one under Settings → Billing. The free audit runs from the Run audit page.",
         });
       }
 

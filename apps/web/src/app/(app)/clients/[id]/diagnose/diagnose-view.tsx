@@ -319,7 +319,7 @@ export function DiagnoseView({ clientId }: { clientId: string }) {
                         однажды разойдутся, и таблица начнёт спорить со
                         списком возможностей. */}
                     <td className="metric py-2 text-right" data-testid="source-opportunity">
-                      {scoreByDomain.get(source.domain) ?? "—"}
+                      {scoreByDomain.get(source.domain) ?? "–"}
                     </td>
                   </tr>
                 ))}

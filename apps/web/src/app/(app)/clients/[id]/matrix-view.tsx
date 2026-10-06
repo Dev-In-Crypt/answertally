@@ -34,7 +34,7 @@ function cellFill(ratePct: number): string {
 }
 
 function formatPct(value: number | null): string {
-  return value === null ? "—" : `${Math.round(value)}%`;
+  return value === null ? "–" : `${Math.round(value)}%`;
 }
 
 function cellTitle(cell: Cell, assistant: AssistantSummary, minSamples: number): string {
@@ -104,7 +104,7 @@ function MatrixRow({ row, matrix }: { row: Row; matrix: Matrix }) {
                   "repeating-linear-gradient(45deg, var(--color-muted) 0 3px, transparent 3px 6px)",
               }}
             >
-              —
+              –
             </div>
           );
         }

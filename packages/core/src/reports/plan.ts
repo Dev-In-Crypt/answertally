@@ -17,7 +17,7 @@ import type { ActionType } from "../diagnosis/recommendations";
 export const PLAN_PHASES = [
   {
     key: "foundation",
-    title: "Month 1 — Foundation",
+    title: "Month 1: Foundation",
     /** Что клиент контролирует сам: собственные страницы и техника. */
     actionTypes: [
       "refresh_page",
@@ -30,7 +30,7 @@ export const PLAN_PHASES = [
   },
   {
     key: "expansion",
-    title: "Month 2 — Expansion",
+    title: "Month 2: Expansion",
     /** Чужие площадки: дольше по сроку и зависит не только от нас. */
     actionTypes: ["review_platform", "source_outreach", "pr_editorial", "ugc_community"],
   },
@@ -38,7 +38,7 @@ export const PLAN_PHASES = [
 
 export const VALIDATION_PHASE = {
   key: "validation",
-  title: "Month 3 — Validation",
+  title: "Month 3: Validation",
 } as const;
 
 export interface PlanInput {

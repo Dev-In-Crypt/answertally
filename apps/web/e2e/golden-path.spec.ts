@@ -51,7 +51,7 @@ test("golden path: from signup to a verifiable visibility number", async ({ page
   const clientId = page.url().split("/").pop()!;
 
   // До измерений — прочерк, а не ноль.
-  await expect(page.getByTestId("stat-visibility")).toHaveText("—");
+  await expect(page.getByTestId("stat-visibility")).toHaveText("–");
 
   // 3. Импортирует промпты.
   await page.goto(`/clients/${clientId}/measure`);

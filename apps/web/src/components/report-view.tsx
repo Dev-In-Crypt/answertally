@@ -40,7 +40,7 @@ function Stat({
  * утверждения, и второе клиенту важнее первого.
  */
 function formatPp(value: number | null): string {
-  if (value === null) return "—";
+  if (value === null) return "–";
   return `${value >= 0 ? "+" : ""}${value} pp`;
 }
 
@@ -106,8 +106,7 @@ export function ReportView({
             </>
           ) : payload.results.visibilityDeltaPp === null ? (
             <>
-              {" "}
-              — the earlier figure rests on a different set of assistants and is shown on its own at{" "}
+              . The earlier figure rests on a different set of assistants and is shown on its own at{" "}
               <span className="metric">{payload.visibility.before}%</span>
             </>
           ) : (

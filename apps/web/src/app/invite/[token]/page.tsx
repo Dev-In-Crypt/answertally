@@ -22,7 +22,7 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
       <main className="mx-auto flex min-h-screen w-full max-w-sm flex-col justify-center gap-4 px-6">
         <h1 className="text-xl font-semibold tracking-tight">This invitation is no longer valid</h1>
         <p className="text-sm text-muted-foreground">
-          If you already accepted it, sign in — a missing confirmation email is sent again when you
+          If you already accepted it, sign in: a missing confirmation email is sent again when you
           do. If it expired, ask your teammate to send a new one.
         </p>
         <Link href="/login" className="text-sm font-medium text-primary hover:underline">

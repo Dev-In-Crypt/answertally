@@ -72,9 +72,9 @@ export default function EditClientPage({
     const rows: [string, string][] = [
       ["Name", client.data.name],
       ["Domain", client.data.domain],
-      ["Industry", client.data.industry || "—"],
-      ["Brand names", client.data.brandNames.join(", ") || "—"],
-      ["Competitors", client.data.competitorNames.join(", ") || "—"],
+      ["Industry", client.data.industry || "–"],
+      ["Brand names", client.data.brandNames.join(", ") || "–"],
+      ["Competitors", client.data.competitorNames.join(", ") || "–"],
     ];
     return (
       <>
@@ -95,7 +95,7 @@ export default function EditClientPage({
     <>
       <PageHeader
         title="Settings"
-        description="Name, domain, brand names and competitors — everything measurement matches against."
+        description="Name, domain, brand names and competitors: everything measurement matches against."
         action={
           <button
             type="button"

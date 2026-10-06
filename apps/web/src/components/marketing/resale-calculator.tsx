@@ -58,7 +58,7 @@ export function ResaleCalculator({
     ? `${plan.name} · ${usd(plan.priceUsd)}`
     : clientsValue > 0
       ? `No listed plan above ${largest?.clientLimit ?? 0} clients yet`
-      : "—";
+      : "–";
   const share = plan && revenue > 0 ? Math.round((plan.priceUsd / revenue) * 100) : null;
 
   return (

@@ -18,7 +18,7 @@ export function ClientsView() {
   const visibility = new Map(
     (portfolio.data ?? []).map((row) => [
       row.clientId,
-      row.sufficient && row.visibilityPct !== null ? `${Math.round(row.visibilityPct)}%` : "—",
+      row.sufficient && row.visibilityPct !== null ? `${Math.round(row.visibilityPct)}%` : "–",
     ]),
   );
   /**
@@ -110,7 +110,7 @@ export function ClientsView() {
                   data-testid={`client-visibility-${client.id}`}
                   className="metric text-lg font-semibold"
                 >
-                  {visibility.get(client.id) ?? "—"}
+                  {visibility.get(client.id) ?? "–"}
                 </span>
               </div>
               <div className="flex flex-col">

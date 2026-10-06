@@ -397,7 +397,7 @@ function refuseWhilePastDue(subscription: Subscription): void {
     throw new TRPCError({
       code: "BAD_REQUEST",
       message:
-        "The last payment did not go through. Update the card in Manage billing first — plan changes and cancelling are available once the account is paid up.",
+        "The last payment did not go through. Update the card in Manage billing first. Plan changes and cancelling are available once the account is paid up.",
     });
   }
 }

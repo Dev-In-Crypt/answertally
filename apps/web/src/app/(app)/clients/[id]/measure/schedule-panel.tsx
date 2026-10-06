@@ -28,8 +28,8 @@ const RUN_STATUS_LABELS: Record<string, string> = {
  */
 function runStatusText(run: { status: string; note: string | null }): string {
   const label = RUN_STATUS_LABELS[run.status] ?? run.status;
-  if (run.note) return `${label} — ${run.note}`;
-  return run.status === "failed" ? `${label} — not every answer was recorded` : label;
+  if (run.note) return `${label}: ${run.note}`;
+  return run.status === "failed" ? `${label}: not every answer was recorded` : label;
 }
 
 const RUN_TRIGGER_LABELS: Record<string, string> = {
@@ -263,7 +263,7 @@ export function SchedulePanel({ clientId }: { clientId: string }) {
         <h2 className="text-base font-medium">Schedule</h2>
         <p className="max-w-prose text-sm text-muted-foreground">
           Answers vary between runs, so each prompt is asked several times per platform and
-          visibility is read from the share across a week — never from a single answer.
+          visibility is read from the share across a week, never from a single answer.
         </p>
       </div>
 
@@ -466,7 +466,7 @@ export function SchedulePanel({ clientId }: { clientId: string }) {
               <p>
                 <span className="font-medium">Estimated</span>{" "}
                 <span className="metric">{estimate.answersPerMonth.toLocaleString("en-US")}</span>{" "}
-                answers per month — {options.promptCount} prompts × {platforms.length} assistants ×{" "}
+                answers per month: {options.promptCount} prompts × {platforms.length} assistants ×{" "}
                 {samples} samples, {cadenceLabelOf(cadenceOptions, cadence).toLowerCase()}.
               </p>
               <p className={estimate.overAllowance ? "text-destructive" : "text-muted-foreground"}>
@@ -518,7 +518,7 @@ export function SchedulePanel({ clientId }: { clientId: string }) {
 
       {saved && (
         <p data-testid="schedule-summary" className="text-sm text-muted-foreground">
-          {saved.active ? "Saved" : "Paused — no scheduled checks run until you resume"}:{" "}
+          {saved.active ? "Saved" : "Paused (no scheduled checks run until you resume)"}:{" "}
           {cadenceLabelOf(cadenceOptions, saved.cadence).toLowerCase()}, {saved.samplesPerPrompt}{" "}
           samples per prompt, {saved.platforms.map(platformLabel).join(", ")}.
           {/* При пропуске срок держится или переносится на перепроверку — это не
@@ -578,7 +578,7 @@ export function SchedulePanel({ clientId }: { clientId: string }) {
               {/* Часы — момент последнего опроса: он обновляется, пока прогон идёт. */}
               {inFlight.status === "pending" &&
               runs.dataUpdatedAt - new Date(inFlight.startedAt).getTime() > SLOW_START_MS
-                ? ". Still waiting to start — this usually takes seconds. Results appear here when it finishes."
+                ? ". Still waiting to start; this usually takes seconds. Results appear here when it finishes."
                 : ". This can take a few minutes; you can leave this page."}
             </span>
           )}

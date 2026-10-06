@@ -178,7 +178,7 @@ export const experimentsRouter = router({
       if (!action.completedAt) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "Complete the action first — the experiment needs a date to measure from.",
+          message: "Complete the action first: the experiment needs a date to measure from.",
         });
       }
 

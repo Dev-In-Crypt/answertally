@@ -296,7 +296,7 @@ export function DashboardRail() {
           <span className="flex items-baseline justify-between gap-3 text-muted-foreground">
             Scheduled today
             <span className="metric font-medium text-foreground">
-              {runs.data?.scheduledToday ?? "—"}
+              {runs.data?.scheduledToday ?? "–"}
             </span>
           </span>
           <span className="flex items-baseline justify-between gap-3 text-muted-foreground">
@@ -304,13 +304,13 @@ export function DashboardRail() {
             <span
               className={cn("metric font-medium", failed > 0 ? "text-competitor-ink" : "text-foreground")}
             >
-              {runs.data?.failedLastWeek ?? "—"}
+              {runs.data?.failedLastWeek ?? "–"}
             </span>
           </span>
           <span className="flex items-baseline justify-between gap-3 text-muted-foreground">
             Under the sample floor
             <span className="metric font-medium text-foreground">
-              {portfolio.data ? underFloor : "—"}
+              {portfolio.data ? underFloor : "–"}
             </span>
           </span>
           {underFloor > 0 && (

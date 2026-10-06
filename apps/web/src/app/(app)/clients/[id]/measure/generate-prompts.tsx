@@ -84,7 +84,7 @@ export function GeneratePrompts({
       <h2 className="text-base font-medium">Generate buyer prompts</h2>
       <p className="max-w-prose text-sm text-muted-foreground">
         A starting set of questions buyers ask in this category. Edit or drop anything that does not
-        fit before saving — nothing is measured until you save.
+        fit before saving. Nothing is measured until you save.
       </p>
 
       <div className="flex flex-wrap items-end gap-2">

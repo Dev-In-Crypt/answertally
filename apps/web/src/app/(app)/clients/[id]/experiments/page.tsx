@@ -18,7 +18,7 @@ export default function ExperimentsPage({ params }: { params: Promise<{ id: stri
     <>
       <PageHeader
         title="Experiments"
-        description="What was done, when, and what happened afterwards — shown against a comparison group."
+        description="What was done, when, and what happened afterwards, shown against a comparison group."
       />
       <ExperimentsView clientId={id} />
     </>

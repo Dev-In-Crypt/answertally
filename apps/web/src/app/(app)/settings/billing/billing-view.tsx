@@ -32,7 +32,7 @@ const PENDING_NOTE =
   "The change is with our payment provider. This page updates as soon as it confirms.";
 
 const CHECKOUT_NOTE =
-  "Thanks — we are confirming your payment with our payment provider. This page updates on its own, usually within a few seconds.";
+  "Thanks! We are confirming your payment with our payment provider. This page updates on its own, usually within a few seconds.";
 
 /** Сколько ждать подтверждения провайдера, опрашивая экран часто. */
 const CONFIRM_WAIT_MS = 60_000;
@@ -232,8 +232,8 @@ export function BillingView() {
           {slow ? (
             waiting?.key === null ? (
               <>
-                Your payment has not been confirmed yet. If you paid, it can take a few minutes —
-                this page keeps checking. If nothing changes, write to {SUPPORT_EMAIL}. Closed the
+                Your payment has not been confirmed yet. If you paid, it can take a few minutes,
+                and this page keeps checking. If nothing changes, write to {SUPPORT_EMAIL}. Closed the
                 payment page without paying?{" "}
                 <a href="/settings/billing" className="text-primary underline">
                   Choose a plan again
@@ -241,7 +241,7 @@ export function BillingView() {
                 .
               </>
             ) : (
-              `Our payment provider has not confirmed the change yet. This page keeps checking — refresh in a few minutes, and if nothing changes write to ${SUPPORT_EMAIL}.`
+              `Our payment provider has not confirmed the change yet. This page keeps checking. Refresh in a few minutes, and if nothing changes write to ${SUPPORT_EMAIL}.`
             )
           ) : waiting?.key === null ? (
             CHECKOUT_NOTE
@@ -344,7 +344,7 @@ export function BillingView() {
           className="flex flex-col gap-3 rounded-lg border border-primary p-5"
         >
           <p className="font-medium">
-            {upgrade ? "Upgrade" : "Switch"} to {targetName} — {usd(target.priceUsd)} / month
+            {upgrade ? "Upgrade" : "Switch"} to {targetName} ({usd(target.priceUsd)} / month)
           </p>
           {upgrade ? (
             <p className="text-sm text-muted-foreground">
@@ -363,8 +363,8 @@ export function BillingView() {
             <p className="text-sm text-muted-foreground">
               The plan changes today: from now on it covers {target.clientLimit} clients and{" "}
               {target.aiCheckAllowance.toLocaleString("en-US")} AI checks a month. Our payment
-              provider prorates the rest of this period between the two plans — the invoice shows
-              the exact amount — and from the next period you pay {usd(target.priceUsd)} a month.
+              provider prorates the rest of this period between the two plans (the invoice shows
+              the exact amount), and from the next period you pay {usd(target.priceUsd)} a month.
             </p>
           )}
           {/* Лимит — потолок ровно в 100%: при равенстве новый прогон тоже ждёт. */}

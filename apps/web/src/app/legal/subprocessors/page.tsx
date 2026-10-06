@@ -81,7 +81,7 @@ const SERVICE_ROWS: Row[] = [
   },
   {
     name: "Resend",
-    purpose: "Delivers product email — invitations, password resets, report links",
+    purpose: "Delivers product email: invitations, password resets, report links",
     data: "Recipient address, subject and message body",
     where: "United States",
   },

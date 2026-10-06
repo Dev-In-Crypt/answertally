@@ -59,7 +59,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   // Повторный клик во время печати ждёт её, а не считается новой печатью.
   if (!isPdfRendering(key) && !(await hit(`pdf:${agencyId}`, PDF_RENDERS_PER_HOUR, 60 * 60))) {
     return failure(
-      `You've reached ${PDF_RENDERS_PER_HOUR} new PDFs this hour. Try again later — PDFs you've already downloaded open right away.`,
+      `You've reached ${PDF_RENDERS_PER_HOUR} new PDFs this hour. Try again later. PDFs you've already downloaded open right away.`,
       429,
     );
   }

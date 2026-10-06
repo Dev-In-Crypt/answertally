@@ -92,8 +92,8 @@ export default function CookiesPage() {
         </tbody>
       </table>
       <p>
-        That is the whole list. It is strictly necessary for the thing you asked for — being signed
-        in — so there is no consent to give or withhold. Refusing it means not signing in.
+        That is the whole list. It is strictly necessary for the thing you asked for (being signed
+        in), so there is no consent to give or withhold. Refusing it means not signing in.
       </p>
 
       <h2>Not cookies, but worth naming</h2>
@@ -106,8 +106,8 @@ export default function CookiesPage() {
 
       <h2>If this changes</h2>
       <p>
-        If we ever add something optional — analytics, a support widget, anything that watches what
-        you do — we will ask first, properly, and this page will say what it is before it runs. A
+        If we ever add something optional (analytics, a support widget, anything that watches what
+        you do), we will ask first, properly, and this page will say what it is before it runs. A
         banner will appear at that point because there will finally be a real choice behind it.
       </p>
       <p>

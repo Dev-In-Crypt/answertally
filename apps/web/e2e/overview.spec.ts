@@ -32,7 +32,7 @@ test("client overview shows visibility built from a completed run", async ({ pag
   const clientId = page.url().split("/").pop()!;
 
   // До измерений экран честно говорит, что данных нет, вместо нуля.
-  await expect(page.getByTestId("stat-visibility")).toHaveText("—");
+  await expect(page.getByTestId("stat-visibility")).toHaveText("–");
   await expect(page.getByText("No visibility data yet")).toBeVisible();
 
   await page.goto(`/clients/${clientId}/measure`);

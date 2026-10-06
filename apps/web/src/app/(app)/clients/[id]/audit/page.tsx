@@ -20,7 +20,7 @@ export default function AuditPage({ params }: { params: Promise<{ id: string }> 
     <>
       <PageHeader
         title="Run audit"
-        description="One measurement pass, then straight to the diagnosis. Nothing is published anywhere — the audit only reads what assistants already answer."
+        description="One measurement pass, then straight to the diagnosis. Nothing is published anywhere: the audit only reads what assistants already answer."
       />
       <AuditView clientId={id} />
     </>

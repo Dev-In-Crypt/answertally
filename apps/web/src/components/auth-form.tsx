@@ -113,7 +113,7 @@ export function AuthForm({
             выдавала бы, есть ли аккаунт), поэтому выход назван всегда. */}
         <p className="text-sm text-muted-foreground">
           Nothing arrived in a few minutes? Check the spam folder, or sign in again with the same
-          email and password — we will send a new link. Each link works for an hour. Still nothing?
+          email and password, and we will send a new link. Each link works for an hour. Still nothing?
           Write to {SUPPORT_EMAIL}.
         </p>
       </div>

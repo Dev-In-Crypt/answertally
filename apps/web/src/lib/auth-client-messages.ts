@@ -96,5 +96,5 @@ export function safeNextPath(next: string | null | undefined): string {
 export function verificationLinkNotice(code: string): string {
   return code === "TOKEN_EXPIRED"
     ? "That confirmation link has expired. Sign in with your email and password and we'll send a fresh one."
-    : "That confirmation link doesn't work any more. Sign in with your email and password — if the address still needs confirming, we'll send a fresh link.";
+    : "That confirmation link doesn't work any more. Sign in with your email and password. If the address still needs confirming, we'll send a fresh link.";
 }

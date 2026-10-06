@@ -17,7 +17,7 @@ import { AGENCIES } from "./data";
 
 /** Как в ReportView: знак плюс, минус — обычным дефисом. */
 function formatPp(value: number | null): string {
-  if (value === null) return "—";
+  if (value === null) return "–";
   return `${value >= 0 ? "+" : ""}${value} pp`;
 }
 

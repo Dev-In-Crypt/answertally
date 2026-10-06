@@ -53,7 +53,7 @@ export function ProspectPanel({ clientId }: { clientId: string }) {
         <h2 className="text-sm font-medium">Prospect</h2>
         <p className="max-w-prose text-sm text-muted-foreground">
           Everything below came out of one measurement pass. Turning this into a client keeps all
-          of it — the questions, the competitors, the baseline and the opportunities.
+          of it: the questions, the competitors, the baseline and the opportunities.
         </p>
       </div>
 
@@ -62,7 +62,7 @@ export function ProspectPanel({ clientId }: { clientId: string }) {
           <h3 className="text-sm font-medium">Also named in these answers</h3>
           <p className="text-xs text-muted-foreground">
             Product sites the models cited when answering this client&apos;s questions. Add the ones
-            that are genuinely competitors — the list decides what counts as a competitor in every
+            that are genuinely competitors. The list decides what counts as a competitor in every
             figure after this.
           </p>
           <ul data-testid="suggested-competitors" className="flex flex-wrap gap-2">
