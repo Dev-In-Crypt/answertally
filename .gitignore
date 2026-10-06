@@ -29,3 +29,6 @@ CLAUDE.md
 test-results/
 playwright-report/
 .storage/
+
+# Локальные настройки Claude Code
+.claude/
