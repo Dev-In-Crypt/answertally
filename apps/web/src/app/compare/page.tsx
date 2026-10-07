@@ -133,8 +133,9 @@ export default function ComparePage() {
             Each cell links to the page it comes from. Prices and plans change; if one is out of date,
             write to us and we correct it.
           </SecHead>
+          <p className="cmp-hint small muted">Swipe the table sideways to see every tool →</p>
           <div className="cmp-wrap">
-            <table className="cmp" data-testid="compare-table">
+            <table className="cmp vs" data-testid="compare-table">
               <thead>
                 <tr>
                   <th scope="col" />

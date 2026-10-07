@@ -186,7 +186,7 @@ export default function ResearchPage() {
             ))}
           </ul>
           <div className="cmp-wrap" style={{ marginTop: 28 }}>
-            <table className="cmp" data-testid="research-table">
+            <table className="cmp stack" data-testid="research-table">
               <thead>
                 <tr>
                   <th scope="col">Brand</th>
@@ -203,14 +203,18 @@ export default function ResearchPage() {
                     const range = wilsonInterval(cell.named, cell.answers);
                     return (
                       <tr key={brand.brand + cell.assistant}>
-                        <th scope="row">{i === 0 ? brand.brand : ""}</th>
-                        <td>{i === 0 ? brand.category : ""}</td>
-                        <td>{ASSISTANT_NAME[cell.assistant]}</td>
-                        <td>
+                        <th scope="row" className={i === 0 ? undefined : "cont"}>
+                          {i === 0 ? brand.brand : ""}
+                        </th>
+                        <td data-label="Category" className={i === 0 ? undefined : "cont"}>
+                          {i === 0 ? brand.category : ""}
+                        </td>
+                        <td data-label="Assistant">{ASSISTANT_NAME[cell.assistant]}</td>
+                        <td data-label="Named in">
                           {pct(cell.named, cell.answers)} ({cell.named} of {cell.answers})
                         </td>
-                        <td>{range ? `${pct(range.low)}–${pct(range.high)}` : "–"}</td>
-                        <td>
+                        <td data-label="Range (95%)">{range ? `${pct(range.low)}–${pct(range.high)}` : "–"}</td>
+                        <td data-label="Buying questions" className={i === 0 ? undefined : "cont"}>
                           {i === 0
                             ? `${pct(brand.purchase.named, brand.purchase.answers)} (${brand.purchase.named} of ${brand.purchase.answers})`
                             : ""}

@@ -794,7 +794,24 @@
 .mk table.cmp { width: 100%; min-width: 860px; border-collapse: collapse; font-size: 13.5px; }
 .mk .cmp th, .mk .cmp td { padding: 11px 12px; border-bottom: 1px solid var(--cw-border); text-align: left; vertical-align: top; color: var(--cw-ink-2); }
 .mk .cmp thead th { font: 500 11px/1.3 var(--font-mono); text-transform: uppercase; letter-spacing: 0.04em; color: var(--cw-muted); }
-.mk .cmp thead th:nth-child(2), .mk .cmp td:nth-child(2) { box-shadow: inset 2px 0 0 var(--cw-indigo); color: var(--cw-ink); font-weight: 500; }
+.mk .cmp.vs thead th:nth-child(2), .mk .cmp.vs td:nth-child(2) { box-shadow: inset 2px 0 0 var(--cw-indigo); color: var(--cw-ink); font-weight: 500; }
 .mk .cmp tbody th { font-weight: 600; color: var(--cw-ink); width: 150px; }
 .mk .cmp tr:last-child th, .mk .cmp tr:last-child td { border-bottom: 0; }
 .mk .cmp a { color: inherit; text-decoration: underline; text-decoration-color: var(--cw-rule); text-underline-offset: 3px; }
+.mk .cmp-hint { display: none; margin-bottom: 8px; }
+@media (max-width: 640px) {
+  .mk .cmp-hint { display: block; }
+  .mk table.cmp.vs { min-width: 720px; }
+  .mk .cmp.vs tbody th { position: sticky; left: 0; z-index: 1; width: 104px; background: var(--cw-surface); box-shadow: 1px 0 0 var(--cw-border); }
+  /* Таблица Research на телефоне — карточки: строка = бренд × ассистент */
+  .mk .cmp-wrap:has(> .cmp.stack) { overflow: visible; }
+  .mk table.cmp.stack { min-width: 0; }
+  .mk .cmp.stack thead { display: none; }
+  .mk .cmp.stack tr, .mk .cmp.stack th, .mk .cmp.stack td { display: block; }
+  .mk .cmp.stack tr { padding: 4px 0; }
+  .mk .cmp.stack tr:has(> th:not(.cont)) { border-top: 1px solid var(--cw-border); padding-top: 12px; }
+  .mk .cmp.stack tr:first-child { border-top: 0; }
+  .mk .cmp.stack th, .mk .cmp.stack td { border: 0; padding: 2px 14px; }
+  .mk .cmp.stack .cont { display: none; }
+  .mk .cmp.stack td::before { content: attr(data-label) ": "; color: var(--cw-muted); }
+}
