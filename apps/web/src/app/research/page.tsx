@@ -213,7 +213,7 @@ export default function ResearchPage() {
                         <td data-label="Named in">
                           {pct(cell.named, cell.answers)} ({cell.named} of {cell.answers})
                         </td>
-                        <td data-label="Range (95%)">{range ? `${pct(range.low)}–${pct(range.high)}` : "–"}</td>
+                        <td data-label="Range (95%)">{range ? `${Math.round(range.low)}–${Math.round(range.high)}%` : "–"}</td>
                         <td data-label="Buying questions" className={i === 0 ? undefined : "cont"}>
                           {i === 0
                             ? `${pct(brand.purchase.named, brand.purchase.answers)} (${brand.purchase.named} of ${brand.purchase.answers})`

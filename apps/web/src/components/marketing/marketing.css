@@ -815,3 +815,8 @@
   .mk .cmp.stack .cont { display: none; }
   .mk .cmp.stack td::before { content: attr(data-label) ": "; color: var(--cw-muted); }
 }
+@media (max-width: 640px) {
+  .mk .cmp-wrap:has(> .cmp.stack) { overflow: hidden; }
+  .mk table.cmp.stack, .mk .cmp.stack tbody { display: block; width: 100%; }
+  .mk .cmp.stack th, .mk .cmp.stack td { white-space: normal; overflow-wrap: anywhere; width: auto; }
+}
