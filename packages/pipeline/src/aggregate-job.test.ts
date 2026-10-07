@@ -24,7 +24,8 @@ describe("aggregateClient", () => {
 
   beforeEach(async () => {
     const agency = await createAgency(db, { name: "Agg Agency", clientLimit: 10 });
-    await makePaying(db, agency.id);
+    // Growth: Grok в расписании разрешён только с него (07.10.2026).
+    await makePaying(db, agency.id, "growth");
     agencyId = agency.id;
 
     const client = await createClient(db, {
@@ -55,7 +56,7 @@ describe("aggregateClient", () => {
         .insert(runSchedules)
         .values({
           clientId,
-          platforms: ["chatgpt", "perplexity", "ai-overviews"],
+          platforms: ["chatgpt", "perplexity", "grok"],
           samplesPerPrompt: 3,
         })
         .returning()
