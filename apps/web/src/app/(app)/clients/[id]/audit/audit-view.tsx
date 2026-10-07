@@ -9,6 +9,7 @@ import { EmptyState } from "@/components/page-header";
 import { buttonClass } from "@/components/ui/button";
 import { SUPPORT_EMAIL } from "@/config/site";
 import { MessageSquare } from "lucide-react";
+import { trackStep } from "@/lib/tracking";
 
 /**
  * Разовый аудит: одна кнопка — и до диагностики без ручных шагов.
@@ -82,6 +83,7 @@ export function AuditView({ clientId }: { clientId: string }) {
   const audit = api.runs.startAudit.useMutation({
     onMutate: () => setPhase("running"),
     onSuccess: async (result) => {
+      trackStep("audit_started");
       /**
        * В живом режиме сервер только создаёт прогон — выполняет его воркер,
        * и это минуты. Раньше экран объявлял «готово» сразу после создания и

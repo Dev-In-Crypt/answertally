@@ -172,6 +172,7 @@ jobs:
             NEXT_PUBLIC_GOOGLE_ADS_SIGNUP_LABEL=${{ vars.NEXT_PUBLIC_GOOGLE_ADS_SIGNUP_LABEL }}
             NEXT_PUBLIC_META_PIXEL_ID=${{ vars.NEXT_PUBLIC_META_PIXEL_ID }}
             NEXT_PUBLIC_LINKEDIN_PARTNER_ID=${{ vars.NEXT_PUBLIC_LINKEDIN_PARTNER_ID }}
+            NEXT_PUBLIC_UMAMI_WEBSITE_ID=${{ vars.NEXT_PUBLIC_UMAMI_WEBSITE_ID }}
             NEXT_PUBLIC_LINKEDIN_SIGNUP_CONVERSION_ID=${{ vars.NEXT_PUBLIC_LINKEDIN_SIGNUP_CONVERSION_ID }}
           cache-from: type=gha,scope=web
           cache-to: type=gha,mode=max,scope=web

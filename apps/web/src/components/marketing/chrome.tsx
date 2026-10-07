@@ -4,6 +4,7 @@ import { SUPPORT_EMAIL } from "@/config/site";
 import { AccountLink } from "./account-link";
 import { ConsentManager, CookieSettingsLink } from "./consent";
 import { Wordmark } from "./logo";
+import { Analytics } from "@/components/analytics";
 import "./marketing.css";
 
 /**
@@ -168,6 +169,7 @@ export function MarketingShell({
       </main>
       <MarketingFooter />
       <ConsentManager />
+      <Analytics />
     </>
   );
 }

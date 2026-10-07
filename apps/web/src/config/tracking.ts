@@ -37,6 +37,18 @@ export const TRACKING: TrackingConfig = {
   ),
 };
 
+/**
+ * Аналитика сайта без cookies — свой Umami. ID сайта не секретный, но
+ * попадает в бандл на сборке, как и рекламные метки.
+ */
+export const UMAMI = {
+  websiteId: pickId(
+    process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID,
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+  ),
+  src: "https://stats.answertally.com/script.js",
+};
+
 export const TRACKING_ENABLED = Boolean(
   TRACKING.googleAdsId || TRACKING.metaPixelId || TRACKING.linkedinPartnerId,
 );

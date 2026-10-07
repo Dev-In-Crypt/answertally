@@ -50,6 +50,8 @@ ARG NEXT_PUBLIC_GOOGLE_ADS_SIGNUP_LABEL
 ARG NEXT_PUBLIC_META_PIXEL_ID
 ARG NEXT_PUBLIC_LINKEDIN_PARTNER_ID
 ARG NEXT_PUBLIC_LINKEDIN_SIGNUP_CONVERSION_ID
+# Аналитика без cookies (Umami). Пусто — счётчик не грузится.
+ARG NEXT_PUBLIC_UMAMI_WEBSITE_ID
 # Standalone-вывод включается только здесь: на Windows он ломает локальную
 # сборку, потому что раскладывается симлинками.
 ENV DOCKER_BUILD=1 NEXT_TELEMETRY_DISABLED=1

@@ -10,6 +10,7 @@ import { SUPPORT_EMAIL } from "@/config/site";
 import { buttonClass } from "@/components/ui/button";
 import { NotePanel } from "@/components/ui/note-panel";
 import { SkeletonCards } from "@/components/ui/skeleton";
+import { trackStep } from "@/lib/tracking";
 
 const PLAN_NAMES: Record<string, string> = {
   starter: "Starter",
@@ -117,6 +118,7 @@ export function BillingView() {
 
   const checkout = api.billing.checkout.useMutation({
     onSuccess: (data) => {
+      trackStep("plan_checkout");
       window.location.href = data.url;
     },
     onError,

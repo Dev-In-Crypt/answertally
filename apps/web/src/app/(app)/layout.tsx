@@ -8,6 +8,7 @@ import { RoleProvider } from "@/lib/role-context";
 import { AppShell } from "@/components/app-shell";
 import { ClientErrorReporting } from "@/components/client-error-reporting";
 import { db } from "@/server/db";
+import { Analytics } from "@/components/analytics";
 
 /** Общий каркас всех защищённых экранов: сессия проверяется здесь, а не в каждой странице. */
 // Рабочее место за входом: в выдачу поисковиков ему не место.
@@ -37,6 +38,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         {/* Сбор ошибок — только на экранах агентства: см. комментарий в корневом layout. */}
         <ClientErrorReporting />
         {children}
+        <Analytics />
       </AppShell>
     </RoleProvider>
   );

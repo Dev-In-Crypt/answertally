@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Turnstile } from "@/components/turnstile";
+import { trackStep } from "@/lib/tracking";
 
 type Prompt = { text: string; intent: string; isControl: boolean };
 
@@ -51,6 +52,7 @@ export function QuestionPreview({ captchaSiteKey }: { captchaSiteKey: string | n
       if (!response.ok) return setState("error");
       const body = (await response.json()) as { prompts: Prompt[]; siteRead: boolean };
       setPrompts(body.prompts);
+      trackStep("question_preview");
       setSiteRead(body.siteRead);
       setState("done");
     } catch {

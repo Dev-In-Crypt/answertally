@@ -135,7 +135,7 @@ test("pricing figures are the ones the API enforces", async ({ page }) => {
   // Allowance объяснён: сколько проверок съедает обычный клиент — и при
   // каденсе по умолчанию, и при еженедельном.
   await expect(page.getByTestId("pricing-checks")).toContainText("every two weeks");
-  await expect(page.getByTestId("pricing-checks")).toContainText("950 checks");
+  await expect(page.getByTestId("pricing-checks")).toContainText("600 checks");
   // Утверждённые условия сказаны; неутверждённые — нет.
   const faq = page.getByTestId("pricing-faq");
   await expect(faq).toContainText("no separate price");

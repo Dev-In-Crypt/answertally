@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { adVendors, TRACKING_ENABLED } from "@/config/tracking";
+import { adVendors, TRACKING_ENABLED, UMAMI } from "@/config/tracking";
 
 /**
  * Уведомление о куках.
@@ -60,7 +60,7 @@ export default function CookiesPage() {
 
           <h2>The marketing site</h2>
           <p>
-            Reading this site sets no cookies at all. No analytics, no advertising, no third-party
+            Reading this site sets no cookies at all. No cookie-based analytics, no advertising, no third-party
             scripts that set their own. You can check in your browser rather than taking our word
             for it.
           </p>
@@ -103,6 +103,18 @@ export default function CookiesPage() {
         {TRACKING_ENABLED ? ", and your answer to the cookie banner" : ""}. They stay in that
         browser, are never sent to us, and disappear when you clear site data.
       </p>
+
+      {UMAMI.websiteId && (
+        <>
+          <h2>Visit statistics</h2>
+          <p>
+            We count visits with Umami, which we run on our own server at stats.answertally.com. It
+            sets no cookies and stores nothing in your browser. It records the page, the referring
+            site, the country and the kind of device, plus a few steps such as creating an account,
+            and nothing that identifies you. That is why it runs without asking.
+          </p>
+        </>
+      )}
 
       <h2>If this changes</h2>
       <p>
