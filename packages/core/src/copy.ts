@@ -482,7 +482,7 @@ export const METHOD_COPY = {
     "Questions are the buyer prompts you track for a client. You can generate a first draft from templates, import your own list, and edit either until it reads the way buyers actually ask.",
   samples:
     "By default each question is asked three times on each assistant you switch on, every run, and you can ask more. A cell with fewer than three answers in its window shows a dash instead of a number.",
-  api: "Each assistant is asked through its developer API with web search switched on, not through the consumer app. What a person sees in the app can differ.",
+  api: "Each assistant is asked through its developer API with web search switched on, not through the consumer app; Google AI Overviews and AI Mode are read from Google search results through a data provider. What a person sees in the app can differ.",
   sources: "Every answer is stored with the pages it cited, so each figure can be traced to answers and sources.",
   windows:
     "Answers are grouped by week. Screens add up a rolling window (the last 28 days by default) so a figure rests on more answers; reports compare the start of the period with the end.",
@@ -533,4 +533,4 @@ export const EXPERIMENT_COPY = {
  * расписания. Числа из `CHECK_WEIGHTS`, а не вписаны: поменяется вес —
  * поменяется везде.
  */
-export const CHECK_WEIGHT_NOTE = `a ChatGPT or Perplexity answer is ${CHECK_WEIGHTS.chatgpt} check, a Claude answer ${CHECK_WEIGHTS.claude}, a Grok answer ${CHECK_WEIGHTS.grok}.`;
+export const CHECK_WEIGHT_NOTE = `a ChatGPT, Perplexity, Google AI Overviews or AI Mode answer is ${CHECK_WEIGHTS.chatgpt} check, a Claude answer ${CHECK_WEIGHTS.claude}, a Grok answer ${CHECK_WEIGHTS.grok}.`;

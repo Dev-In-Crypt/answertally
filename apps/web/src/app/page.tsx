@@ -160,13 +160,13 @@ export default async function HomePage() {
               <div className="chip-row" aria-label="Assistants measured">
                 <span className="a-chip">ChatGPT</span>
                 <span className="a-chip">Perplexity</span>
-                <span className="a-chip opt">Grok · on request</span>
+                <span className="a-chip opt">Grok · per client</span>
                 <span className="a-chip opt">Claude · from Growth</span>
                 <span className="a-chip opt" title={GOOGLE_SURFACES_PLAIN}>
-                  Google AI Overviews · on request
+                  Google AI Overviews · per client
                 </span>
                 <span className="a-chip opt" title={GOOGLE_SURFACES_PLAIN}>
-                  Google AI Mode · on request
+                  Google AI Mode · per client
                 </span>
               </div>
               <ul className="trust-strip" aria-label="How client data is handled" data-testid="trust-strip">

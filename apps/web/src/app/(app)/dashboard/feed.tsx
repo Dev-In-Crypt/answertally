@@ -279,7 +279,7 @@ export function DashboardRail() {
               />
             </span>
             <span className="text-xs text-muted-foreground">
-              One answer to one prompt: {CHECK_WEIGHT_NOTE}
+              How checks count: {CHECK_WEIGHT_NOTE}
             </span>
           </div>
         ) : usage.error ? (

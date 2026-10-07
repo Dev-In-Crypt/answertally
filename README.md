@@ -86,12 +86,14 @@ from fixtures.
 <details>
 <summary><b>Assistants and what is not measured</b></summary>
 
-Four assistants are measured: ChatGPT, Perplexity, Grok and Claude. A new client is measured on
-the first three; Claude is switched on per client in the schedule, because it adds answers to every
-run and needs its own key (`ANTHROPIC_API_KEY`). All four have been checked with live calls; run
-`live-check` (see `packages/core/src/adapters/live-check.ts`) with a key to repeat that.
+Six surfaces are measured: ChatGPT, Perplexity, Grok and Claude through their own APIs, and
+Google AI Overviews and AI Mode through a search-results data provider (DataForSEO,
+`DATAFORSEO_AUTH`). A new client is measured on ChatGPT and Perplexity; the rest are switched on
+per client in the schedule. Answers count against the monthly AI checks by weight: Grok 5,
+Claude 4, everything else 1 (`CHECK_WEIGHTS`). Run `live-check` (see
+`packages/core/src/adapters/live-check.ts`) with a key to repeat a live call.
 
-Copilot and Google's AI surfaces have no public answer API, so they stay listed as not measured.
+Copilot has no public answer API, so it stays listed as not measured.
 Gemini is listed there too, for a different reason: the adapter exists and works, but Google's
 terms for grounded search do not allow the results to be analysed, or kept the way every answer
 here is kept so a figure can be rechecked. It is not registered even when a key is set.

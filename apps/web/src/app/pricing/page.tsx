@@ -201,7 +201,7 @@ export default function PricingPage() {
                   <dd data-testid={`plan-assistants-${plan.id}`}>{plan.assistants}</dd>
                 </div>
               </dl>
-              <p className="per">≈ {int(plan.checksPerClient)} checks per client a month</p>
+              <p className="per">≈ {int(plan.checksPerClient)} checks per client a month included</p>
               <ul>
                 <li>Measurement, diagnosis and reports on every client</li>
                 <li>White-label reports and PDF export</li>
@@ -217,7 +217,7 @@ export default function PricingPage() {
           ))}
         </ul>
         <p className="small muted" data-testid="check-weights" style={{ marginTop: 12 }}>
-          How AI checks count: {CHECK_WEIGHT_NOTE.charAt(0).toUpperCase() + CHECK_WEIGHT_NOTE.slice(1)} A Google AI Overviews or AI Mode answer is 1 check. Everything beyond ChatGPT and Perplexity is switched on per client.
+          How AI checks count: {CHECK_WEIGHT_NOTE.charAt(0).toUpperCase() + CHECK_WEIGHT_NOTE.slice(1)} Everything beyond ChatGPT and Perplexity is switched on per client.
         </p>
       </div>
 
@@ -272,7 +272,7 @@ export default function PricingPage() {
             </div>
             <div className="card def">
               <div className="cap">What an AI check is</div>
-              <p className="big">One answer from one assistant to one prompt.</p>
+              <p className="big">One answer to one prompt from ChatGPT, Perplexity or Google. Claude counts 4, Grok 5.</p>
               <div className="eq" role="img" aria-label="1 prompt times 1 assistant times 1 answer equals 1 AI check">
                 <span className="t"><b>1</b><span>prompt</span></span>
                 <span className="op">×</span>

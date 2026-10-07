@@ -56,9 +56,8 @@ export const ANSWER_PRICES: Record<Platform, AnswerPrice> = {
   perplexity: { usd: 0.0014, basis: "measured", on: "2026-09-29" },
   chatgpt: { usd: 0.0116, basis: "measured", on: "2026-10-02" },
   claude: { usd: 0.0817, basis: "measured", on: "2026-09-29" },
-  // Самый дорогой из всех, а не второй по дешевизне, как считалось. Он
-  // входит в тройку по умолчанию, то есть в бесплатный аудит и в каждый
-  // прогон младшего тарифа.
+  // Самый дорогой из всех. С 07.10.2026 вне набора по умолчанию и весит
+  // 5 проверок (CHECK_WEIGHTS).
   grok: { usd: 0.1058, basis: "measured", on: "2026-09-29" },
   // Не измеряется: условия Google на grounded-поиск. Строка нужна типу.
   gemini: { usd: 0.055, basis: "listed", on: "2026-09-23" },

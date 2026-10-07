@@ -357,8 +357,8 @@ export function SchedulePanel({ clientId }: { clientId: string }) {
                 })}
               </div>
               <p className="max-w-prose text-xs text-muted-foreground">
-                Every assistant you add asks each prompt again on every run, so it adds to the cost. An
-                assistant only answers once its key is set on the server.
+                Every assistant you add asks each prompt again on every run, so it uses more of the
+                month&rsquo;s AI checks: {CHECK_WEIGHT_NOTE}
               </p>
             </fieldset>
 

@@ -52,7 +52,7 @@ const ASSISTANT_ROWS: Row[] = [
   },
   {
     name: "xAI",
-    purpose: "Answers the tracked questions as Grok",
+    purpose: "Answers the tracked questions as Grok, when switched on for a client",
     data: "The question text and the brand and competitor names in it",
     where: "United States",
   },

@@ -6,7 +6,8 @@ import type { Platform } from "./types";
  * Продукт обещает видимость «в ответах ИИ», а покупатель под этим понимает
  * не три системы, а весь набор, которым пользуются его клиенты. Каталог
  * перечисляет их целиком и честно помечает, какие мы действительно
- * спрашиваем: у Copilot и AI Overviews публичного API нет вовсе.
+ * спрашиваем: у Copilot публичного API нет вовсе, ответы Google снимает
+ * поставщик выдачи.
  *
  * Gemini здесь нет совсем — ни измеряемым, ни выключенным. Условия Google
  * не дают его измерять (docs/open-questions/gemini-grounding.md), а
@@ -43,10 +44,8 @@ export const ASSISTANTS: readonly Assistant[] = [
   // Через поставщика выдачи (DataForSEO), опцией агентства — adapters/dataforseo.
   { id: "ai-overviews", label: "Google AI Overviews", short: "G·AIO", measurable: true },
   /**
-   * Вторая поверхность Google. Стоит рядом с AI Overviews, потому что мешает
-   * им обеим одно и то же — отсутствие программного доступа к ответу (см.
-   * adapters/surfaces.ts). Показывать её как «не измеряем» честнее, чем не
-   * показывать вовсе: агентство видит её у своих клиентов и спрашивает о ней.
+   * Вторая поверхность Google: у неё, как у AI Overviews, нет API, и ответ
+   * снимает тот же поставщик выдачи (adapters/dataforseo).
    */
   { id: "ai-mode", label: "Google AI Mode", short: "G·Mode", measurable: true },
 ] as const;

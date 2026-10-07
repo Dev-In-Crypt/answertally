@@ -129,8 +129,9 @@ export default function TermsPage() {
       <h2>6. Plans, payment and limits</h2>
       <p>
         Plans are billed monthly in advance. Each plan sets how many client accounts a workspace
-        holds and how many AI checks it includes in a month. One AI check is one assistant answering
-        one question once.
+        holds and how many AI checks it includes in a month. An answer to one question from ChatGPT,
+        Perplexity, Google AI Overviews or AI Mode counts as one AI check, a Claude answer as four
+        and a Grok answer as five.
       </p>
       <p>
         Measurement runs within the AI-check limit of the plan you chose. When the checks included
