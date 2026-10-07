@@ -1,29 +1,67 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { MARKETING_COPY, METHOD_COPY, MIN_SAMPLES_PER_CELL } from "@repo/core";
+import { MARKETING_COPY, METHOD_COPY, MIN_SAMPLES_PER_CELL, wilsonInterval } from "@repo/core";
 import { MethodLink, SecHead } from "@/components/marketing/bits";
 import { MarketingShell } from "@/components/marketing/chrome";
 import { SPARKTORO_STUDY } from "@/components/marketing/content";
 import { HAS_SALES_CONTACT, SalesCta } from "../partners/sales-cta";
+import { FIELD_NOTES_1 } from "./field-notes";
 
 /**
- * Страница собственного исследования, которого ещё нет.
+ * Страница собственного исследования: полевые заметки №1 (5 брендов, 458
+ * ответов, 06–07.10.2026) плюс метод полного исследования, которое идёт.
  *
- * Единственный способ написать такую страницу честно — не писать выводов.
- * Здесь нет ни одной цифры о рынке, ни одной даты публикации и ни одного
- * «мы обнаружили»: есть вопрос, метод, список того, что будет опубликовано,
- * и то, чего мы не станем утверждать даже с данными на руках.
- *
- * Дата отсутствует намеренно. Срок зависит от того, сколько ответов наберётся,
- * а объявленная и сорванная дата стоит дороже, чем её отсутствие.
+ * Цифры таблицы считаются из `field-notes.ts` (данные замера), выводы в
+ * тексте — из того же замера; пересчитать их при новых данных. Даты полного
+ * исследования нет намеренно: объявленная и сорванная дата стоит дороже.
  */
 
 export const metadata: Metadata = {
   alternates: { canonical: "/research" },
-  title: "AI Answer Research: Method and Findings · Answertally",
+  title: "AI Answer Research: How Often Assistants Name Smaller Brands · Answertally",
   description:
-    "Our first study of how AI assistants answer buyer questions is under way. The method and what we will publish; no findings yet, and none invented.",
+    "Field notes from 458 ChatGPT and Perplexity answers about five brands: how often each was named, with ranges, how stable that was, and what the assistants cited.",
 };
+
+const pct = (k: number, n = 1) => `${Math.round((k / n) * 100)}%`;
+
+const ASSISTANT_NAME: Record<string, string> = { chatgpt: "ChatGPT", perplexity: "Perplexity" };
+
+const TOTAL_ANSWERS = FIELD_NOTES_1.reduce(
+  (sum, b) => sum + b.control.answers + b.cells.reduce((s, c) => s + c.answers, 0),
+  0,
+);
+
+/**
+ * Выводы полевых заметок №1. Повторы, согласие ассистентов и цитаты
+ * посчитаны по сырым ответам того же замера; в таблицу они не вынесены.
+ */
+const FINDINGS = [
+  {
+    title: "Named in half the answers or more",
+    body: "On questions built around what each brand does differently, every one of the five was named in 51% to 87% of answers. Broad “best in category” questions are where small brands disappear, so each set kept only a few.",
+  },
+  {
+    title: "Steadier than its reputation",
+    body: "Asked the same question three times on the same assistant, whether the brand was named came out the same all three times in 124 of 136 cases (91%). Which brands make a list changes from run to run; whether yours is on it changes much less.",
+  },
+  {
+    title: "ChatGPT reads the brand’s own site, Perplexity reads everyone else",
+    body: "ChatGPT cited the brand’s own site in 25 Brooklinen answers and 41 Plausible answers; Perplexity did so in 3 and 7, leaning on review sites and roundups instead. Owned pages and third-party coverage are two different jobs.",
+  },
+  {
+    title: "Buying questions are the weak spot",
+    body: "For three of the five brands, questions asked at the point of purchase named them least: Kubera in 20% of them against 90% for comparison questions, Graza in 40%. That gap is where an agency has the most to work on.",
+  },
+  {
+    title: "The control questions stayed quiet",
+    body: "Questions about a neighbouring category each brand does not sell named it in 1 of 48 answers. The counting finds the brand where it belongs, not everywhere.",
+  },
+  {
+    title: "The assistants mostly agree, not always",
+    body: "Where both were asked, ChatGPT and Perplexity agreed on whether a brand was named for 31 of 38 questions. The other 7 are a reason to report each assistant separately rather than blend them.",
+  },
+];
 
 /** Что будет опубликовано вместе с выводами. Список — и есть обещание. */
 const WILL_PUBLISH = [
@@ -81,13 +119,12 @@ export default function ResearchPage() {
           <div>
             <div className="kicker page-kicker">Research</div>
             <h1 className="display">
-              Our first study is being run. <em>There are no findings yet.</em>
+              Smaller brands get named more than you think. <em>On the right questions.</em>
             </h1>
             <p className="lead">
-              We would rather have this page say nothing than say something we have not measured.
-              So instead of results, here is the question we are asking, how we are asking it,
-              what we will publish alongside the answer, and what we will not claim even once the
-              data is in.
+              Field notes #1: {TOTAL_ANSWERS} answers from ChatGPT and Perplexity about five brands,
+              asked the way their buyers ask. Every figure below comes with its range, and the
+              questions are published word for word so anyone can ask them again.
             </p>
             <div className="ctas" style={{ marginTop: 28 }}>
               <MethodLink>Read the method we use →</MethodLink>
@@ -97,16 +134,20 @@ export default function ResearchPage() {
             <div className="cap">Status</div>
             <dl>
               <div>
-                <dt>Findings published</dt>
-                <dd>none</dd>
+                <dt>Field notes #1</dt>
+                <dd>published 7 Oct 2026</dd>
               </div>
               <div>
-                <dt>Study</dt>
+                <dt>Answers collected</dt>
+                <dd>{TOTAL_ANSWERS}</dd>
+              </div>
+              <div>
+                <dt>Brands</dt>
+                <dd>{FIELD_NOTES_1.length}</dd>
+              </div>
+              <div>
+                <dt>Full study</dt>
                 <dd>being run</dd>
-              </div>
-              <div>
-                <dt>Publication date</dt>
-                <dd>not set</dd>
               </div>
               <div>
                 <dt>Answers per question per assistant</dt>
@@ -118,17 +159,96 @@ export default function ResearchPage() {
               </div>
             </dl>
             <div className="basis">
-              No date appears on this page because we would be inventing it. It publishes when
+              The full study has no date yet because we would be inventing it. It publishes when
               there are enough answers behind it to be worth reading.
             </div>
           </aside>
         </section>
       </div>
 
-      {/* 1 · вопрос */}
+      {/* 1 · полевые заметки */}
+      <section className="sec" id="field-notes">
+        <div className="wrap">
+          <SecHead n={1} title="Field notes #1: what we found">
+            Five brands, picked because each is smaller than the leaders of its category. Questions
+            drafted by the product from each brand’s homepage, each asked three times per assistant,
+            on 6 and 7 October 2026.
+          </SecHead>
+          <ul className="incl" data-testid="research-findings">
+            {FINDINGS.map((item, i) => (
+              <li key={item.title}>
+                <span className="num" aria-hidden>
+                  {i + 1}
+                </span>
+                <h3>{item.title}</h3>
+                <p>{item.body}</p>
+              </li>
+            ))}
+          </ul>
+          <div className="cmp-wrap" style={{ marginTop: 28 }}>
+            <table className="cmp" data-testid="research-table">
+              <thead>
+                <tr>
+                  <th scope="col">Brand</th>
+                  <th scope="col">Category</th>
+                  <th scope="col">Assistant</th>
+                  <th scope="col">Named in</th>
+                  <th scope="col">Range (95%)</th>
+                  <th scope="col">Buying questions, all assistants</th>
+                </tr>
+              </thead>
+              <tbody>
+                {FIELD_NOTES_1.flatMap((brand) =>
+                  brand.cells.map((cell, i) => {
+                    const range = wilsonInterval(cell.named, cell.answers);
+                    return (
+                      <tr key={brand.brand + cell.assistant}>
+                        <th scope="row">{i === 0 ? brand.brand : ""}</th>
+                        <td>{i === 0 ? brand.category : ""}</td>
+                        <td>{ASSISTANT_NAME[cell.assistant]}</td>
+                        <td>
+                          {pct(cell.named, cell.answers)} ({cell.named} of {cell.answers})
+                        </td>
+                        <td>{range ? `${pct(range.low)}–${pct(range.high)}` : "–"}</td>
+                        <td>
+                          {i === 0
+                            ? `${pct(brand.purchase.named, brand.purchase.answers)} (${brand.purchase.named} of ${brand.purchase.answers})`
+                            : ""}
+                        </td>
+                      </tr>
+                    );
+                  }),
+                )}
+              </tbody>
+            </table>
+          </div>
+          <p className="small muted" style={{ marginTop: 12 }}>
+            Shares count answers to the brand’s own questions; control questions are left out here
+            and reported in finding 5. Plausible ran 17 of its 24 questions before the run reached
+            its budget, and three brands were measured on Perplexity only. Five brands in one week
+            are field notes, not a market study: read the ranges before the shares.
+          </p>
+          <div className="g2" style={{ marginTop: 24 }}>
+            {FIELD_NOTES_1.map((brand) => (
+              <details className="limit" key={brand.brand}>
+                <summary>
+                  <b>{brand.brand}</b>: the {brand.questions.length} questions, verbatim
+                </summary>
+                <ol className="small" style={{ marginTop: 10, paddingLeft: 18, listStyle: "decimal" }}>
+                  {brand.questions.map((q) => (
+                    <li key={q}>{q}</li>
+                  ))}
+                </ol>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 2 · вопрос полного исследования */}
       <section className="sec" id="question">
         <div className="wrap">
-          <SecHead n={1} title="The question we are asking">
+          <SecHead n={2} title="What the full study asks">
             Narrow on purpose. A study that tries to describe &ldquo;AI search&rdquo; as a whole
             ends up describing nothing that can be checked.
           </SecHead>
@@ -168,7 +288,8 @@ export default function ResearchPage() {
                   {SPARKTORO_STUDY.label}
                 </a>
                 <br />
-                Somebody else&rsquo;s work, linked because it exists and ours does not yet.
+                Somebody else&rsquo;s work, on which brands make a list. Our field notes measure
+                something narrower, whether a brand is named at all, and found that far steadier.
               </figcaption>
             </figure>
           </div>
@@ -178,7 +299,7 @@ export default function ResearchPage() {
       {/* 2 · метод */}
       <section className="sec" id="method">
         <div className="wrap">
-          <SecHead n={2} title="How it is being run">
+          <SecHead n={3} title="How the full study is run">
             The same way the product measures a client, which is the point: if the method is not
             good enough for a study, it is not good enough to bill an agency for.
           </SecHead>
@@ -211,7 +332,7 @@ export default function ResearchPage() {
       {/* 3 · что опубликуем */}
       <section className="sec" id="publish">
         <div className="wrap">
-          <SecHead n={3} title="What gets published with it">
+          <SecHead n={4} title="What gets published with it">
             A number on its own cannot be checked. These go out with it, or it does not go out.
           </SecHead>
           <ul className="incl" data-testid="research-publish">
@@ -231,7 +352,7 @@ export default function ResearchPage() {
       {/* 4 · чего не будем утверждать */}
       <section className="sec" id="never">
         <div className="wrap">
-          <SecHead n={4} title="What we will not claim, even with the data">
+          <SecHead n={5} title="What we will not claim, even with the data">
             Said now, while there are no results to be tempted by.
           </SecHead>
           <div className="split">
@@ -254,7 +375,7 @@ export default function ResearchPage() {
 
       <section className="sec">
         <div className="wrap closing">
-          <h2 className="h1">Until then, measure your own client</h2>
+          <h2 className="h1">Now measure your own client</h2>
           <div>
             <p className="prose">
               A general study would tell you how assistants behave. An audit tells you what they

@@ -121,7 +121,7 @@ export function MarketingFooter() {
               <li><Link href="/partners">Selling it to clients</Link></li>
               <li><Link href="/proposal-template">Proposal template</Link></li>
               <li><Link href="/compare">Compared with Peec, Otterly and others</Link></li>
-              <li><Link href="/research">Our study (in progress)</Link></li>
+              <li><Link href="/research">Research: how often AI names smaller brands</Link></li>
             </ul>
           </div>
         </div>
