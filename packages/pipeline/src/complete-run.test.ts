@@ -69,11 +69,11 @@ describe("completeRun", () => {
     const run = await createRun(db, { clientId, scheduleId: null, trigger: "manual" });
     const outcome = await completeRun(db, run.id, clientId, "mock");
 
-    // 2 промпта × 3 платформы × 3 сэмпла.
-    expect(outcome.responses).toBe(18);
+    // 2 промпта × 2 платформы по умолчанию (ChatGPT, Perplexity) × 3 сэмпла.
+    expect(outcome.responses).toBe(12);
     expect(outcome.status).toBe("done");
     expect(outcome.failed).toBe(0);
-    expect(outcome.parsedResponses).toBe(18);
+    expect(outcome.parsedResponses).toBe(12);
   });
 
   it("источники классифицированы — диагностике есть что показывать", async () => {
