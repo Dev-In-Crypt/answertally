@@ -62,10 +62,10 @@ export const ANSWER_PRICES: Record<Platform, AnswerPrice> = {
   grok: { usd: 0.1058, basis: "measured", on: "2026-09-29" },
   // Не измеряется: условия Google на grounded-поиск. Строка нужна типу.
   gemini: { usd: 0.055, basis: "listed", on: "2026-09-23" },
-  // DataForSEO: AI Mode — живой вызов 07.10.2026 стоил $0.004. AI Overview —
-  // выдача $0.002 и подгрузка блока $0.002 по прайсу, живьём ещё не снято.
+  // DataForSEO, живые вызовы 07.10.2026: AI Mode $0.004, выдача с блоком
+  // AI Overview $0.002.
   "ai-mode": { usd: 0.004, basis: "measured", on: "2026-10-07" },
-  "ai-overviews": { usd: 0.004, basis: "listed", on: "2026-10-07" },
+  "ai-overviews": { usd: 0.002, basis: "measured", on: "2026-10-07" },
 };
 
 /**
