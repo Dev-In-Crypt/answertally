@@ -44,6 +44,8 @@ export function Turnstile({ siteKey, onToken }: { siteKey: string; onToken: (tok
         id = api.render(box.current, {
           sitekey: siteKey,
           appearance: "interaction-only",
+          // Витрина светлая всегда; авто-тема рисовала тёмный блок на светлой форме.
+          theme: "light",
           callback: (token: string) => callback.current(token),
           "expired-callback": () => callback.current(null),
           "error-callback": () => callback.current(null),
