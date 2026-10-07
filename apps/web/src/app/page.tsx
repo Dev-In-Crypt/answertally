@@ -213,7 +213,7 @@ export default async function HomePage() {
               differently. Buying questions were their weak spot.
             </p>
             <Link className="link" href="/research">
-              {RESEARCH_ANSWERS} answers, five brands, every question published →
+              {RESEARCH_ANSWERS} answers, six brands, every question published →
             </Link>
           </div>
         </div>

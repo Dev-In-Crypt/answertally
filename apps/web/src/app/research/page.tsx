@@ -8,8 +8,8 @@ import { HAS_SALES_CONTACT, SalesCta } from "../partners/sales-cta";
 import { FIELD_NOTES_1 } from "./field-notes";
 
 /**
- * Страница собственного исследования: полевые заметки №1 (5 брендов, 458
- * ответов, 06–07.10.2026) плюс метод полного исследования, которое идёт.
+ * Страница собственного исследования: полевые заметки №1 (6 брендов, 591
+ * ответ, 06–07.10.2026; Cal.com — ещё и на Google AI Overviews) плюс метод полного исследования, которое идёт.
  *
  * Цифры таблицы считаются из `field-notes.ts` (данные замера), выводы в
  * тексте — из того же замера; пересчитать их при новых данных. Даты полного
@@ -20,12 +20,16 @@ export const metadata: Metadata = {
   alternates: { canonical: "/research" },
   title: "AI Answer Research: How Often Assistants Name Smaller Brands · Answertally",
   description:
-    "Field notes from 458 ChatGPT and Perplexity answers about five brands: how often each was named, with ranges, how stable that was, and what the assistants cited.",
+    "Field notes from 591 ChatGPT, Perplexity and Google AI Overviews answers about six brands: how often each was named, with ranges, how stable that was, and what the assistants cited.",
 };
 
 const pct = (k: number, n = 1) => `${Math.round((k / n) * 100)}%`;
 
-const ASSISTANT_NAME: Record<string, string> = { chatgpt: "ChatGPT", perplexity: "Perplexity" };
+const ASSISTANT_NAME: Record<string, string> = {
+  chatgpt: "ChatGPT",
+  perplexity: "Perplexity",
+  "ai-overviews": "Google AI Overviews",
+};
 
 const TOTAL_ANSWERS = FIELD_NOTES_1.reduce(
   (sum, b) => sum + b.control.answers + b.cells.reduce((s, c) => s + c.answers, 0),
@@ -39,11 +43,11 @@ const TOTAL_ANSWERS = FIELD_NOTES_1.reduce(
 const FINDINGS = [
   {
     title: "Named in half the answers or more",
-    body: "On questions built around what each brand does differently, every one of the five was named in 51% to 87% of answers. Broad “best in category” questions are where small brands disappear, so each set kept only a few.",
+    body: "On questions built around what each brand does differently, every one of the six was named in 51% to 87% of answers. Broad “best in category” questions are where small brands disappear, so each set kept only a few.",
   },
   {
     title: "Steadier than its reputation",
-    body: "Asked the same question three times on the same assistant, whether the brand was named came out the same all three times in 124 of 136 cases (91%). Which brands make a list changes from run to run; whether yours is on it changes much less.",
+    body: "Asked the same question three times on the same assistant, whether the brand was named came out the same all three times in 149 of 167 cases (89%). Which brands make a list changes from run to run; whether yours is on it changes much less.",
   },
   {
     title: "ChatGPT reads the brand’s own site, Perplexity reads everyone else",
@@ -51,15 +55,19 @@ const FINDINGS = [
   },
   {
     title: "Buying questions are the weak spot",
-    body: "For three of the five brands, questions asked at the point of purchase named them least: Kubera in 20% of them against 90% for comparison questions, Graza in 40%. That gap is where an agency has the most to work on.",
+    body: "For three of the six brands, questions asked at the point of purchase named them least: Kubera in 20% of them against 90% for comparison questions, Graza in 40%. That gap is where an agency has the most to work on. Cal.com went the other way, named in 20 of 24 buying answers.",
   },
   {
     title: "The control questions stayed quiet",
-    body: "Questions about a neighboring category each brand does not sell named it in 1 of 48 answers. The counting finds the brand where it belongs, not everywhere.",
+    body: "Questions about a neighboring category each brand does not sell named it in 1 of 75 answers. The counting finds the brand where it belongs, not everywhere.",
   },
   {
     title: "The assistants mostly agree, not always",
-    body: "Where both were asked, ChatGPT and Perplexity agreed on whether a brand was named for 31 of 38 questions. The other 7 are a reason to report each assistant separately rather than blend them.",
+    body: "Where both were asked, ChatGPT and Perplexity agreed on whether a brand was named for 40 of 51 questions. The other 11 are a reason to report each assistant separately rather than blend them.",
+  },
+  {
+    title: "Google almost always answers first",
+    body: "Asked Cal.com’s questions, Google showed an AI Overview above its results in 35 of 37 searches, and named Cal.com in 23 of 28 answers to its own questions. For buyers who start on Google, that box is the answer they read before any link.",
   },
 ];
 
@@ -122,7 +130,7 @@ export default function ResearchPage() {
               Smaller brands get named more than you think. <em>On the right questions.</em>
             </h1>
             <p className="lead">
-              Field notes #1: {TOTAL_ANSWERS} answers from ChatGPT and Perplexity about five brands,
+              Field notes #1: {TOTAL_ANSWERS} answers from ChatGPT, Perplexity and Google AI Overviews about six brands,
               asked the way their buyers ask. Every figure below comes with its range, and the
               questions are published word for word so anyone can ask them again.
             </p>
@@ -170,7 +178,7 @@ export default function ResearchPage() {
       <section className="sec" id="field-notes">
         <div className="wrap">
           <SecHead n={1} title="Field notes #1: what we found">
-            Five brands, picked because each is smaller than the leaders of its category. Questions
+            Six brands, picked because each is smaller than the leaders of its category. Questions
             drafted by the product from each brand’s homepage, each asked three times per assistant,
             on 6 and 7 October 2026.
           </SecHead>
@@ -229,7 +237,7 @@ export default function ResearchPage() {
           <p className="small muted" style={{ marginTop: 12 }}>
             Shares count answers to the brand’s own questions; control questions are left out here
             and reported in finding 5. Plausible ran 17 of its 24 questions before the run reached
-            its budget, and three brands were measured on Perplexity only. Five brands in one week
+            its budget, three brands were measured on Perplexity only, and Cal.com was also asked on Google AI Overviews, where 11 of 48 searches failed at the data provider and are left out. Six brands in one week
             are field notes, not a market study: read the ranges before the shares.
           </p>
           <div className="g2" style={{ marginTop: 24 }}>

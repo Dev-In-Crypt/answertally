@@ -226,5 +226,52 @@
       "Which online payment providers are good for collecting deposits?",
       "how much does online form builder usually cost"
     ]
+  },
+  {
+    "brand": "Cal.com",
+    "category": "scheduling software",
+    "cells": [
+      {
+        "assistant": "chatgpt",
+        "named": 30,
+        "answers": 39
+      },
+      {
+        "assistant": "perplexity",
+        "named": 26,
+        "answers": 39
+      },
+      {
+        "assistant": "ai-overviews",
+        "named": 23,
+        "answers": 28
+      }
+    ],
+    "purchase": {
+      "named": 20,
+      "answers": 24
+    },
+    "control": {
+      "named": 0,
+      "answers": 27
+    },
+    "questions": [
+      "Which booking tools let me customize the experience to match my website?",
+      "What are good options for adding a booking flow to my SaaS product?",
+      "Which scheduling APIs are built for platforms where users meet with other users?",
+      "Best booking software for an independent consultant taking client calls?",
+      "Which tools let customers choose a time to talk with me directly from my website?",
+      "What are good alternatives to Calendly for customizable booking pages?",
+      "Which platform is best for building a branded appointment-booking experience into an app?",
+      "What booking tools give each provider a personal page where clients can request a call?",
+      "Which developer-friendly platforms can handle bookings between users in my marketplace?",
+      "Best scheduling software for a business that takes calls from prospective customers?",
+      "Which booking platforms offer a free plan for an individual taking client calls?",
+      "What scheduling software has a free trial for testing an embedded booking flow?",
+      "Which customizable scheduling platforms publish clear pricing for developers?",
+      "Which video meeting apps are a good fit for client conversations?",
+      "What are good customer relationship management tools for a solo consultant?",
+      "Which online form builders work well for collecting client details before a call?"
+    ]
   }
 ]

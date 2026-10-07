@@ -82,6 +82,12 @@ export function extractAiAnswer(
   return { text, citations };
 }
 
+/** Сбой поставщика, который проходит при повторе (в отличие от «нет денег»). */
+function isTransient(payload: DataForSeoPayload): boolean {
+  const code = payload.tasks?.[0]?.status_code ?? payload.status_code ?? 0;
+  return code === 40101 || code >= 50000;
+}
+
 export class DataForSeoAdapter implements PlatformAdapter {
   readonly platform: GoogleSurface;
 
@@ -112,16 +118,25 @@ export class DataForSeoAdapter implements PlatformAdapter {
       ...(this.platform === "ai-overviews" ? { load_async_ai_overview: true, depth: 10 } : {}),
     };
 
-    const payload = await postJson<DataForSeoPayload>({
-      provider: "DataForSEO",
-      url: DATAFORSEO_ENDPOINTS[this.platform],
-      headers: { Authorization: `Basic ${this.config.auth}` },
-      body: JSON.stringify([task]),
-      fetchImpl: this.fetchImpl,
-      maxAttempts: this.maxAttempts,
-      sleep: this.sleep,
-      timeoutMs: this.timeoutMs,
-    });
+    const send = () =>
+      postJson<DataForSeoPayload>({
+        provider: "DataForSEO",
+        url: DATAFORSEO_ENDPOINTS[this.platform],
+        headers: { Authorization: `Basic ${this.config.auth}` },
+        body: JSON.stringify([task]),
+        fetchImpl: this.fetchImpl,
+        maxAttempts: this.maxAttempts,
+        sleep: this.sleep,
+        timeoutMs: this.timeoutMs,
+      });
+
+    let payload = await send();
+    // 40101 «Internal SE Server Error» — сбой поставщика на его стороне: в замере
+    // 07.10.2026 так упал каждый четвёртый запрос, повтор проходит.
+    for (let attempt = 1; attempt < this.maxAttempts && isTransient(payload); attempt++) {
+      await this.sleep(2_000 * attempt);
+      payload = await send();
+    }
 
     const result = payload.tasks?.[0];
     // Ошибка задачи приходит с HTTP 200 и своим кодом (40104 — аккаунт не

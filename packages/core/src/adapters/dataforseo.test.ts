@@ -74,6 +74,22 @@ describe("DataForSeoAdapter", () => {
     await expect(adapter.execute("q")).rejects.toThrow(/40104/);
   });
 
+  it("внутренняя ошибка поставщика (40101) — повтор, а не потерянный ответ", async () => {
+    const bodies = [payload([], 0, 40101), payload([{ type: "ai_overview", markdown: "Cal.com" }], 0.002)];
+    let n = 0;
+    const adapter = new DataForSeoAdapter({
+      auth: "x",
+      surface: "ai-overviews",
+      sleep: async () => {},
+      fetchImpl: (async () => new Response(JSON.stringify(bodies[n++]), { status: 200 })) as typeof fetch,
+    });
+
+    const result = await adapter.execute("q");
+
+    expect(result.text).toBe("Cal.com");
+    expect(n).toBe(2);
+  });
+
   it("без ключа не создаётся", () => {
     expect(() => new DataForSeoAdapter({ auth: "", surface: "ai-mode" })).toThrow(/DATAFORSEO_AUTH/);
   });
