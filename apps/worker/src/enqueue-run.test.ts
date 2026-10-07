@@ -9,7 +9,7 @@ import {
   getRunById,
   upsertSubscription,
 } from "@repo/db";
-import { promptClusters, prompts } from "@repo/db/schema/measurement";
+import { promptClusters, prompts, runSchedules } from "@repo/db/schema/measurement";
 import { registerLiveAdapters } from "@repo/core";
 import { NO_ACTIVE_PROMPTS_NOTE } from "@repo/pipeline";
 import { FINALIZE_ATTEMPTS, PENDING_RUN_MAX_AGE_MS, pickUpPendingRuns } from "./enqueue-run";
@@ -74,6 +74,15 @@ describe("pickUpPendingRuns", () => {
     return createRun(db, { clientId, scheduleId: null, trigger: "manual", adaptersMode: mode });
   }
 
+  /** Прогон по расписанию с Grok: с 07.10.2026 он не в умолчании, а включается у клиента. */
+  async function runWithGrok() {
+    const [schedule] = await db
+      .insert(runSchedules)
+      .values({ clientId, platforms: ["chatgpt", "perplexity", "grok"], samplesPerPrompt: 3 })
+      .returning();
+    return createRun(db, { clientId, scheduleId: schedule!.id, trigger: "manual", adaptersMode: "live" });
+  }
+
   /** Агентство-плательщик: у него набор тарифа, а не бесплатного аудита. */
   async function makePaying() {
     await upsertSubscription(db, {
@@ -93,7 +102,7 @@ describe("pickUpPendingRuns", () => {
     return [...new Set(call[0].children.map((child) => child.queueName))].sort();
   }
 
-  it("ставит ручной живой прогон в очередь: 2 промпта × 3 платформы × 3 сэмпла", async () => {
+  it("ставит ручной живой прогон в очередь: 2 промпта × 2 платформы × 3 сэмпла", async () => {
     await makePaying();
     const run = await manualRun();
     const { flow, add } = fakeFlow();
@@ -101,7 +110,7 @@ describe("pickUpPendingRuns", () => {
     const result = await pickUpPendingRuns(db, flow, "live");
 
     expect(result.queuedRuns).toBe(1);
-    expect(result.queuedJobs).toBe(18);
+    expect(result.queuedJobs).toBe(12);
     expect(add).toHaveBeenCalledTimes(1);
     expect((await getRunById(db, run.id))?.status).toBe("running");
   });
@@ -178,10 +187,10 @@ describe("pickUpPendingRuns", () => {
     expect(queuedPlatforms(add).some((queue) => queue.includes("grok"))).toBe(false);
   });
 
-  it("плательщику Grok ставится", async () => {
+  it("плательщику Grok ставится, когда включён у клиента", async () => {
     // Иначе это была бы не граница бесплатного аудита, а потеря ассистента.
     await makePaying();
-    await manualRun();
+    await runWithGrok();
     const { flow, add } = fakeFlow();
 
     await pickUpPendingRuns(db, flow, "live");
@@ -237,7 +246,7 @@ describe("pickUpPendingRuns", () => {
   it("ассистент без ключа на сервере не спрашивается, и сборка об этом знает", async () => {
     // Раньше каждая задача Grok падала, и любой прогон плательщика был failed.
     await makePaying();
-    await manualRun();
+    await runWithGrok();
     const { flow, add } = fakeFlow();
 
     registerLiveAdapters({ OPENAI_API_KEY: "test", PERPLEXITY_API_KEY: "test" });

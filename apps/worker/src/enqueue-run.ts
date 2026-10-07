@@ -12,7 +12,7 @@ import {
   setRunNote,
 } from "@repo/db";
 import type { Database } from "@repo/db";
-import { liveAdapterPlatforms, type AdaptersMode } from "@repo/core";
+import { checkWeight, liveAdapterPlatforms, type AdaptersMode } from "@repo/core";
 import { capabilitiesForAgency, platformsForRun } from "@repo/core/config/measurement";
 import { entitlementsForAgency, NO_ACTIVE_PROMPTS_NOTE, planRunJobs } from "@repo/pipeline";
 import { QUEUE_NAMES, runsQueueName, type FinalizeJobData, type RunJobData } from "./queues";
@@ -116,7 +116,9 @@ export async function enqueueRun(
     );
     return 0;
   }
-  if (run.plannedChecks !== null && jobs.length > run.plannedChecks) {
+  // Сравнение в проверках, а не в ответах: ответ Grok весит 5, Claude 4.
+  const jobChecks = jobs.reduce((sum, job) => sum + checkWeight(job.platform), 0);
+  if (run.plannedChecks !== null && jobChecks > run.plannedChecks) {
     await finishRunWithNote(
       db,
       runId,

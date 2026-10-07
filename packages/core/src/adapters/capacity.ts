@@ -1,6 +1,6 @@
 import { ASSISTANTS } from "./catalogue";
 import { platformLabel } from "../copy";
-import { answersCostUsd } from "./pricing";
+import { answersCostUsd, checkUnits } from "./pricing";
 import { PLATFORM_IDS, type Platform } from "./types";
 import { ESTIMATED_COST_PER_ANSWER_USD } from "../billing/period";
 import type { PlanId } from "../billing/entitlements";
@@ -143,6 +143,8 @@ export function refuseScheduleForPlan(
 export interface CapacityEstimate {
   /** Сколько ответов в месяц даст такая настройка. */
   answersPerMonth: number;
+  /** Сколько проверок с лимита это спишет: ответ Grok весит 5, Claude 4. */
+  checksPerMonth: number;
   /** Сколько проверок в месяц даёт тариф. */
   allowance: number;
   /** Доля месячного лимита, 0..1+. Больше 1 — перерасход, а не ошибка. */
@@ -190,6 +192,12 @@ export function estimateSchedule(input: {
     samplesPerPrompt: input.samplesPerPrompt,
     cadence: input.cadence,
   });
+  const checksPerMonth = monthlyAnswers({
+    prompts: input.prompts,
+    assistants: checkUnits(input.assistants),
+    samplesPerPrompt: input.samplesPerPrompt,
+    cadence: input.cadence,
+  });
   const allowance = monthlyCheckAllowance(input.plan);
 
   // Ответов на одного ассистента за месяц: общее число делится поровну,
@@ -198,9 +206,10 @@ export function estimateSchedule(input: {
 
   return {
     answersPerMonth,
+    checksPerMonth,
     allowance,
-    ratio: allowance > 0 ? answersPerMonth / allowance : 0,
-    overAllowance: answersPerMonth > allowance,
+    ratio: allowance > 0 ? checksPerMonth / allowance : 0,
+    overAllowance: checksPerMonth > allowance,
     estimatedCostUsd: answersCostUsd(input.assistants, answersEach),
   };
 }

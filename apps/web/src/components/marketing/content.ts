@@ -1,4 +1,6 @@
 import {
+  CHECK_WEIGHT_NOTE,
+  CHECK_WEIGHTS,
   DEFAULT_PLATFORMS,
   MARKETING_COPY,
   VOLUME_ACCOUNT_PRICE_USD,
@@ -68,7 +70,7 @@ export const PRICING_NOTES = {
    * Allowance рассчитан на еженедельный опрос, а по умолчанию продукт опрашивает
    * раз в две недели — названы оба числа, чтобы запас не выглядел выдуманным.
    */
-  checks: `One AI check is one assistant answering one prompt once. A client measured the default way (around two dozen prompts, three samples each, three assistants, every two weeks) uses roughly ${int(TYPICAL_CHECKS_BIWEEKLY)} checks a month. Measured weekly, it uses roughly ${int(TYPICAL_CHECKS_PER_CLIENT)} checks, and each plan still covers every client, with ${SPARE_MIN}–${SPARE_MAX}% of the allowance to spare.`,
+  checks: `One AI check is one ChatGPT or Perplexity answer to one prompt; a Claude answer counts as ${CHECK_WEIGHTS.claude} checks and a Grok answer as ${CHECK_WEIGHTS.grok}. A client measured the default way (around two dozen prompts, three samples each, ChatGPT and Perplexity, every two weeks) uses roughly ${int(TYPICAL_CHECKS_BIWEEKLY)} checks a month. Measured weekly, it uses roughly ${int(TYPICAL_CHECKS_PER_CLIENT)} checks, and each plan still covers every client, with ${SPARE_MIN}–${SPARE_MAX}% of the allowance to spare.`,
   /**
    * Лимит — потолок: следующий прогон сверх него не начнётся (решение
    * фаундера, после аудита расходов). Начатый не обрывается. Обещание
@@ -88,7 +90,7 @@ export const PRICING_NOTES = {
    * формулировка говорила «пять вместо трёх» и пережила два решения,
    * которые её опровергли.
    */
-  extraAssistants: `The assistants your plan allows have no separate price. Switching every one of them on for a client means ${MEASURABLE_ASSISTANT_COUNT} assistants instead of the ${DEFAULT_PLATFORMS.length} measured by default, so that client uses about ${MEASURABLE_ASSISTANT_COUNT}/${DEFAULT_PLATFORMS.length} as many AI checks (roughly ${int(TYPICAL_CHECKS_ALL_ASSISTANTS)} a month if measured weekly).${ALL_ASSISTANTS_OVER.map(
+  extraAssistants: `The assistants your plan allows have no separate price; they use more of the allowance instead: ${CHECK_WEIGHT_NOTE} Switching every one of them on for a client means ${MEASURABLE_ASSISTANT_COUNT} assistants instead of the ${DEFAULT_PLATFORMS.length} measured by default, roughly ${int(TYPICAL_CHECKS_ALL_ASSISTANTS)} checks a month if measured weekly.${ALL_ASSISTANTS_OVER.map(
     (plan) =>
       ` On ${plan.name}, all ${MEASURABLE_ASSISTANT_COUNT} assistants weekly on all ${plan.clientLimit} clients needs about ${int(plan.clientLimit * TYPICAL_CHECKS_ALL_ASSISTANTS)} checks, more than the ${int(plan.aiCheckAllowance)} included: measure some clients every two weeks, or write to us to raise the allowance.`,
   ).join("")}`,

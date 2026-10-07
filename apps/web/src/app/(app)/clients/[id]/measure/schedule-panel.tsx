@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { formatDateTime, platformLabel, MEASUREMENT_COPY, MIN_SAMPLES_PER_CELL, type Platform } from "@repo/core";
+import { CHECK_WEIGHT_NOTE, formatDateTime, platformLabel, MEASUREMENT_COPY, MIN_SAMPLES_PER_CELL, type Platform } from "@repo/core";
 import { estimateSchedule, type Cadence } from "@repo/core/adapters/capacity";
 import { api } from "@/trpc/react";
 import { buttonClass } from "@/components/ui/button";
@@ -468,6 +468,12 @@ export function SchedulePanel({ clientId }: { clientId: string }) {
                 <span className="metric">{estimate.answersPerMonth.toLocaleString("en-US")}</span>{" "}
                 answers per month: {options.promptCount} prompts × {platforms.length} assistants ×{" "}
                 {samples} samples, {cadenceLabelOf(cadenceOptions, cadence).toLowerCase()}.
+                {estimate.checksPerMonth !== estimate.answersPerMonth && (
+                  <>
+                    {" "}That is <span className="metric">{estimate.checksPerMonth.toLocaleString("en-US")}</span>{" "}
+                    checks: {CHECK_WEIGHT_NOTE}
+                  </>
+                )}
               </p>
               <p className={estimate.overAllowance ? "text-destructive" : "text-muted-foreground"}>
                 {estimate.overAllowance ? "Above" : "About"}{" "}
@@ -482,20 +488,20 @@ export function SchedulePanel({ clientId }: { clientId: string }) {
                 <p
                   data-testid="schedule-agency-total"
                   className={
-                    estimate.answersPerMonth + options.otherClientsMonthly > estimate.allowance
+                    estimate.checksPerMonth + options.otherClientsMonthly > estimate.allowance
                       ? "text-destructive"
                       : "text-muted-foreground"
                   }
                 >
                   With your other clients&rsquo; schedules:{" "}
                   <span className="metric">
-                    {(estimate.answersPerMonth + options.otherClientsMonthly).toLocaleString(
+                    {(estimate.checksPerMonth + options.otherClientsMonthly).toLocaleString(
                       "en-US",
                     )}
                   </span>{" "}
                   of <span className="metric">{estimate.allowance.toLocaleString("en-US")}</span> a
                   month.
-                  {estimate.answersPerMonth + options.otherClientsMonthly > estimate.allowance
+                  {estimate.checksPerMonth + options.otherClientsMonthly > estimate.allowance
                     ? " Above the plan: once the month's checks run out, new runs wait until the 1st."
                     : ""}
                 </p>

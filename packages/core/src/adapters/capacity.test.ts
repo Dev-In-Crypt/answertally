@@ -265,7 +265,8 @@ describe("оценка расхода", () => {
    * и «запускная тройка» в тесте перестала быть запускной тройкой. Берём
    * набор оттуда же, откуда его берёт продукт.
    */
-  const TRIO: Platform[] = [...DEFAULT_PLATFORMS];
+  // Прежняя запускная тройка: тест про цену набора с дорогим Grok.
+  const TRIO: Platform[] = ["chatgpt", "perplexity", "grok"];
   const setting = { prompts: 24, assistants: TRIO, samplesPerPrompt: 3 };
 
   it("ответов в месяц — ровно столько, сколько считает конфиг", () => {

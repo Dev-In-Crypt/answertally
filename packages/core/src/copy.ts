@@ -14,6 +14,7 @@
  */
 
 import type { AssistantSetComparison } from "./metrics/comparability";
+import { CHECK_WEIGHTS } from "./adapters/pricing";
 
 export const CONFIDENCE_LABELS = {
   low: "Confidence: low",
@@ -516,3 +517,10 @@ export const EXPERIMENT_COPY = {
   attributionLimits:
     "This is a record of what was done and what followed, compared with the weeks before it and, where there are untouched topics, with how they moved over the same period. It is evidence, not attribution of cause.",
 } as const;
+
+/**
+ * Как дорогие ассистенты списывают лимит — одна фраза для цен, кабинета и
+ * расписания. Числа из `CHECK_WEIGHTS`, а не вписаны: поменяется вес —
+ * поменяется везде.
+ */
+export const CHECK_WEIGHT_NOTE = `a ChatGPT or Perplexity answer is ${CHECK_WEIGHTS.chatgpt} check, a Claude answer ${CHECK_WEIGHTS.claude}, a Grok answer ${CHECK_WEIGHTS.grok}.`;

@@ -6,6 +6,8 @@ import {
   PLAN_LIMITS,
   usageStatus,
 } from "./period";
+import { ANSWER_PRICES, checkWeight } from "../adapters/pricing";
+import { PLATFORM_IDS } from "../adapters/types";
 
 describe("billingPeriod", () => {
   const cases: [string, string][] = [
@@ -79,10 +81,18 @@ describe("PLAN_LIMITS", () => {
      */
     for (const plan of [PLAN_LIMITS.starter, PLAN_LIMITS.growth, PLAN_LIMITS.scale]) {
       const typical = plan.clientLimit * CHECKS_PER_CLIENT_MONTH;
-      const headroom = plan.aiCheckAllowance / typical;
+      expect(plan.aiCheckAllowance / typical).toBeGreaterThan(1.2);
 
-      expect(headroom).toBeGreaterThan(1.2);
-      expect(headroom).toBeLessThan(1.6);
+      /**
+       * Верхняя граница теперь в деньгах, а не в «не больше 1.6× обычного»:
+       * с весами (Grok 5, Claude 4) запас нужен под включённые дорогие
+       * ассистенты. Даже если весь лимит уйдёт на самый невыгодный для нас
+       * ассистент, расход не превысит трети цены тарифа.
+       */
+      const worstCost = Math.max(
+        ...PLATFORM_IDS.map((id) => (plan.aiCheckAllowance / checkWeight(id)) * ANSWER_PRICES[id].usd),
+      );
+      expect(worstCost).toBeLessThan(plan.priceUsd / 3);
     }
   });
 

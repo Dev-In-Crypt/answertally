@@ -23,7 +23,8 @@ export const PLATFORMS: readonly Platform[] = PLATFORM_IDS;
 export const DEFAULT_PLATFORMS: readonly Platform[] = [
   "chatgpt",
   "perplexity",
-  "grok",
+  // Grok вышел из умолчания 07.10.2026 (решение фаундера): его ответ самый
+  // дорогой и списывает 5 проверок. Включается переключателем на клиента.
 ] as const;
 
 export interface Citation {

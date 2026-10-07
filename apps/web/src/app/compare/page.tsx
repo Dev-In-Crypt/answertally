@@ -79,7 +79,7 @@ const ROWS: { label: string; cells: Cell[] }[] = [
   {
     label: "Assistants",
     cells: [
-      { text: "ChatGPT, Perplexity, Grok; Claude from Growth" },
+      { text: "ChatGPT and Perplexity; Grok and Claude switched on per client" },
       { text: "Pick 3, incl. ChatGPT, Google AI Mode and AI Overviews, Copilot, Gemini", href: "https://peec.ai/pricing" },
       { text: "ChatGPT, Google AI Overviews, Perplexity, Copilot; more as add-ons", href: "https://otterly.ai/pricing" },
       { text: "Enterprise: ChatGPT, Perplexity, Google AI Mode, Gemini, Copilot, Claude and more", href: "https://www.tryprofound.com/pricing" },

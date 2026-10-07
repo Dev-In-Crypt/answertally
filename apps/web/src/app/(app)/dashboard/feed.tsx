@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { MEASUREMENT_COPY } from "@repo/core";
+import { CHECK_WEIGHT_NOTE, MEASUREMENT_COPY } from "@repo/core";
 import { api, type RouterOutputs } from "@/trpc/react";
 import { buttonClass } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
@@ -279,7 +279,7 @@ export function DashboardRail() {
               />
             </span>
             <span className="text-xs text-muted-foreground">
-              One check is one answer from one assistant to one prompt.
+              One answer to one prompt: {CHECK_WEIGHT_NOTE}
             </span>
           </div>
         ) : usage.error ? (

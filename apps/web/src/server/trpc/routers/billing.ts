@@ -4,6 +4,7 @@ import {
   billingPeriod,
   billingPeriodBounds,
   canSwitchToPlan,
+  checkWeight,
   FREE_CHECK_ALLOWANCE,
   PLAN_LIMITS,
   sumCostUsd,
@@ -306,16 +307,18 @@ export const billingRouter = router({
         countFixtureAnswers(ctx.db, ctx.user.agencyId, start, end),
       ]);
 
-      const byClient = new Map<string, { clientId: string; clientName: string; costs: string[]; responses: number }>();
+      const byClient = new Map<string, { clientId: string; clientName: string; costs: string[]; responses: number; checks: number }>();
       for (const row of rows) {
         const entry = byClient.get(row.clientId) ?? {
           clientId: row.clientId,
           clientName: row.clientName,
           costs: [],
           responses: 0,
+          checks: 0,
         };
         entry.costs.push(row.costUsd);
         entry.responses += row.responses;
+        entry.checks += row.responses * checkWeight(row.platform);
         byClient.set(row.clientId, entry);
       }
 
@@ -328,10 +331,13 @@ export const billingRouter = router({
           clientId: entry.clientId,
           clientName: entry.clientName,
           responses: entry.responses,
+          checks: entry.checks,
           costUsd: sumCostUsd(entry.costs),
         })),
         totalCostUsd: sumCostUsd(rows.map((row) => row.costUsd)),
         totalResponses: rows.reduce((total, row) => total + row.responses, 0),
+        /** Проверки с лимита: ответ Grok весит 5, Claude 4 (`checkWeight`). */
+        totalChecks: rows.reduce((total, row) => total + row.responses * checkWeight(row.platform), 0),
         /** Ответы на фикстурах: в счёт не входят, но о них надо сказать. */
         fixtureAnswers,
       };

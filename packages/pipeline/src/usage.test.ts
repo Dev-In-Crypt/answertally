@@ -78,13 +78,14 @@ describe("usage counters", () => {
     await close();
   });
 
-  it("живой прогон на 18 ответов увеличивает счётчик ровно на 18", async () => {
+  it("живой прогон на 18 ответов списывает 42 проверки: ответ Grok весит 5", async () => {
     // Живой режим с подставным адаптером: в сеть тест не ходит, но проходит
     // ровно ту ветку, по которой расход и считается.
     await orchestrateRun(db, runId, "live");
 
     const counter = await getUsageCounter(db, agencyId, billingPeriod());
-    expect(counter?.aiChecksUsed).toBe(18);
+    // 2 вопроса × 3 сэмпла × (ChatGPT 1 + Perplexity 1 + Grok 5).
+    expect(counter?.aiChecksUsed).toBe(42);
   });
 
   it("прогон на заглушках в расход не идёт", async () => {

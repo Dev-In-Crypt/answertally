@@ -29,6 +29,8 @@ import type { Database } from "@repo/db";
 
 /** Что даёт starter — умолчание для агентства без подписки. */
 const STARTER_ASSISTANTS = ["chatgpt", "perplexity", "grok"] as const;
+/** Включены у нового клиента: Grok с 07.10.2026 включается вручную. */
+const DEFAULT_ASSISTANTS = ["chatgpt", "perplexity"] as const;
 const STARTER_CADENCES = ["biweekly", "weekly"] as const;
 
 const { db, close } = createDb();
@@ -101,7 +103,7 @@ describe("ёмкость расписания", () => {
       ...STARTER_ASSISTANTS,
     ]);
     expect(capacity.monthlyCheckAllowance).toBe(PLAN_LIMITS[capacity.plan].aiCheckAllowance);
-    expect(capacity.defaultAssistants).toEqual([...STARTER_ASSISTANTS]);
+    expect(capacity.defaultAssistants).toEqual([...DEFAULT_ASSISTANTS]);
     expect(capacity.promptsPerClient).toBe(100);
   });
 
@@ -210,7 +212,7 @@ describe("ёмкость расписания", () => {
     const capacity = await caller.runs.capacity({ clientId });
 
     expect(capacity.cadences[0]?.id).toBe("biweekly");
-    expect(capacity.defaultAssistants).toEqual([...STARTER_ASSISTANTS]);
+    expect(capacity.defaultAssistants).toEqual([...DEFAULT_ASSISTANTS]);
   });
 
   it("незнакомая частота отвергается входной схемой", async () => {

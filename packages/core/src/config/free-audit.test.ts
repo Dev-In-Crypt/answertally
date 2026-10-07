@@ -116,7 +116,8 @@ describe("как набор называется на витрине", () => {
   it("называет именно бесплатный набор, а не тройку тарифа", () => {
     // Иначе страница обещает ассистента, которого человек не получит.
     expect(freeAuditAssistantSentence()).not.toContain("Grok");
-    expect(defaultAssistantSentence("starter")).toContain("Grok");
+    // С 07.10.2026 Grok не в умолчании и у платных тарифов: включается вручную.
+    expect(defaultAssistantSentence("starter")).not.toContain("Grok");
   });
 });
 

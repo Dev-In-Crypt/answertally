@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ASSISTANTS, billingPeriod } from "@repo/core";
+import { ASSISTANTS, billingPeriod, CHECK_WEIGHT_NOTE } from "@repo/core";
 import { api } from "@/trpc/react";
 import { EmptyState } from "@/components/page-header";
 import { NotePanel } from "@/components/ui/note-panel";
@@ -108,7 +108,7 @@ export function UsageView() {
             <div className="flex flex-col gap-1 rounded-lg border p-5">
               <span className="text-sm text-muted-foreground">Checks used</span>
               <span data-testid="usage-total" className="metric text-3xl font-semibold tracking-tight">
-                {data ? data.totalResponses.toLocaleString("en-US") : "–"}
+                {data ? data.totalChecks.toLocaleString("en-US") : "–"}
               </span>
               {allowance && (
                 <span
@@ -155,6 +155,10 @@ export function UsageView() {
             </div>
           </div>
 
+          <p data-testid="usage-weights" className="text-sm text-muted-foreground">
+            How checks are counted: {CHECK_WEIGHT_NOTE}
+          </p>
+
           <div className="flex flex-col gap-3">
             <h2 className="text-lg font-medium">By client</h2>
             <table data-testid="usage-by-client" className="w-full text-sm">
@@ -173,11 +177,11 @@ export function UsageView() {
                       data-testid={`usage-client-${row.clientId}`}
                       className="metric py-2 text-right"
                     >
-                      {row.responses.toLocaleString("en-US")}
+                      {row.checks.toLocaleString("en-US")}
                     </td>
                     <td className="metric py-2 text-right text-muted-foreground">
-                      {data && data.totalResponses > 0
-                        ? `${Math.round((row.responses / data.totalResponses) * 100)}%`
+                      {data && data.totalChecks > 0
+                        ? `${Math.round((row.checks / data.totalChecks) * 100)}%`
                         : "–"}
                     </td>
                   </tr>

@@ -1,4 +1,5 @@
 import {
+  checkUnits,
   ASSISTANTS,
   BASELINE_WINDOW_DAYS,
   CHECKS_PER_CLIENT_MONTH,
@@ -222,10 +223,11 @@ export const TYPICAL_CHECKS_BIWEEKLY = Math.round(CHECKS_PER_CLIENT_MONTH / 2 / 
  * ассистентов пережила и появление Grok в умолчании, и уход Gemini.
  */
 export const MEASURABLE_ASSISTANT_COUNT = ASSISTANTS.filter((a) => a.measurable).length;
+const MEASURABLE_IDS = ASSISTANTS.filter((a) => a.measurable).map((a) => a.id);
 
 export const TYPICAL_CHECKS_ALL_ASSISTANTS =
   Math.round(
-    (TYPICAL_CHECKS_PER_CLIENT * MEASURABLE_ASSISTANT_COUNT) / DEFAULT_PLATFORMS.length / 50,
+    (TYPICAL_CHECKS_PER_CLIENT * checkUnits(MEASURABLE_IDS)) / checkUnits(DEFAULT_PLATFORMS) / 50,
   ) * 50;
 
 export const PLANS: {

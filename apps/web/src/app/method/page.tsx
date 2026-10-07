@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import {
   BASELINE_WINDOW_DAYS,
+  CHECK_WEIGHT_NOTE,
   MARKETING_COPY,
   MEASUREMENT_COPY,
   METHOD_COPY,
@@ -166,12 +167,13 @@ export default function MethodPage() {
               <div className="chip-row">
                 <span className="a-chip">ChatGPT</span>
                 <span className="a-chip">Perplexity</span>
-                <span className="a-chip">Grok</span>
               </div>
               <p className="small" style={{ margin: "16px 0 8px" }}>
-                Switched on per client from the Growth plan, using more AI checks rather than costing extra
+                Switched on per client, using more AI checks rather than costing extra: Grok on any
+                plan, Claude from Growth. {CHECK_WEIGHT_NOTE.charAt(0).toUpperCase() + CHECK_WEIGHT_NOTE.slice(1)}
               </p>
               <div className="chip-row">
+                <span className="a-chip opt">Grok</span>
                 <span className="a-chip opt">Claude</span>
               </div>
               <p className="small" style={{ margin: "16px 0 8px" }}>Not measured</p>

@@ -1,6 +1,7 @@
 import { PLAN_LIMITS } from "../billing/period";
 import type { PlanId } from "../billing/entitlements";
 import { ASSISTANTS, isMeasurableAssistant } from "../adapters/catalogue";
+import { checkUnits } from "../adapters/pricing";
 import { DEFAULT_PLATFORMS, PLATFORM_IDS, type Platform } from "../adapters/types";
 import { MIN_SAMPLES_PER_CELL } from "../metrics/visibility";
 
@@ -108,8 +109,8 @@ export const MEASUREMENT_CAPABILITIES: Record<PlanId, MeasurementCapabilities> =
     promptsPerClient: PROMPTS_PER_CLIENT,
     cadences: WITHOUT_DAILY,
     assistants: STARTER_ASSISTANTS,
-    // Умолчание не может предлагать то, чего тариф не разрешает.
-    defaultAssistants: STARTER_ASSISTANTS,
+    // Grok разрешён, но включается вручную: умолчание общее для всех тарифов.
+    defaultAssistants: DEFAULT_PLATFORMS,
   },
   growth: { ...ALL_ASSISTANTS, cadences: WITHOUT_DAILY },
   scale: ALL_ASSISTANTS,
@@ -186,9 +187,9 @@ export function allowsAssistant(plan: PlanId, platform: Platform): boolean {
 /**
  * Сколько ответов в месяц даст такая настройка.
  *
- * Считает то же, что списывается со счётчика проверок: один ответ одного
- * ассистента на один вопрос. Нужна и интерфейсу (показать цену выбора), и
- * расчёту себестоимости.
+ * Один ответ одного ассистента на один вопрос. Передайте в `assistants`
+ * число ассистентов — получите ответы; `checkUnits(список)` — проверки,
+ * которые спишутся с лимита.
  */
 export function monthlyAnswers(input: {
   prompts: number;
@@ -235,18 +236,19 @@ export function platformsForRun(
 }
 
 /**
- * Во сколько ответов обойдётся прогон — тем же правилом, что и сам прогон.
+ * Во сколько проверок обойдётся прогон — тем же правилом, что и сам прогон.
  *
  * Одна функция на веб (кнопка), планировщик (расписание) и воркер (что
  * ставить в очередь): разные подсчёты одного размера уже расходились.
- * Без расписания выборок `MIN_SAMPLES_PER_CELL`.
+ * Без расписания выборок `MIN_SAMPLES_PER_CELL`. Ответ ассистента весит
+ * `checkWeight` проверок (Grok 5, Claude 4).
  */
 export function plannedChecksForRun(
   capabilities: MeasurementCapabilities,
   promptCount: number,
   schedule: { platforms: readonly string[]; samplesPerPrompt: number } | null | undefined,
 ): number {
-  const platforms = platformsForRun(capabilities, schedule?.platforms).length;
-  return promptCount * platforms * (schedule?.samplesPerPrompt ?? MIN_SAMPLES_PER_CELL);
+  const units = checkUnits(platformsForRun(capabilities, schedule?.platforms));
+  return promptCount * units * (schedule?.samplesPerPrompt ?? MIN_SAMPLES_PER_CELL);
 }
 

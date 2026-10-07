@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { MARKETING_COPY, VOLUME_ACCOUNT_PRICE_USD, VOLUME_DISCOUNT, VOLUME_THRESHOLD } from "@repo/core";
+import { CHECK_WEIGHT_NOTE, MARKETING_COPY, VOLUME_ACCOUNT_PRICE_USD, VOLUME_DISCOUNT, VOLUME_THRESHOLD } from "@repo/core";
 import { CtaNote, FREE_AUDIT_NOTE, Faq, SecHead, TalkOrAudit } from "@/components/marketing/bits";
 import { MarketingShell } from "@/components/marketing/chrome";
 import { checkoutCopy, PRICING_NOTES, RESALE, SALES_CONTACT } from "@/components/marketing/content";
@@ -43,7 +43,7 @@ const clientLimitsText = `${clientLimits.slice(0, -1).join(", ")} or ${clientLim
 const INCLUDED = [
   {
     title: "Measurement",
-    body: `Three assistants on Starter; all four from Growth, switched on per client. ${MARKETING_COPY.sampleFloor} ${MARKETING_COPY.cadence}`,
+    body: `ChatGPT and Perplexity by default; Grok on any plan and Claude from Growth, switched on per client. ${MARKETING_COPY.sampleFloor} ${MARKETING_COPY.cadence}`,
   },
   {
     title: "Diagnosis",
@@ -216,6 +216,9 @@ export default function PricingPage() {
             </li>
           ))}
         </ul>
+        <p className="small muted" data-testid="check-weights" style={{ marginTop: 12 }}>
+          How AI checks count: {CHECK_WEIGHT_NOTE.charAt(0).toUpperCase() + CHECK_WEIGHT_NOTE.slice(1)} Grok and Claude are switched on per client.
+        </p>
       </div>
 
       {/* 1 · перепродажа */}

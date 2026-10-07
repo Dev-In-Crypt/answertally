@@ -209,8 +209,8 @@ export default function ProductPage() {
           </div>
           <div className="facts">
             <div className="card fact">
-              <b>3 / 4</b>
-              <span>Three assistants on Starter; all four from Growth, switched on per client.</span>
+              <b>2 + 2</b>
+              <span>ChatGPT and Perplexity by default; Grok on any plan and Claude from Growth, switched on per client.</span>
             </div>
             <div className="card fact">
               <b>≥ 3</b>

@@ -140,8 +140,9 @@ describe("контракт адаптера", () => {
 });
 
 describe("набор по умолчанию", () => {
-  it("состоит из запускной тройки и входит в полный набор", () => {
-    expect([...DEFAULT_PLATFORMS]).toEqual(["chatgpt", "perplexity", "grok"]);
+  it("ChatGPT и Perplexity, и входит в полный набор", () => {
+    // Grok вышел из умолчания 07.10.2026: самый дорогой ответ, весит 5 проверок.
+    expect([...DEFAULT_PLATFORMS]).toEqual(["chatgpt", "perplexity"]);
     for (const platform of DEFAULT_PLATFORMS) {
       expect(PLATFORMS).toContain(platform);
     }

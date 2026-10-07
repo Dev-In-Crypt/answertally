@@ -133,7 +133,8 @@ export default async function HomePage() {
             </h1>
             <p className="lead">
               Answer “Are we in ChatGPT?” with numbers that show their work. Answertally asks
-              ChatGPT, Perplexity and Grok the questions your client’s buyers ask, several times each.{" "}
+              ChatGPT and Perplexity, and Grok or Claude when you switch them on, the questions your
+              client’s buyers ask, several times each.{" "}
               {MARKETING_COPY.evidencePromise} <b>Your client sees your brand, not ours.</b>
             </p>
             <div className="ctas">
@@ -159,7 +160,7 @@ export default async function HomePage() {
               <div className="chip-row" aria-label="Assistants measured">
                 <span className="a-chip">ChatGPT</span>
                 <span className="a-chip">Perplexity</span>
-                <span className="a-chip">Grok</span>
+                <span className="a-chip opt">Grok · on request</span>
                 <span className="a-chip opt">Claude · from Growth</span>
               </div>
               <ul className="trust-strip" aria-label="How client data is handled" data-testid="trust-strip">

@@ -88,3 +88,34 @@ export function answersCostUsd(assistants: readonly string[], answersEach: numbe
   // Шесть знаков — та же точность, что у колонки cost_usd.
   return Math.round(perRound * answersEach * 1_000_000) / 1_000_000;
 }
+
+/**
+ * Сколько проверок из месячного лимита списывает один ответ ассистента.
+ *
+ * Решение фаундера 07.10.2026: Grok 5, Claude 4, ChatGPT и Perplexity по 1.
+ * Без весов лимит в проверках не держал деньги: ответ Grok в 75 раз дороже
+ * ответа Perplexity, и агентство, гоняющее только Grok и Claude, уводило
+ * Growth и Scale в минус. С весами самый дорогой расклад на любом тарифе —
+ * около четверти цены.
+ *
+ * Неизвестная платформа считается по самому тяжёлому весу: ошибка в сторону
+ * осторожности, как и с ценой ответа.
+ */
+export const CHECK_WEIGHTS: Record<Platform, number> = {
+  chatgpt: 1,
+  perplexity: 1,
+  claude: 4,
+  grok: 5,
+  gemini: 4,
+};
+
+const HEAVIEST_WEIGHT = Math.max(...PLATFORM_IDS.map((id) => CHECK_WEIGHTS[id]));
+
+export function checkWeight(platform: string): number {
+  return CHECK_WEIGHTS[platform as Platform] ?? HEAVIEST_WEIGHT;
+}
+
+/** Проверок за один круг «каждый ассистент ответил один раз». */
+export function checkUnits(platforms: readonly string[]): number {
+  return platforms.reduce((sum, platform) => sum + checkWeight(platform), 0);
+}

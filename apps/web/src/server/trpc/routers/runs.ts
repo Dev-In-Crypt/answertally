@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import {
+  checkUnits,
   MIN_SAMPLES_PER_CELL,
   parseAdaptersMode,
   PLATFORM_IDS,
@@ -126,7 +127,8 @@ async function otherClientsMonthly(
     const prompts = await listActivePromptsForClient(db, client.id);
     total += monthlyAnswers({
       prompts: prompts.length,
-      assistants: platformsForRun(capabilities, schedule.platforms).length,
+      // В проверках, а не в ответах: так их и списывает лимит.
+      assistants: checkUnits(platformsForRun(capabilities, schedule.platforms)),
       samplesPerPrompt: schedule.samplesPerPrompt,
       cadence: schedule.cadence,
     });

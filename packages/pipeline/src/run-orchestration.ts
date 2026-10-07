@@ -1,5 +1,6 @@
 import {
   billingPeriod,
+  checkWeight,
   getAdapter,
   type AdaptersMode,
   type Platform,
@@ -124,7 +125,8 @@ export async function executeRunJob(
    * согласен. Заодно бесплатный аудит не съедает сам себя в демо-режиме.
    */
   if (agencyId) {
-    await incrementAiChecks(db, agencyId, billingPeriod());
+    // Дорогой ассистент списывает больше одной проверки (Grok 5, Claude 4).
+    await incrementAiChecks(db, agencyId, billingPeriod(), checkWeight(job.platform));
   }
 
   return response.id;
