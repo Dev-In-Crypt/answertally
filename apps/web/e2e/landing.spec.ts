@@ -79,7 +79,7 @@ test("the example report is a real report page in a fictional agency's brand", a
   await expect(page.getByTestId("agency-name")).toHaveText("Harbor & Pine");
   await expect(page.getByTestId("report-visibility")).toContainText("19.4% → 28.6%");
   await expect(page.getByTestId("report-work").locator("li")).toHaveCount(5);
-  await expect(page.getByTestId("report-results")).toContainText("Brand mentions");
+  await expect(page.getByTestId("report-results")).toContainText("Answers naming");
   await expect(page.getByTestId("report-caveats")).toContainText("share of AI answers");
 
   const html = await page.content();
