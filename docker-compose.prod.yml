@@ -312,6 +312,8 @@ services:
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-aisdos}:${POSTGRES_PASSWORD}@postgres:5432/umami
       APP_SECRET: ${UMAMI_APP_SECRET:?set UMAMI_APP_SECRET}
+      # Ключ шифрования секретов двухфакторного входа в Umami.
+      TWO_FACTOR_ENCRYPTION_KEY: ${UMAMI_2FA_KEY:-}
       DISABLE_TELEMETRY: "1"
     depends_on:
       postgres:
