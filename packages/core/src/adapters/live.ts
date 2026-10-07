@@ -4,6 +4,7 @@ import type { ReasoningEffort } from "./openai";
 import { PerplexityAdapter } from "./perplexity";
 import { ClaudeAdapter } from "./claude";
 import { GrokAdapter } from "./grok";
+import { DataForSeoAdapter } from "./dataforseo";
 
 /**
  * Подключение живых адаптеров.
@@ -104,6 +105,15 @@ export function registerLiveAdapters(env: NodeJS.ProcessEnv = process.env): stri
         }),
     );
     registered.push("grok");
+  }
+
+  // Google AI Overviews и AI Mode — один ключ поставщика выдачи на обе поверхности.
+  const dataForSeoAuth = env["DATAFORSEO_AUTH"]?.trim();
+  if (dataForSeoAuth) {
+    for (const surface of ["ai-overviews", "ai-mode"] as const) {
+      registerLiveAdapter(surface, () => new DataForSeoAdapter({ auth: dataForSeoAuth, surface }));
+      registered.push(surface);
+    }
   }
 
   registeredPlatforms = registered;

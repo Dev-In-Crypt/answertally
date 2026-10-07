@@ -136,12 +136,13 @@ describe("домены в fixtures", () => {
     }
 
     expect(Object.fromEntries([...counts].sort())).toEqual({
-      documentation: 4,
-      editorial: 7,
-      owned: 17,
-      review: 42,
-      ugc: 8,
-      unclassified: 49,
+      // Выросло 07.10.2026: появились заготовки для поверхностей Google.
+      documentation: 6,
+      editorial: 10,
+      owned: 26,
+      review: 60,
+      ugc: 13,
+      unclassified: 74,
     });
   });
 });

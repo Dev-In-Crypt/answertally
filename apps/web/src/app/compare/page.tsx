@@ -79,7 +79,7 @@ const ROWS: { label: string; cells: Cell[] }[] = [
   {
     label: "Assistants",
     cells: [
-      { text: "ChatGPT and Perplexity; Grok and Claude switched on per client" },
+      { text: "ChatGPT and Perplexity; Grok, Claude, Google AI Overviews and AI Mode switched on per client" },
       { text: "Pick 3, incl. ChatGPT, Google AI Mode and AI Overviews, Copilot, Gemini", href: "https://peec.ai/pricing" },
       { text: "ChatGPT, Google AI Overviews, Perplexity, Copilot; more as add-ons", href: "https://otterly.ai/pricing" },
       { text: "Enterprise: ChatGPT, Perplexity, Google AI Mode, Gemini, Copilot, Claude and more", href: "https://www.tryprofound.com/pricing" },
@@ -178,8 +178,8 @@ export default function ComparePage() {
             <div className="limit">
               <h3>Pick them if</h3>
               <p>
-                You need Google AI Overviews, AI Mode or Copilot today, daily tracking of hundreds of
-                prompts for one brand, or an entry price under $100 for a single project.
+                You need Microsoft Copilot or Gemini today, daily tracking of hundreds of prompts for
+                one brand, or an entry price under $100 for a single project.
               </p>
             </div>
             <div className="limit">

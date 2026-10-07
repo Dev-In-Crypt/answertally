@@ -292,6 +292,8 @@ export function allFixtures(): ResponseFixture[] {
 const DERIVED_FROM: readonly { platform: Platform; donor: Platform; modelVersion: string }[] = [
   { platform: "claude", donor: "perplexity", modelVersion: "claude-haiku-4-5-fixture" },
   { platform: "grok", donor: "gemini", modelVersion: "grok-4-1-fast-fixture" },
+  { platform: "ai-overviews", donor: "chatgpt", modelVersion: "dataforseo-google-ai-overviews-fixture" },
+  { platform: "ai-mode", donor: "perplexity", modelVersion: "dataforseo-google-ai-mode-fixture" },
 ];
 
 function derivedFixtures(written: ResponseFixture[]): ResponseFixture[] {

@@ -119,6 +119,9 @@ export const DIAGNOSIS_COPY = {
 } as const;
 
 export const REPORT_COPY = {
+  /** Мелкая строка в «How to read this», когда в отчёте есть поверхности Google. */
+  googleSurfacesSource:
+    "Google AI Overviews and AI Mode answers are collected from Google search results through a third-party data provider, for searches from the United States in English.",
   /**
    * Идёт в каждый отчёт: клиент должен понимать, что именно измерено.
    *
@@ -411,7 +414,7 @@ export const MARKETING_COPY = {
     "Without untouched topics there is nothing to compare against, and the report says so instead of showing a difference.",
   /** Кого не измеряем и почему. */
   notMeasuredSurfaces:
-    "Google AI Overviews, AI Mode and Microsoft Copilot have no official API. Standard measurement runs only through official provider APIs, so they are not part of it, and no report estimates them.",
+    "Microsoft Copilot has no API for its answers, so it is not measured, and no report estimates it. Google AI Overviews and AI Mode can be switched on per client; Google has no API for them either, so their answers come from search results through a data provider.",
   /** Пределы, названные вслух на главной. */
   limits: {
     quarter:

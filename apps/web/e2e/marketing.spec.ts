@@ -207,7 +207,7 @@ test("the method page states its thresholds and what it never claims", async ({ 
   const assistants = page.getByTestId("method-assistants");
   await expect(assistants).toContainText("Copilot");
   await expect(assistants).toContainText("AI Overviews");
-  await expect(assistants).toContainText("no official API");
+  await expect(assistants).toContainText("no API");
 
   await expect(page.getByTestId("method-never").locator("li")).not.toHaveCount(0);
   await expect(page.getByTestId("method-summary")).toContainText("every 2 weeks");

@@ -169,18 +169,18 @@ export default function MethodPage() {
                 <span className="a-chip">Perplexity</span>
               </div>
               <p className="small" style={{ margin: "16px 0 8px" }}>
-                Switched on per client, using more AI checks rather than costing extra: Grok on any
-                plan, Claude from Growth. {CHECK_WEIGHT_NOTE.charAt(0).toUpperCase() + CHECK_WEIGHT_NOTE.slice(1)}
+                Switched on per client, using more AI checks rather than costing extra: Grok and
+                Google AI Overviews and AI Mode on any plan, Claude from Growth. {CHECK_WEIGHT_NOTE.charAt(0).toUpperCase() + CHECK_WEIGHT_NOTE.slice(1)}
               </p>
               <div className="chip-row">
                 <span className="a-chip opt">Grok</span>
                 <span className="a-chip opt">Claude</span>
+                <span className="a-chip opt">AI Overviews</span>
+                <span className="a-chip opt">AI Mode</span>
               </div>
               <p className="small" style={{ margin: "16px 0 8px" }}>Not measured</p>
               <div className="chip-row">
                 <span className="a-chip off">Copilot</span>
-                <span className="a-chip off">AI Overviews</span>
-                <span className="a-chip off">AI Mode</span>
               </div>
               <div className="basis" style={{ marginTop: 16 }}>
                 {MARKETING_COPY.notMeasuredSurfaces}

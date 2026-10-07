@@ -6,7 +6,8 @@ import { z } from "zod";
  * Литеральный кортеж, а не только `PLATFORMS`: zod-схемы входа выводят из
  * него union, а из `readonly Platform[]` вывели бы `string[]` и потеряли его.
  */
-export const PLATFORM_IDS = ["chatgpt", "perplexity", "gemini", "claude", "grok"] as const;
+// Поверхности Google (07.10.2026) — через поставщика выдачи, см. adapters/dataforseo.
+export const PLATFORM_IDS = ["chatgpt", "perplexity", "gemini", "claude", "grok", "ai-overviews", "ai-mode"] as const;
 
 export type Platform = (typeof PLATFORM_IDS)[number];
 

@@ -29,15 +29,15 @@ describe("surfaceCapabilities", () => {
     }
   });
 
-  it("поверхности Google требуют поставщика выдачи, а не ключа", () => {
-    // Разница не косметическая: ключ — вопрос денег, поставщик выдачи —
-    // вопрос того, отдаёт ли Google ответ программно вообще.
+  it("поверхности Google измеряются через поставщика выдачи", () => {
+    // С 07.10.2026: у Google API нет, ответы снимает DataForSEO (adapters/dataforseo).
     const google = surfaceCapabilities().filter((entry) => entry.id.startsWith("ai-"));
 
-    expect(google.length).toBeGreaterThan(0);
+    expect(google.length).toBe(2);
     for (const surface of google) {
-      expect(surface.requirement).toBe("serp-provider");
-      expect(surface.measurable).toBe(false);
+      expect(surface.requirement).toBe("none");
+      expect(surface.measurable).toBe(true);
+      expect(surface.note).toContain("data provider");
     }
   });
 
@@ -83,7 +83,7 @@ describe("surfaceCapabilities", () => {
   it("поверхность без адаптера не существует и для базы", () => {
     // У тех, кого мы не измеряли никогда, нет и значения в enum: ни одна
     // строка на него не сошлётся.
-    for (const id of ["copilot", "ai-overviews", "ai-mode"]) {
+    for (const id of ["copilot"]) {
       expect(PLATFORM_IDS as readonly string[]).not.toContain(id);
       expect(isPlatform(id)).toBe(false);
     }

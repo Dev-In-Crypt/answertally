@@ -51,6 +51,8 @@ export {
   grokCostUsd,
 } from "./adapters/grok";
 export type { GrokAdapterConfig, GrokPricing } from "./adapters/grok";
+export { DataForSeoAdapter, extractAiAnswer, NO_AI_OVERVIEW_TEXT } from "./adapters/dataforseo";
+export type { DataForSeoAdapterConfig, GoogleSurface } from "./adapters/dataforseo";
 export { registerLiveAdapters } from "./adapters/live";
 export { liveAdapterPlatforms } from "./adapters/live";
 export {

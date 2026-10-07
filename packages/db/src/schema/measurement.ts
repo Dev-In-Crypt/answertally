@@ -22,7 +22,15 @@ export const promptIntentEnum = pgEnum("prompt_intent", [
   "other",
 ]);
 
-export const platformEnum = pgEnum("platform", ["chatgpt", "perplexity", "gemini", "claude", "grok"]);
+export const platformEnum = pgEnum("platform", [
+  "chatgpt",
+  "perplexity",
+  "gemini",
+  "claude",
+  "grok",
+  "ai-overviews",
+  "ai-mode",
+]);
 /**
  * Частота прогонов.
  *

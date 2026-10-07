@@ -37,7 +37,7 @@ const NOTES: Record<string, { requirement: SurfaceRequirement; note: string; rea
   chatgpt: { requirement: "none", note: "Measured through the platform API.", ready: true },
   perplexity: { requirement: "none", note: "Measured through the platform API.", ready: true },
   "ai-overviews": {
-    requirement: "serp-provider",
+    requirement: "none",
     /**
      * TODO — граница интеграции, ровно одна:
      * реализовать SerpProvider поверх стороннего поставщика выдачи, который
@@ -51,12 +51,12 @@ const NOTES: Record<string, { requirement: SurfaceRequirement; note: string; rea
      * ветку в adapters/live, `measurable: true` здесь и в каталоге.
      * Разбор поставщиков, цен и условий — docs/open-questions/serp-provider.md.
      */
-    note: "Google does not return AI Overviews through an API. Measuring it needs a search-results provider that captures the block for a query and region.",
+    note: "Measured through a search-results data provider: Google has no API for it.",
     ready: true,
   },
   "ai-mode": {
-    requirement: "serp-provider",
-    note: "Same as AI Overviews: no API, so it needs a search-results provider.",
+    requirement: "none",
+    note: "Measured through a search-results data provider, like AI Overviews.",
     ready: true,
   },
   claude: { requirement: "none", note: "Measured through the platform API.", ready: true },

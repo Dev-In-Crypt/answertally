@@ -62,6 +62,10 @@ export const ANSWER_PRICES: Record<Platform, AnswerPrice> = {
   grok: { usd: 0.1058, basis: "measured", on: "2026-09-29" },
   // Не измеряется: условия Google на grounded-поиск. Строка нужна типу.
   gemini: { usd: 0.055, basis: "listed", on: "2026-09-23" },
+  // DataForSEO: AI Mode — живой вызов 07.10.2026 стоил $0.004. AI Overview —
+  // выдача $0.002 и подгрузка блока $0.002 по прайсу, живьём ещё не снято.
+  "ai-mode": { usd: 0.004, basis: "measured", on: "2026-10-07" },
+  "ai-overviews": { usd: 0.004, basis: "listed", on: "2026-10-07" },
 };
 
 /**
@@ -107,6 +111,8 @@ export const CHECK_WEIGHTS: Record<Platform, number> = {
   claude: 4,
   grok: 5,
   gemini: 4,
+  "ai-overviews": 1,
+  "ai-mode": 1,
 };
 
 const HEAVIEST_WEIGHT = Math.max(...PLATFORM_IDS.map((id) => CHECK_WEIGHTS[id]));

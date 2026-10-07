@@ -75,8 +75,10 @@ describe("почему набор именно такой", () => {
      * падает, когда разрыв исчезает, и зовёт пересмотреть список руками, а
      * не оставляет устаревшее решение жить само по себе.
      */
+    // Поверхности Google исключены не по цене (они дешевле всех), а потому
+    // что это опция агентства с данными стороннего поставщика.
     const excluded = capabilitiesFor("starter").assistants.filter(
-      (id) => !FREE_AUDIT_ASSISTANTS.includes(id),
+      (id) => !FREE_AUDIT_ASSISTANTS.includes(id) && !id.startsWith("ai-"),
     );
 
     expect(excluded.length).toBeGreaterThan(0);

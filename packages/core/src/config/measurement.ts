@@ -64,7 +64,14 @@ export interface MeasurementCapabilities {
  * индекс, а продукт делает ровно это. Его больше не измеряет ни один
  * тариф (docs/open-questions/gemini-grounding.md).
  */
-const STARTER_ASSISTANTS: readonly Platform[] = ["chatgpt", "perplexity", "grok"] as const;
+const STARTER_ASSISTANTS: readonly Platform[] = [
+  "chatgpt",
+  "perplexity",
+  "grok",
+  // Поверхности Google — опция на любом платном тарифе, по умолчанию выключены.
+  "ai-overviews",
+  "ai-mode",
+] as const;
 
 /**
  * Ежедневный опрос — только на старшем тарифе.

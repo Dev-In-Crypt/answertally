@@ -50,6 +50,10 @@ export const PLATFORM_RATE_LIMITS: Record<Platform, { max: number; duration: num
   // середина. Уточнить по тарифу аккаунта при первом живом прогоне.
   claude: { max: 30, duration: 60_000 },
   grok: { max: 30, duration: 60_000 },
+  // У DataForSEO лимит — тысячи в минуту; держим скромно, ответ живого
+  // вызова идёт 6–15 секунд.
+  "ai-overviews": { max: 30, duration: 60_000 },
+  "ai-mode": { max: 30, duration: 60_000 },
 };
 
 export interface FinalizeJobData {

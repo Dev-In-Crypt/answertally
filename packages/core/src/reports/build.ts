@@ -211,6 +211,12 @@ export function buildReportPayload(inputs: ReportInputs): ReportPayload {
     caveats: [
       measurementBasisFor(basisPlatforms),
       ...(assistantCaveat ? [assistantCaveat] : []),
+      // Источник ответов Google — мелкой строкой здесь, а не в шапке
+      // (решение фаундера 07.10.2026): у Google нет API, данные снимает
+      // поставщик выдачи. Имени поставщика нет: клиенту оно ничего не даёт.
+      ...(basisPlatforms.some((p) => p === "ai-overviews" || p === "ai-mode")
+        ? [REPORT_COPY.googleSurfacesSource]
+        : []),
       ...inputs.caveats,
     ],
   };

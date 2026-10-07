@@ -77,7 +77,8 @@ describe("сегодняшняя политика тарифов", () => {
   it("starter даёт три самых дешёвых ассистента", () => {
     // Разброс цены ответа между самым дешёвым и самым дорогим почти
     // пятикратный, и на младшем тарифе он съедал бы маржу быстрее всего.
-    expect(capabilitiesFor("starter").assistants).toEqual([...STARTER_THREE]);
+    // С 07.10.2026 к тройке добавлены поверхности Google — дешёвые, через поставщика выдачи.
+    expect(capabilitiesFor("starter").assistants).toEqual([...STARTER_THREE, "ai-overviews", "ai-mode"]);
     expect(
       refuseScheduleForPlan("starter", { cadence: "biweekly", assistants: STARTER_THREE }),
     ).toBeNull();
@@ -230,7 +231,7 @@ describe("что предлагается в форме", () => {
     );
     // Неизмеряемым в расписании места нет — ни тем, у кого нет API, ни
     // Gemini, которого запрещают условия поставщика.
-    for (const id of ["copilot", "ai-overviews", "gemini"]) {
+    for (const id of ["copilot", "gemini"]) {
       expect(offered).not.toContain(id);
     }
   });
@@ -346,7 +347,8 @@ describe("оценка расхода", () => {
       cadence: "daily",
     });
 
-    expect(estimate.answersPerMonth).toBe(45_000);
+    // 60 вопросов × 7 платформ × 5 выборок × 30 дней.
+    expect(estimate.answersPerMonth).toBe(63_000);
     expect(estimate.allowance).toBe(PLAN_LIMITS.starter.aiCheckAllowance);
     expect(estimate.overAllowance).toBe(true);
     expect(estimate.ratio).toBeGreaterThan(1);
