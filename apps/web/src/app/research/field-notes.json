@@ -1,0 +1,230 @@
+[
+  {
+    "brand": "Brooklinen",
+    "category": "bed sheets and bedding",
+    "cells": [
+      {
+        "assistant": "chatgpt",
+        "named": 32,
+        "answers": 63
+      },
+      {
+        "assistant": "perplexity",
+        "named": 34,
+        "answers": 63
+      }
+    ],
+    "purchase": {
+      "named": 18,
+      "answers": 30
+    },
+    "control": {
+      "named": 1,
+      "answers": 18
+    },
+    "questions": [
+      "Which soft sheets feel comfortable for sensitive sleepers?",
+      "What are good options for sheets with a soft feel that lasts?",
+      "Which sheets feel soft without feeling too flimsy?",
+      "What are good sheets for hot sleepers?",
+      "Which sheet brands are good alternatives to Parachute sheets?",
+      "What are some alternatives to Boll & Branch sheets?",
+      "Which premium sheets make a thoughtful wedding gift?",
+      "Where can I buy high-quality sheets online?",
+      "Are premium sheets worth the price for everyday use?",
+      "Which sheets are best for a California king bed?",
+      "What are good options for a cozy comforter for cold winters?",
+      "Which comforters feel warm and cozy without being too heavy?",
+      "What are the best comforters for year-round use?",
+      "Which comforter brands are good alternatives to Snowe?",
+      "Which premium comforters are worth buying as a housewarming gift?",
+      "Where can I find a king-size comforter from a premium brand?",
+      "Which pillows come in both soft and firm support options?",
+      "What are good firm supportive pillows for side sleepers?",
+      "Which soft pillows work well for stomach sleepers?",
+      "What are the best supportive pillows for neck pain?",
+      "Which pillows are a good choice for a guest room?",
+      "Which mattress toppers add a plush feel to a firm bed?",
+      "What are good sleep masks for blocking out light while traveling?",
+      "Which pajamas are comfortable for warm summer nights?"
+    ]
+  },
+  {
+    "brand": "Plausible",
+    "category": "website analytics software",
+    "cells": [
+      {
+        "assistant": "chatgpt",
+        "named": 44,
+        "answers": 49
+      },
+      {
+        "assistant": "perplexity",
+        "named": 41,
+        "answers": 49
+      }
+    ],
+    "purchase": {
+      "named": 9,
+      "answers": 14
+    },
+    "control": {
+      "named": 0,
+      "answers": 0
+    },
+    "questions": [
+      "Which privacy-focused tools are good alternatives to Google Analytics for a small website?",
+      "What are the best lightweight tools for tracking website visits without slowing pages down?",
+      "Which website analytics tools work without cookie consent banners?",
+      "What are good alternatives to Fathom Analytics for privacy-friendly website stats?",
+      "What are good alternatives to Simple Analytics for a clear, easy-to-read dashboard?",
+      "Which tools are good alternatives to Matomo for tracking website traffic?",
+      "Which open-source tools can I use to understand traffic on my website?",
+      "What are good website analytics options if I want to own and control my data?",
+      "Which website analytics tools charge based on traffic instead of users or events?",
+      "What are the simplest tools for seeing where my website visitors come from?",
+      "Which privacy-friendly tools can replace Google Analytics on a blog?",
+      "What website analytics tools are a good fit for an online store?",
+      "Which tools show website traffic in a straightforward dashboard without lots of reports?",
+      "Which tools can track website visits without collecting personal visitor data?",
+      "Which website analytics tools offer a free trial?",
+      "What website analytics software has a free plan for a low-traffic site?",
+      "How much do privacy-friendly website analytics tools cost in the US?"
+    ]
+  },
+  {
+    "brand": "Graza",
+    "category": "olive oil",
+    "cells": [
+      {
+        "assistant": "perplexity",
+        "named": 37,
+        "answers": 60
+      }
+    ],
+    "purchase": {
+      "named": 6,
+      "answers": 15
+    },
+    "control": {
+      "named": 0,
+      "answers": 12
+    },
+    "questions": [
+      "Which extra-virgin cooking oil comes in a squeeze bottle that's easy to control?",
+      "What are good extra-virgin oils with refill cans for everyday cooking?",
+      "Which extra-virgin oils come in glass bottles instead of plastic?",
+      "What are good olive oil gift sets with more than one style of oil?",
+      "Which cooking oils are made for high-heat cooking?",
+      "What are some olive-oil-based mayonnaises to try?",
+      "What are good extra-virgin olive oils for finishing dishes straight from a squeeze bottle?",
+      "What are good alternatives to Brightland olive oil for everyday cooking?",
+      "Which extra-virgin olive oils come in refillable or recyclable packaging?",
+      "What are good alternatives to California Olive Ranch extra-virgin olive oil in a squeeze bottle?",
+      "What are good alternatives to Colavita extra-virgin olive oil for drizzling?",
+      "Which olive oil gift set has separate bottles for cooking and finishing?",
+      "What are good olive oil brands that sell both glass bottles and refill cans?",
+      "Which high-heat cooking oil is a good alternative to extra-virgin olive oil?",
+      "Which olive oil trio is a good way to try different cooking styles?",
+      "Where can I buy an olive oil starter set in the US?",
+      "What's a good olive oil gift set under $50?",
+      "Is a premium olive oil trio worth the price as a gift?",
+      "Where can I buy extra-virgin olive oil potato chips?",
+      "Which olive oil subscriptions let me reorder refill cans?",
+      "What are the best cast-iron skillets for home cooking?",
+      "Which avocado oils are best for high-heat cooking?",
+      "What are good countertop air fryers for a small kitchen?",
+      "Which ceramic nonstick pans are good for everyday cooking?"
+    ]
+  },
+  {
+    "brand": "Kubera",
+    "category": "net worth tracking software",
+    "cells": [
+      {
+        "assistant": "perplexity",
+        "named": 42,
+        "answers": 63
+      }
+    ],
+    "purchase": {
+      "named": 3,
+      "answers": 15
+    },
+    "control": {
+      "named": 0,
+      "answers": 9
+    },
+    "questions": [
+      "Which apps can track bank and brokerage accounts alongside crypto and real estate?",
+      "What tools combine US and international financial accounts in one wealth dashboard?",
+      "Which wealth apps handle multiple currencies across accounts and assets?",
+      "What are good options for tracking private investments, LP positions, and public stocks together?",
+      "Which platforms can include homes, cars, jewelry, and watches in a personal balance sheet?",
+      "What software lets me separate assets across trusts, LLCs, and personal ownership?",
+      "Which wealth trackers let a spouse or advisor view the same financial picture?",
+      "What apps update investment and account balances close to real time?",
+      "Which platforms track crypto, commodities, and traditional investments in one place?",
+      "What tools can show cash balances alongside investments and debts?",
+      "Which services create a shareable proof-of-wealth report for a lender?",
+      "What are alternatives to Empower for tracking investments, property, and other assets?",
+      "Which apps offer private benchmarks for comparing wealth with similar households?",
+      "What software can send account access instructions to someone I choose if I become incapacitated?",
+      "Which wealth tracking apps connect to international banks and brokerages?",
+      "Is there a wealth app that can track ownership stakes across multiple entities?",
+      "Which software offers a trial before I connect all my financial accounts?",
+      "What does premium wealth tracking software typically cost per year?",
+      "Which personal finance apps have a free plan for tracking investments and assets?",
+      "Is a paid wealth dashboard worth it for someone with private investments and real estate?",
+      "What are alternatives to Monarch Money for tracking investments and total assets?",
+      "What estate planning services help organize account and asset information for heirs?",
+      "Which password managers are best for sharing emergency access with family?",
+      "What tax software works well for people with rental property and investment income?"
+    ]
+  },
+  {
+    "brand": "Tally",
+    "category": "online form builder",
+    "cells": [
+      {
+        "assistant": "perplexity",
+        "named": 32,
+        "answers": 63
+      }
+    ],
+    "purchase": {
+      "named": 12,
+      "answers": 15
+    },
+    "control": {
+      "named": 0,
+      "answers": 9
+    },
+    "questions": [
+      "What are good alternatives to Typeform for collecting customer feedback?",
+      "Which online form tools let me collect unlimited responses for free?",
+      "What are good alternatives to Jotform for creating registration forms?",
+      "Which form builders support conditional questions based on earlier answers?",
+      "What are good alternatives to Google Forms for polished client intake forms?",
+      "Which no-code form tools can calculate a quote from someone's answers?",
+      "What form builders let me use a custom domain without coding?",
+      "Which tools make it easy to embed a form on my website?",
+      "What are good form builders for collecting sensitive information with better privacy controls?",
+      "Which form tools can send submissions to my other business apps?",
+      "Which tools are good for building a polished job application form?",
+      "What form builders work well for a simple event RSVP?",
+      "Which form tools let me add a pop-up signup to a website?",
+      "What are some easy form builders for someone with no technical experience?",
+      "Which online forms can I customize with my own colors and fonts?",
+      "What form builders are good for creating a quick product survey?",
+      "Which form builders have a genuinely free plan with no response limit?",
+      "What's the best free online form builder for a personal project?",
+      "Which form tools offer a free plan with conditional logic?",
+      "How much do popular form builders cost if I need a custom domain?",
+      "Is a paid form builder worth it for a small business collecting leads?",
+      "What are good appointment scheduling tools for a solo consultant?",
+      "Which online payment providers are good for collecting deposits?",
+      "how much does online form builder usually cost"
+    ]
+  }
+]
