@@ -12,6 +12,7 @@ const PAGES = [
   "/sample-report/audit",
   "/partners",
   "/research",
+  "/compare",
   "/proposal-template",
   "/legal/terms",
   "/legal/privacy",

@@ -7,6 +7,7 @@ import { JsonLd } from "@/components/marketing/json-ld";
 import { SITE_URL, SUPPORT_EMAIL } from "@/config/site";
 import {
   AUDIENCE,
+  BUYER_NOTE,
   checkoutCopy,
   MARKET_NOTE,
   OBJECTIONS,
@@ -160,14 +161,18 @@ export default async function HomePage() {
             hand over, and that is the part Answertally does, so the service does not start with a
             new hire.
           </SecHead>
-          <figure className="market-note">
-            <blockquote>{MARKET_NOTE.text}</blockquote>
-            <figcaption>
-              <a href={MARKET_NOTE.href} rel="noopener noreferrer" target="_blank">
-                {MARKET_NOTE.source}
-              </a>
-            </figcaption>
-          </figure>
+          <div className="notes2">
+            {[MARKET_NOTE, BUYER_NOTE].map((note) => (
+              <figure className="market-note" key={note.source}>
+                <blockquote>{note.text}</blockquote>
+                <figcaption>
+                  <a href={note.href} rel="noopener noreferrer" target="_blank">
+                    {note.source}
+                  </a>
+                </figcaption>
+              </figure>
+            ))}
+          </div>
           <div className="g3" data-testid="landing-money">
             <div className="card pad money">
               <h3 className="h4">Sell it on its own, or fold it in</h3>

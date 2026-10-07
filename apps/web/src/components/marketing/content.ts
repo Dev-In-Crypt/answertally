@@ -169,6 +169,13 @@ export const MARKET_NOTE = {
   href: "https://agencyanalytics.com/agency-benchmarks-2026",
 };
 
+/** Вторая внешняя цифра: сдвиг покупателя к ответам ИИ. Проверено 07.10.2026. */
+export const BUYER_NOTE = {
+  text: "About 80% of search users rely on AI summaries at least 40% of the time, and 42% of people using AI chatbots ask them for shopping recommendations.",
+  source: "Bain & Company, February 2025",
+  href: "https://www.bain.com/about/media-center/press-releases/20252/consumer-reliance-on-ai-search-results-signals-new-era-of-marketing--bain--company-about-80-of-search-users-rely-on-ai-summaries-at-least-40-of-the-time-on-traditional-search-engines-about-60-of-searches-now-end-without-the-user-progressing-to-a/",
+};
+
 /** Исследование непостоянства ответов, на которое опирается отказ от «позиции». */
 export const SPARKTORO_STUDY = {
   label: "SparkToro: AIs are highly inconsistent when recommending brands",
