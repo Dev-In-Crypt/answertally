@@ -39,3 +39,9 @@
 	redir @www https://{re.www.1}{uri} permanent
 	reverse_proxy web:3000
 }
+
+# Аналитика сайта (Umami). Тот же порядок с сертификатом: запись DNS без
+# прокси Cloudflare. Журнал не пишется: адреса посетителей сюда не нужны.
+{$STATS_DOMAIN} {
+	reverse_proxy umami:3000
+}

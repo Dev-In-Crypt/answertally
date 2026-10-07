@@ -301,6 +301,27 @@ services:
           memory: ${WORKER_MEMORY_LIMIT:-1g}
           pids: 256
 
+  # Аналитика сайта без cookies (Umami): stats.answertally.com. База — своя
+  # в том же Postgres (`umami`), данных продукта она не видит. Без
+  # UMAMI_APP_SECRET служба не стартует — значит, аналитики просто нет.
+  umami:
+    image: ghcr.io/umami-software/umami:latest
+    restart: unless-stopped
+    logging: *logging
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-aisdos}:${POSTGRES_PASSWORD}@postgres:5432/umami
+      APP_SECRET: ${UMAMI_APP_SECRET:?set UMAMI_APP_SECRET}
+      DISABLE_TELEMETRY: "1"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
@@ -322,6 +343,7 @@ services:
       - caddy-config:/config
     environment:
       SITE_DOMAIN: ${SITE_DOMAIN:?set SITE_DOMAIN}
+      STATS_DOMAIN: ${STATS_DOMAIN:-stats.answertally.com}
     depends_on:
       web:
         condition: service_healthy
