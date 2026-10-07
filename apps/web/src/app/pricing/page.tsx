@@ -111,10 +111,8 @@ function faqItems(paymentsOn: boolean) {
     q: "Can we get a refund?",
     a: (
       <>
-        In the first 14 days of your first paid month, yes: we refund the unused part, the price
-        minus the AI checks already run (on {PLANS[0]!.name}, {usd(PLANS[0]!.priceUsd)} ÷{" "}
-        {int(PLANS[0]!.aiCheckAllowance)} checks, about ${(PLANS[0]!.priceUsd / PLANS[0]!.aiCheckAllowance).toFixed(2)}{" "}
-        each). After that, a started month is not refunded. A wrong charge is always refunded in
+        In the first 14 days of your first paid month, yes: we refund the rest of that month in
+        proportion to the days left. After that, a started month is not refunded. A wrong charge is always refunded in
         full, and if measurement was broken on our side we refund or credit that part. <Link href="/legal/refunds">The full policy</Link>
       </>
     ),

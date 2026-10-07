@@ -89,10 +89,9 @@ export default function RefundsPage() {
       <ul>
         <li>
           <strong>Your first 14 days.</strong> If something is not working out in the first 14
-          days of your first paid month, write to us and we refund the part of that month you have
-          not used: the month&rsquo;s price minus the AI checks already run, each counted at the
-          plan&rsquo;s price divided by its monthly checks. Checks already run are not refunded,
-          because we have paid the assistants for them.
+          days of your first paid month, write to us and we refund the rest of that month in
+          proportion to the days left. For example, a third of the month gone on a $499 plan means
+          about $333 back.
         </li>
         <li>
           <strong>We charged you wrongly.</strong> Double charge, a plan you did not choose, billing
