@@ -43,7 +43,7 @@ const clientLimitsText = `${clientLimits.slice(0, -1).join(", ")} or ${clientLim
 const INCLUDED = [
   {
     title: "Measurement",
-    body: `ChatGPT and Perplexity by default; Grok on any plan and Claude from Growth, switched on per client. ${MARKETING_COPY.sampleFloor} ${MARKETING_COPY.cadence}`,
+    body: `ChatGPT and Perplexity by default. Switched on per client: Grok and Google’s AI search (AI Overviews and AI Mode) on any plan, Claude from Growth. ${MARKETING_COPY.sampleFloor} ${MARKETING_COPY.cadence}`,
   },
   {
     title: "Diagnosis",
@@ -217,7 +217,7 @@ export default function PricingPage() {
           ))}
         </ul>
         <p className="small muted" data-testid="check-weights" style={{ marginTop: 12 }}>
-          How AI checks count: {CHECK_WEIGHT_NOTE.charAt(0).toUpperCase() + CHECK_WEIGHT_NOTE.slice(1)} Grok and Claude are switched on per client.
+          How AI checks count: {CHECK_WEIGHT_NOTE.charAt(0).toUpperCase() + CHECK_WEIGHT_NOTE.slice(1)} A Google AI Overviews or AI Mode answer is 1 check. Everything beyond ChatGPT and Perplexity is switched on per client.
         </p>
       </div>
 

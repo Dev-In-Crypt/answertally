@@ -1,6 +1,7 @@
 import {
   CHECK_WEIGHT_NOTE,
   CHECK_WEIGHTS,
+  GOOGLE_SURFACES_PLAIN,
   DEFAULT_PLATFORMS,
   MARKETING_COPY,
   VOLUME_ACCOUNT_PRICE_USD,
@@ -262,6 +263,10 @@ export const OBJECTIONS = [
   {
     q: "“How is this different from other AI visibility tools?”",
     a: "Many lead with a single visibility score or a position. We show how often each assistant names your client, with the range and the answers behind it, which sources those answers cite, and the work that follows from it, in a report under your brand. If a number moves, you can open the answers and see why.",
+  },
+  {
+    q: "“Does it cover Google?”",
+    a: `Yes, Google’s AI answers, not its blue links. ${GOOGLE_SURFACES_PLAIN} Both can be switched on for any client on a paid plan, next to ChatGPT, Perplexity, Grok and Claude.`,
   },
   {
     q: "“Where does our clients’ data live?”",

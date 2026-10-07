@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
+  GOOGLE_SURFACES_PLAIN,
   BASELINE_WINDOW_DAYS,
   CHECK_WEIGHT_NOTE,
   MARKETING_COPY,
@@ -170,7 +171,8 @@ export default function MethodPage() {
               </div>
               <p className="small" style={{ margin: "16px 0 8px" }}>
                 Switched on per client, using more AI checks rather than costing extra: Grok and
-                Google AI Overviews and AI Mode on any plan, Claude from Growth. {CHECK_WEIGHT_NOTE.charAt(0).toUpperCase() + CHECK_WEIGHT_NOTE.slice(1)}
+                Google AI Overviews and AI Mode on any plan, Claude from Growth.{" "}
+                {GOOGLE_SURFACES_PLAIN} {CHECK_WEIGHT_NOTE.charAt(0).toUpperCase() + CHECK_WEIGHT_NOTE.slice(1)}
               </p>
               <div className="chip-row">
                 <span className="a-chip opt">Grok</span>

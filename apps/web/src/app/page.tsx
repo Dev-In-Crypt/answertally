@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { MARKETING_COPY, METHOD_COPY, SAMPLE_DELIVERY_REPORT } from "@repo/core";
+import { GOOGLE_SURFACES_PLAIN, MARKETING_COPY, METHOD_COPY, SAMPLE_DELIVERY_REPORT } from "@repo/core";
 import { CtaNote, Faq, MethodLink, SecHead, SrcChip } from "@/components/marketing/bits";
 import { MarketingShell } from "@/components/marketing/chrome";
 import { JsonLd } from "@/components/marketing/json-ld";
@@ -111,7 +111,7 @@ export default async function HomePage() {
               applicationCategory: "BusinessApplication",
               operatingSystem: "Web",
               description:
-                "AI visibility measurement for agencies: sampled answers from ChatGPT, Perplexity, Grok and Claude, ranked work with a reason on every item, and white-label client reports.",
+                "AI visibility measurement for agencies: sampled answers from ChatGPT, Perplexity, Grok, Claude and Google's AI search (AI Overviews and AI Mode), ranked work with a reason on every item, and white-label client reports.",
               publisher: { "@id": `${SITE_URL}/#organization` },
               offers: PLANS.map((plan) => ({
                 "@type": "Offer",
@@ -133,8 +133,8 @@ export default async function HomePage() {
             </h1>
             <p className="lead">
               Answer “Are we in ChatGPT?” with numbers that show their work. Answertally asks
-              ChatGPT and Perplexity, and Grok or Claude when you switch them on, the questions your
-              client’s buyers ask, several times each.{" "}
+              ChatGPT and Perplexity, plus Grok, Claude and Google’s AI search when you switch them
+              on, the questions your client’s buyers ask, several times each.{" "}
               {MARKETING_COPY.evidencePromise} <b>Your client sees your brand, not ours.</b>
             </p>
             <div className="ctas">
@@ -162,6 +162,12 @@ export default async function HomePage() {
                 <span className="a-chip">Perplexity</span>
                 <span className="a-chip opt">Grok · on request</span>
                 <span className="a-chip opt">Claude · from Growth</span>
+                <span className="a-chip opt" title={GOOGLE_SURFACES_PLAIN}>
+                  Google AI Overviews · on request
+                </span>
+                <span className="a-chip opt" title={GOOGLE_SURFACES_PLAIN}>
+                  Google AI Mode · on request
+                </span>
               </div>
               <ul className="trust-strip" aria-label="How client data is handled" data-testid="trust-strip">
                 {TRUST.map((item) => (

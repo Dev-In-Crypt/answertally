@@ -79,8 +79,8 @@ export function MarketingFooter() {
             <Wordmark dot="#7C86FF" />
             <p>
               AI visibility measurement, diagnosis and white-label reporting for agencies.
-              Measures ChatGPT, Perplexity, Grok and Claude; which of them a workspace can
-              switch on depends on its plan.
+              Measures ChatGPT, Perplexity, Grok, Claude and Google’s AI search (AI Overviews
+              and AI Mode); which of them a workspace can switch on depends on its plan.
             </p>
           </div>
           <div className="foot-col">

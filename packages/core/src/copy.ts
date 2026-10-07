@@ -118,6 +118,13 @@ export const DIAGNOSIS_COPY = {
     "Presence is inferred from answers where the source was cited, not from checking the page itself.",
 } as const;
 
+/**
+ * Что такое поверхности Google — одной фразой для тех, кто не в теме:
+ * владелец бренда не знает слов «AI Overviews» и «AI Mode», но видел оба.
+ */
+export const GOOGLE_SURFACES_PLAIN =
+  "Google AI Overviews is the AI-written answer Google shows above its search results; Google AI Mode is Google's chat-style AI search.";
+
 export const REPORT_COPY = {
   /** Мелкая строка в «How to read this», когда в отчёте есть поверхности Google. */
   googleSurfacesSource:
@@ -364,7 +371,7 @@ export const OPPORTUNITY_COPY = {
 export const MARKETING_COPY = {
   /** Подвал каждой страницы сайта. */
   siteBasis:
-    "Every figure on this site is estimated from repeated samples of assistant answers. Example agencies, clients, competitors and *.example domains are invented. ChatGPT, Perplexity, Grok and Claude are trademarks of their owners; Answertally is not affiliated with or endorsed by them.",
+    "Every figure on this site is estimated from repeated samples of assistant answers. Example agencies, clients, competitors and *.example domains are invented. ChatGPT, Perplexity, Grok, Claude and Google are trademarks of their owners; Answertally is not affiliated with or endorsed by them.",
   /** Карточка «как сделана каждая цифра». */
   methodNote:
     "Everything is estimated from repeated samples of assistant answers. Nothing is published anywhere until you approve it.",

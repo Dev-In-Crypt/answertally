@@ -14,7 +14,7 @@ export function GET(): Response {
   const body = [
     "# Answertally",
     "",
-    "> AI visibility measurement and white-label reporting for SEO, content and digital agencies. Answertally asks ChatGPT, Perplexity, Grok and Claude the questions a client's buyers ask, several times each, and reports how often the client is named, with a range and a confidence level, the sources the answers cite, ranked work with a reason on every item, and a report in the agency's brand.",
+    "> AI visibility measurement and white-label reporting for SEO, content and digital agencies. Answertally asks ChatGPT, Perplexity, Grok, Claude and Google's AI search (AI Overviews, the AI answer above Google results, and AI Mode) the questions a client's buyers ask, several times each, and reports how often the client is named, with a range and a confidence level, the sources the answers cite, ranked work with a reason on every item, and a report in the agency's brand.",
     "",
     `Pricing is per client account, with the whole team included: ${plans}. One free audit per agency, no card needed.`,
     "",

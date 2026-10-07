@@ -41,14 +41,14 @@ export const ASSISTANTS: readonly Assistant[] = [
   { id: "grok", label: "Grok", short: "Grok", measurable: true },
   { id: "copilot", label: "Copilot", short: "Copilot", measurable: false },
   // Через поставщика выдачи (DataForSEO), опцией агентства — adapters/dataforseo.
-  { id: "ai-overviews", label: "Google AI Overviews", short: "AIO", measurable: true },
+  { id: "ai-overviews", label: "Google AI Overviews", short: "G·AIO", measurable: true },
   /**
    * Вторая поверхность Google. Стоит рядом с AI Overviews, потому что мешает
    * им обеим одно и то же — отсутствие программного доступа к ответу (см.
    * adapters/surfaces.ts). Показывать её как «не измеряем» честнее, чем не
    * показывать вовсе: агентство видит её у своих клиентов и спрашивает о ней.
    */
-  { id: "ai-mode", label: "Google AI Mode", short: "AI Mode", measurable: true },
+  { id: "ai-mode", label: "Google AI Mode", short: "G·Mode", measurable: true },
 ] as const;
 
 /** Ассистенты, по которым есть измерения. Совпадает с `PLATFORMS` по составу. */
