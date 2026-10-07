@@ -111,7 +111,7 @@ export default function MethodPage() {
             <ul className="rules">
               <li>
                 <span>
-                  <b>What we report instead.</b> {METHOD_COPY.instead}
+                  {METHOD_COPY.instead}
                 </span>
               </li>
               <li>

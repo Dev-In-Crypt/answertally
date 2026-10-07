@@ -195,7 +195,7 @@
 .mk .foot-top { display: grid; grid-template-columns: minmax(0, 1.4fr) repeat(4, minmax(0, 1fr)); gap: 32px; padding-bottom: 40px; border-bottom: 1px dashed var(--cw-dark-rule); }
 .mk .foot-brand svg { width: 150px; height: auto; color: var(--cw-dark-text); }
 .mk .foot-brand p { margin-top: 16px; font-size: 14px; color: var(--cw-dark-muted); max-width: 340px; }
-.mk .foot-col h2 { font: 500 11px/1.4 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--cw-dark-muted); margin-bottom: 14px; }
+.mk .foot-col .foot-h { font: 500 11px/1.4 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--cw-dark-muted); margin-bottom: 14px; }
 .mk .foot-col ul { display: grid; gap: 9px; font-size: 14.5px; }
 .mk .foot-small { display: flex; justify-content: space-between; gap: 12px 32px; flex-wrap: wrap; padding-top: 24px; font-family: var(--font-mono); font-size: 11.5px; line-height: 1.6; color: var(--cw-dark-muted); }
 .mk .foot-small span { max-width: 640px; }
@@ -820,3 +820,12 @@
   .mk table.cmp.stack, .mk .cmp.stack tbody { display: block; width: 100%; }
   .mk .cmp.stack th, .mk .cmp.stack td { white-space: normal; overflow-wrap: anywhere; width: auto; }
 }
+
+/* Полоса «что мы намерили»: счётчик из базы и тизер исследования */
+.mk .measured-band { padding-top: 0; }
+.mk .measured-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 28px; align-items: center; border: 1px solid var(--cw-border); border-radius: 10px; background: var(--cw-surface); padding: 22px 26px; }
+.mk .measured-stats { display: flex; gap: 32px; flex-wrap: wrap; }
+.mk .measured-stats dt { font: 500 11px/1.4 var(--font-mono); text-transform: uppercase; letter-spacing: 0.05em; color: var(--cw-muted); }
+.mk .measured-stats dd { font: 600 30px/1.2 var(--font-sans); color: var(--cw-ink); font-variant-numeric: tabular-nums; }
+.mk .measured-teaser .h4 { margin: 6px 0 8px; }
+@media (max-width: 760px) { .mk .measured-grid { grid-template-columns: minmax(0, 1fr); padding: 18px; } }

@@ -24,5 +24,7 @@ const PAGES = [
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  return PAGES.map((path) => ({ url: `${SITE_URL}${path === "/" ? "" : path}` }));
+  // Дата сборки: страницы витрины меняются только с выкладкой.
+  const lastModified = new Date();
+  return PAGES.map((path) => ({ url: `${SITE_URL}${path === "/" ? "" : path}`, lastModified }));
 }

@@ -107,7 +107,8 @@ export default function DpaPage() {
         </li>
         <li>
           If we become aware of a breach affecting your data, we tell you without undue delay and
-          with what we know, rather than waiting until the picture is complete.
+          in any case within 48 hours, with what we know, rather than waiting until the picture is
+          complete.
         </li>
       </ul>
 
@@ -155,8 +156,8 @@ export default function DpaPage() {
       <p>
         The assistant providers and the services we use are largely in the United States, so using
         the product involves transferring data there. Where a legal mechanism is needed we rely on
-        the European Commission&rsquo;s standard contractual clauses, and these terms incorporate
-        them.
+        the European Commission&rsquo;s standard contractual clauses (Module 3, processor to
+        processor, for our sub-processors), and these terms incorporate them.
       </p>
 
       <h2>7. Deletion, and the one exception</h2>

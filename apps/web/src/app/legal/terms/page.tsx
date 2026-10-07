@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { FREE_CHECK_ALLOWANCE } from "@repo/core";
 import { LEGAL_ENTITY } from "@/config/legal";
 import { SUPPORT_EMAIL } from "@/config/site";
 
@@ -40,9 +41,9 @@ export default function TermsPage() {
 
       <h2>1. Who is party to this</h2>
       <p>
-        This agreement is between {us} (&ldquo;we&rdquo;, &ldquo;us&rdquo;) and the organisation
+        This agreement is between {us} (&ldquo;we&rdquo;, &ldquo;us&rdquo;) and the organization
         whose workspace this is (&ldquo;you&rdquo;). The person who creates the workspace confirms
-        they may accept these terms on that organisation&rsquo;s behalf.
+        they may accept these terms on that organization&rsquo;s behalf.
       </p>
       <p>
         Your clients are not party to this agreement. They may receive a report from you and approve
@@ -135,8 +136,8 @@ export default function TermsPage() {
         Measurement runs within the AI-check limit of the plan you chose. When the checks included
         for the month are used up, new measurement waits until the next billing period starts or
         you move to a larger plan; nothing already measured is lost, and your reports stay open.
-        Before a plan is bought, free use is capped: the free audit covers a set number of checks
-        and then asks you to choose a plan.
+        Before a plan is bought, free use is capped: the free audit covers up to{" "}
+        {FREE_CHECK_ALLOWANCE} AI checks for one brand and then asks you to choose a plan.
       </p>
       <p>
         Cancellation, refunds and what happens to a downgrade are in{" "}

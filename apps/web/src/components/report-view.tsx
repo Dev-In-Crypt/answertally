@@ -92,7 +92,10 @@ export function ReportView({
       </header>
 
       <section className="flex flex-col gap-4">
-        <h1 className="text-2xl font-semibold tracking-tight">AI answer visibility</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          {/* Аудит и отчёт по ретейнеру — разные документы, и заголовки у них разные. */}
+          {payload.opportunity ? "AI answer visibility audit" : "AI answer visibility report"}
+        </h1>
 
         {/* Одна фраза перед цифрами: клиент агентства читает отчёт по диагонали,
             и первое, что он должен унести, — что это оценка, а не счётчик. */}
@@ -199,13 +202,24 @@ export function ReportView({
           {/* В первом измерении «новых» источников нет: сравнивать не с чем. */}
           {!payload.firstMeasurement && (
             <li className="flex justify-between border-b py-2">
-              <span>Newly cited sources</span>
+              <span>Sources cited for the first time</span>
               <span className="metric font-medium">{payload.results.newCitedUrls}</span>
             </li>
           )}
           <li className="flex justify-between border-b py-2">
-            <span>Brand mentions in AI answers</span>
-            <span className="metric font-medium">{payload.results.newBrandMentions}</span>
+            {payload.results.sampledAnswers !== undefined ? (
+              <>
+                <span>Answers naming {payload.client.name}</span>
+                <span className="metric font-medium">
+                  {payload.results.newBrandMentions} of {payload.results.sampledAnswers}
+                </span>
+              </>
+            ) : (
+              <>
+                <span>Brand mentions in AI answers</span>
+                <span className="metric font-medium">{payload.results.newBrandMentions}</span>
+              </>
+            )}
           </li>
           <li className="flex justify-between py-2">
             <span>Visibility change</span>

@@ -83,7 +83,7 @@ export function MarketingFooter() {
             </p>
           </div>
           <div className="foot-col">
-            <h2>Product</h2>
+            <p className="foot-h">Product</p>
             <ul>
               <li><Link href="/product#measure">Measure</Link></li>
               <li><Link href="/product#diagnose">Diagnose</Link></li>
@@ -94,7 +94,7 @@ export function MarketingFooter() {
             </ul>
           </div>
           <div className="foot-col">
-            <h2>Start</h2>
+            <p className="foot-h">Start</p>
             <ul>
               <li><Link href="/free-audit">Free audit</Link></li>
               <li><Link href="/sample-report">Sample report</Link></li>
@@ -103,7 +103,7 @@ export function MarketingFooter() {
             </ul>
           </div>
           <div className="foot-col">
-            <h2>Method</h2>
+            <p className="foot-h">Method</p>
             <ul>
               <li><Link href="/method">How we measure</Link></li>
               <li><Link href="/method#confidence">What confidence means</Link></li>
@@ -116,7 +116,7 @@ export function MarketingFooter() {
             без ссылки страница существует только для того, кто знает адрес.
           */}
           <div className="foot-col">
-            <h2>For agencies</h2>
+            <p className="foot-h">For agencies</p>
             <ul>
               <li><Link href="/partners">Selling it to clients</Link></li>
               <li><Link href="/proposal-template">Proposal template</Link></li>

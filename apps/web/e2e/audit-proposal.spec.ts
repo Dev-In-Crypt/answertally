@@ -57,8 +57,8 @@ test("opportunity report and its PDF are produced for a prospect", async ({ page
 
   await page.goto(`/clients/${clientId}/reports`);
 
-  // Маржа видна агентству до генерации: 3500 − 12×85 = 2480 → 70.9%.
-  await expect(page.getByTestId("opportunity-margin")).toContainText("70.9%");
+  // Маржа видна агентству до генерации: 3500 − 30×85 = 950 → 27.1%.
+  await expect(page.getByTestId("opportunity-margin")).toContainText("27.1%");
 
   await page.getByTestId("generate-opportunity").click();
   await expect(page.getByTestId("reports-list").locator("li")).toHaveCount(1);
@@ -82,7 +82,7 @@ test("opportunity report and its PDF are produced for a prospect", async ({ page
 
   const html = await anonPage.content();
   expect(html).not.toContain("estimatedMarginPct");
-  expect(html).not.toContain("70.9");
+  expect(html).not.toContain("27.1");
   expect(html).not.toMatch(/\bproven\b|\bproof\b|\bguaranteed\b|\bcaused\b/i);
   await anonymous.close();
 
@@ -102,6 +102,6 @@ test("opportunity report and its PDF are produced for a prospect", async ({ page
   expect(text).toContain("Where the opportunity is");
   expect(text).toContain("$3,500");
   // Внутренние деньги в клиентский документ не попадают.
-  expect(text).not.toContain("70.9");
+  expect(text).not.toContain("27.1");
   expect(text.toLowerCase()).not.toContain("margin");
 });

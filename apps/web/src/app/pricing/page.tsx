@@ -326,7 +326,7 @@ export default function PricingPage() {
       <section className="sec">
         <div className="wrap">
           <SecHead n={3} title="Included in every plan">
-            {PRICING_NOTES.included} Plans differ only in how many clients and checks they cover.
+            {PRICING_NOTES.included} Plans differ in client accounts, AI checks and assistants: Claude is included from Growth.
           </SecHead>
           <ol className="incl">
             {INCLUDED.map((item, i) => (

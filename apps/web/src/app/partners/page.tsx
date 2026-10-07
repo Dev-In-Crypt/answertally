@@ -101,7 +101,7 @@ const THE_LINE = [
   },
   {
     title: "Partner terms do not change any of the above",
-    body: `${PARTNER_COPY.notIncluded} The wholesale rate and the referral commission are money between us and you; your client never sees either.`,
+    body: `The wholesale rate and the referral commission are money between us and you; your client never sees either.`,
   },
 ];
 
@@ -125,12 +125,12 @@ function faqItems(paymentsOn: boolean) {
     a: "That is yours to decide, and we deliberately do not publish a recommended rate: we have no market data that would make one honest. The calculator above does arithmetic on the numbers you type in, so you can see what a price would mean against the plan that covers those clients.",
   },
   {
-    q: "Is there a partner programme or revenue share?",
+    q: "Is there a partner program or revenue share?",
     a: `Yes, and both parts are printed above rather than described. ${TERMS.volume} ${TERMS.referral} ${PARTNER_COPY.howItRuns}`,
   },
   {
     q: "Do we have to commit to anything for the wholesale rate?",
-    a: `${PARTNER_COPY.notIncluded} The rate follows the number of client accounts you actually run, so it appears when you cross ${VOLUME_THRESHOLD} and goes away if you drop back below.`,
+    a: `The rate follows the number of client accounts you actually run, so it appears when you cross ${VOLUME_THRESHOLD} and goes away if you drop back below.`,
   },
   {
     q: "What does it cost us per client?",

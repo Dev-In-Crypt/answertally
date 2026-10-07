@@ -55,7 +55,7 @@ const FINDINGS = [
   },
   {
     title: "The control questions stayed quiet",
-    body: "Questions about a neighbouring category each brand does not sell named it in 1 of 48 answers. The counting finds the brand where it belongs, not everywhere.",
+    body: "Questions about a neighboring category each brand does not sell named it in 1 of 48 answers. The counting finds the brand where it belongs, not everywhere.",
   },
   {
     title: "The assistants mostly agree, not always",
@@ -79,7 +79,7 @@ const WILL_PUBLISH = [
   },
   {
     title: "The model versions and dates",
-    body: "Which model answered and when. An assistant's behaviour changes between versions, so a figure without a version is not repeatable.",
+    body: "Which model answered and when. An assistant's behavior changes between versions, so a figure without a version is not repeatable.",
   },
   {
     title: "What went wrong",

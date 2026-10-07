@@ -106,14 +106,16 @@ const RANKED_ACTIONS = [
  */
 export const SAMPLE_AUDIT_REPORT: ReportPayload = buildReportPayload({
   clientName: SAMPLE_CLIENT_NAME,
-  periodStart: new Date("2026-01-05T00:00:00.000Z"),
-  periodEnd: new Date("2026-01-12T00:00:00.000Z"),
+  periodStart: new Date("2026-09-21T00:00:00.000Z"),
+  periodEnd: new Date("2026-09-28T00:00:00.000Z"),
   snapshots: [
-    snapshot(11.5, COMPETITORS_AT_AUDIT, "2026-01-05T00:00:00.000Z", "2026-01-12T00:00:00.000Z"),
+    snapshot(11.5, COMPETITORS_AT_AUDIT, "2026-09-21T00:00:00.000Z", "2026-09-28T00:00:00.000Z"),
   ],
   completedActions: [],
   newCitedUrls: 0,
-  newBrandMentions: 0,
+  // 15 из 130 = 11.5%: сходится с долей снимка.
+  newBrandMentions: 15,
+  sampledAnswers: 130,
   highestImpact: null,
   nextSprint: RANKED_ACTIONS.slice(0, 3).map((action) => action.title),
   caveats: [REPORT_COPY.opportunityBasis, REPORT_COPY.scopeEstimate],
@@ -134,20 +136,20 @@ export const SAMPLE_AUDIT_REPORT: ReportPayload = buildReportPayload({
  */
 export const SAMPLE_DELIVERY_REPORT: ReportPayload = buildReportPayload({
   clientName: SAMPLE_CLIENT_NAME,
-  periodStart: new Date("2026-04-01T00:00:00.000Z"),
-  periodEnd: new Date("2026-06-30T00:00:00.000Z"),
+  periodStart: new Date("2026-07-01T00:00:00.000Z"),
+  periodEnd: new Date("2026-09-30T00:00:00.000Z"),
   snapshots: [
     snapshot(
       19.4,
       { Quillstack: 41.2, Loambox: 33.7, Tidepin: 22.5 },
-      "2026-04-06T00:00:00.000Z",
-      "2026-04-13T00:00:00.000Z",
+      "2026-07-06T00:00:00.000Z",
+      "2026-07-13T00:00:00.000Z",
     ),
     snapshot(
       28.6,
       { Quillstack: 42, Loambox: 31.4, Tidepin: 24.8 },
-      "2026-06-22T00:00:00.000Z",
-      "2026-06-29T00:00:00.000Z",
+      "2026-09-21T00:00:00.000Z",
+      "2026-09-28T00:00:00.000Z",
     ),
   ],
   completedActions: [
@@ -165,7 +167,9 @@ export const SAMPLE_DELIVERY_REPORT: ReportPayload = buildReportPayload({
     { title: "Fixed product schema on key pages", actionType: "structured_data_fix" },
   ],
   newCitedUrls: 7,
-  newBrandMentions: 34,
+  // Доля за квартал росла с 19% до 29%; 104 из 432 = 24%, середина пути.
+  newBrandMentions: 104,
+  sampledAnswers: 432,
   highestImpact: {
     title: "Refreshed the comparison page",
     incrementalPp: 4,
@@ -175,7 +179,7 @@ export const SAMPLE_DELIVERY_REPORT: ReportPayload = buildReportPayload({
   },
   nextSprint: [
     "Get covered on the two remaining review platforms",
-    "Publish the head-to-head comparison the answers keep asking for",
+    "Publish a head-to-head page against Quillstack, the competitor the answers name most",
     "Refresh the integrations page with current partners",
   ],
   caveats: [],

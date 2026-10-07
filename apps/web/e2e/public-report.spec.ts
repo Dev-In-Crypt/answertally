@@ -37,7 +37,7 @@ async function setUpAgencyWithReport(page: Page): Promise<{ clientId: string; to
   // Брендинг агентства: имя и цвет уйдут в клиентский отчёт.
   await page.goto("/settings");
   await page.getByLabel("Agency name").fill("Northwind Studio");
-  await page.getByLabel("Brand colour").fill("#0ea5e9");
+  await page.getByLabel("Brand color").fill("#0ea5e9");
   await page.getByRole("button", { name: "Save changes" }).click();
   await expect(page.getByTestId("settings-status")).toHaveText("Saved");
 

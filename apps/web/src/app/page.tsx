@@ -14,6 +14,10 @@ import {
   PRICING_NOTES,
 } from "@/components/marketing/content";
 import { getPaymentProvider } from "@/server/payments";
+import { unstable_cache } from "next/cache";
+import { getMeasuredTotals } from "@repo/db";
+import { db } from "@/server/db";
+import { FIELD_NOTES_1 } from "./research/field-notes";
 import { PER_CLIENT_MAX, PER_CLIENT_MIN, PLANS, CLIENT, int, usd } from "@/components/marketing/data";
 import { EvidenceCard } from "@/components/marketing/evidence-card";
 import { ReportPreview } from "@/components/marketing/report-preview";
@@ -56,7 +60,32 @@ const CHAIN = [
   { label: "Leads and revenue", note: "in their CRM" },
 ];
 
+/** Ответы полевых заметок №1: собраны кодом продукта, но вне базы (скриптом). */
+const RESEARCH_ANSWERS = FIELD_NOTES_1.reduce(
+  (sum, b) => sum + b.control.answers + b.cells.reduce((s, c) => s + c.answers, 0),
+  0,
+);
+
+/**
+ * Счётчик витрины — настоящие числа из базы плюс ответы исследования, раз в
+ * час. Не завышается: покупатель-агентство само в этом разбирается, и одна
+ * пойманная подтасовка стоит дороже маленькой цифры. База недоступна —
+ * полоса просто не показывается.
+ */
+const measuredTotals = unstable_cache(
+  async () => {
+    try {
+      return await getMeasuredTotals(db);
+    } catch {
+      return null;
+    }
+  },
+  ["measured-totals"],
+  { revalidate: 3600 },
+);
+
 export default async function HomePage() {
+  const totals = await measuredTotals();
   return (
     <MarketingShell>
       <JsonLd
@@ -151,6 +180,34 @@ export default async function HomePage() {
           </div>
         </section>
       </div>
+
+      {/* исследование и счётчик: настоящие данные вместо отзывов, которых ещё нет */}
+      <section className="sec measured-band" aria-label="What we have measured">
+        <div className="wrap measured-grid">
+          {totals && (
+            <dl className="measured-stats" data-testid="measured-totals">
+              <div>
+                <dt>AI answers measured</dt>
+                <dd>{int(totals.answers + RESEARCH_ANSWERS)}</dd>
+              </div>
+              <div>
+                <dt>Cited sources read</dt>
+                <dd>{int(totals.citations)}</dd>
+              </div>
+            </dl>
+          )}
+          <div className="measured-teaser">
+            <div className="kicker">Research · field notes #1</div>
+            <p className="h4">
+              Smaller brands were named in 51% to 87% of answers when the question fit what they do
+              differently. Buying questions were their weak spot.
+            </p>
+            <Link className="link" href="/research">
+              {RESEARCH_ANSWERS} answers, five brands, every question published →
+            </Link>
+          </div>
+        </div>
+      </section>
 
       {/* 1 · деньги агентства */}
       <section className="sec" id="service">
@@ -257,7 +314,7 @@ export default async function HomePage() {
               <span className="num">3</span>
               <h3>Report in your brand, approved by link</h3>
               <p>
-                Your logo and colour on a page the client opens without an account. They approve the
+                Your logo and color on a page the client opens without an account. They approve the
                 report and the next sprint in it by typing their name, so the plan is agreed in
                 writing.
               </p>

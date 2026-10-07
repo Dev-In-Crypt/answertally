@@ -27,6 +27,8 @@ export interface ReportInputs {
   completedActions: { title: string; actionType: string }[];
   newCitedUrls: number;
   newBrandMentions: number;
+  /** Ответов за период без контрольных; с ним строка отчёта — «X из N». */
+  sampledAnswers?: number;
   highestImpact: {
     title: string;
     incrementalPp: number | null;
@@ -183,6 +185,7 @@ export function buildReportPayload(inputs: ReportInputs): ReportPayload {
     results: {
       newCitedUrls: inputs.newCitedUrls,
       newBrandMentions: inputs.newBrandMentions,
+      ...(inputs.sampledAnswers !== undefined ? { sampledAnswers: inputs.sampledAnswers } : {}),
       visibilityDeltaPp: deltaPp,
     },
     highestImpactAction: null,

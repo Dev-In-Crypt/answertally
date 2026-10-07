@@ -141,7 +141,7 @@ export default function ProductPage() {
               From the answers assistants give <em>to the report your client approves.</em>
             </h1>
             <p className="lead">
-              Six parts, one per client: measure the answers, find the sources cited around them,
+              Six parts, run for each client: measure the answers, find the sources cited around them,
               rank the work, check what followed it, report it in your brand, and pull any of it into
               your own tools.
             </p>
@@ -225,9 +225,6 @@ export default function ProductPage() {
               <span>every raw answer, with its model version and cost.</span>
             </div>
           </div>
-          <p className="label" style={{ marginTop: 14 }}>
-            {MARKETING_COPY.notMeasuredSurfaces}
-          </p>
         </div>
       </section>
 
@@ -554,7 +551,7 @@ export default function ProductPage() {
         <div className="wrap">
           <SecHead n={5} title="White-label reports, in your agency’s name">
             A report is a page your client opens from a link, without an account, in your logo and
-            colour. You can download the same page as a PDF to forward.
+            color. You can download the same page as a PDF to forward.
           </SecHead>
           <div className="split">
             <div className="side">

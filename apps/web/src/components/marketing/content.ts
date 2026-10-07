@@ -101,7 +101,7 @@ export const PRICING_NOTES = {
    * Поэтому текст выбирается тем же признаком, что и сама кнопка.
    */
   checkoutSelfServe:
-    "You pick a plan in the product and pay by card. If your agency would rather be invoiced, say so and we set that up directly.",
+    "You pick a plan in the product and pay by card. Need an invoice with your VAT number? Creem, our payment provider, issues it at checkout.",
   checkoutDirect: "There is no self-serve checkout yet. Plans are set up with us directly.",
   checkoutHeadingSelfServe: "Pick a plan and pay by card",
   checkoutHeadingDirect: "No self-serve checkout yet",
@@ -111,7 +111,7 @@ export const PRICING_NOTES = {
     "Start with the free audit on a brand you work on. Plans and billing are then set up with us directly; there is no “Buy now” button to pretend with.",
   stepPickTitleSelfServe: "Pick a plan in the product",
   stepPickSelfServe:
-    "Choose the plan that fits how many clients you plan to measure and pay by card. If your agency would rather be invoiced, say so and we set that up directly.",
+    "Choose the plan that fits how many clients you plan to measure and pay by card. Need an invoice with your VAT number? Creem, our payment provider, issues it at checkout.",
   stepBillingSelfServe:
     "The plan’s limits apply as soon as the payment provider confirms the payment.",
   stepPickTitleDirect: "Pick the plan with us",
@@ -239,7 +239,7 @@ export const OBJECTIONS = [
   },
   {
     q: "“AI answers change every time. The numbers are noise.”",
-    a: "One answer is noise, which is why we never report one. No figure rests on fewer than three answers per question per assistant, shares come with their range and a confidence level, and a change the sample cannot tell apart is labelled that way instead of being sold as a win.",
+    a: "One answer is noise, which is why we never report one. No figure rests on fewer than three answers per question per assistant, shares come with their range and a confidence level, and a change the sample cannot tell apart is labeled that way instead of being sold as a win.",
   },
   {
     q: "“We don’t need another dashboard.”",

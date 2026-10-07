@@ -50,10 +50,14 @@ describe("отчёт аудита", () => {
     expect(SAMPLE_AUDIT_REPORT.competitorGap.before).toBe(-28.1);
   });
 
-  it("работ не сделано и результатов нет — так его и собирает продукт", () => {
+  it("работ не сделано; ответы с клиентом сходятся с долей — так его и собирает продукт", () => {
     expect(SAMPLE_AUDIT_REPORT.workCompleted).toEqual([]);
     expect(SAMPLE_AUDIT_REPORT.results.newCitedUrls).toBe(0);
-    expect(SAMPLE_AUDIT_REPORT.results.newBrandMentions).toBe(0);
+    // «X из N» в отчёте не спорит с долей: раньше здесь был 0 при 11.5%.
+    const { newBrandMentions, sampledAnswers } = SAMPLE_AUDIT_REPORT.results;
+    expect(Math.round((newBrandMentions / (sampledAnswers ?? 1)) * 1000) / 10).toBe(
+      SAMPLE_AUDIT_REPORT.opportunity?.currentVisibilityPct,
+    );
     expect(SAMPLE_AUDIT_REPORT.highestImpactAction).toBeNull();
   });
 

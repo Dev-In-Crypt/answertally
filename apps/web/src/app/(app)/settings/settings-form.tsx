@@ -112,13 +112,13 @@ export function SettingsForm({
         </label>
 
         <div className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium">Brand colour</span>
+          <span className="text-sm font-medium">Brand color</span>
           <p className="text-sm text-muted-foreground">
             Used on client-facing reports instead of any product branding.
           </p>
           <div className="flex items-center gap-3">
             <input
-              aria-label="Brand colour"
+              aria-label="Brand color"
               type="color"
               value={brandColor}
               onChange={(e) => setBrandColor(e.target.value)}

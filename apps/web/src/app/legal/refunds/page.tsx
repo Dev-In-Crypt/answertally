@@ -29,6 +29,13 @@ export default function RefundsPage() {
         month you have started is the month you pay for.
       </p>
 
+      <h2>Business customers only</h2>
+      <p>
+        Answertally is sold to businesses, not to consumers. By subscribing you confirm you are
+        acting for your agency or company, so consumer cooling-off rules for distance purchases do
+        not apply.
+      </p>
+
       <h2>Before you pay</h2>
       <p>
         The free audit runs the product end to end on one brand: the measurement, the full

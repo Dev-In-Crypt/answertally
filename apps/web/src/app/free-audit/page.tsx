@@ -49,7 +49,7 @@ function faqItems(paymentsOn: boolean) {
   },
   {
     q: "Which assistants does the audit use?",
-    a: `${FREE_TRIO}, each with its own cited sources. Paid plans measure up to four assistants: Grok on any plan, Claude from Growth, switched on per client. ${MARKETING_COPY.notMeasuredSurfaces}`,
+    a: `${FREE_TRIO}, each with its own cited sources. Paid plans measure up to four assistants: Grok on any plan, Claude from Growth, switched on per client.`,
   },
   {
     q: "What happens right after the audit?",
@@ -129,7 +129,7 @@ export default function FreeAuditPage() {
         <div className="wrap">
           <SecHead n={2} title="What comes back">
             The card above is the example audit, abridged, with invented names. Your client sees your
-            agency’s logo and colour.
+            agency’s logo and color.
           </SecHead>
           <div className="g2">
             <div>
@@ -213,7 +213,7 @@ export default function FreeAuditPage() {
               edit them until they read the way your client’s buyers actually ask.
             </div>
             <div className="note" style={{ marginTop: 12 }} data-testid="audit-timing">
-              <b>Why it is not instant.</b> {MARKETING_COPY.auditTakesTime}
+              <b>Why it is not instant.</b> Every question is asked several times on each assistant, because one answer per question would be noise.
             </div>
           </div>
           <ol className="flow">

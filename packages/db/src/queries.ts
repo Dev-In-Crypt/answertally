@@ -1028,6 +1028,26 @@ export async function getUsageCounter(
  * один на аккаунт. Брать для него месячную строку значило бы выдавать новый
  * аудит первого числа каждого месяца, бессрочно.
  */
+/**
+ * Счётчик для витрины: сколько живых ответов ассистентов собрано и сколько
+ * источников в них процитировано, по всем агентствам. Только числа, без
+ * клиентов и агентств: ничего, что раскрывало бы чужие данные.
+ */
+export async function getMeasuredTotals(db: Database): Promise<{ answers: number; citations: number }> {
+  const [answers] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(responses)
+    .innerJoin(runs, eq(responses.runId, runs.id))
+    .where(eq(runs.adaptersMode, "live"));
+  const [cited] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(citations)
+    .innerJoin(responses, eq(citations.responseId, responses.id))
+    .innerJoin(runs, eq(responses.runId, runs.id))
+    .where(eq(runs.adaptersMode, "live"));
+  return { answers: answers?.n ?? 0, citations: cited?.n ?? 0 };
+}
+
 export async function getLifetimeAiChecks(db: Database, agencyId: string): Promise<number> {
   const rows = await db
     .select({ total: sql<number>`coalesce(sum(${usageCounters.aiChecksUsed}), 0)::int` })
@@ -1741,28 +1761,38 @@ export async function countNewCitedDomains(
 }
 
 /** Упоминания клиента в периоде — «новые упоминания бренда» в отчёте. */
-export async function countClientMentionsBetween(
+/**
+ * Ответы за период: сколько собрано и в скольких назван клиент.
+ *
+ * Считаются ответы, а не строки упоминаний (раньше одно имя дважды в ответе
+ * давало 2), и без контрольных вопросов — так «X из N» сходится с долей в
+ * отчёте, а не спорит с ней.
+ */
+export async function countClientAnswersBetween(
   db: Database,
   clientId: string,
   from: Date,
   to: Date,
-): Promise<number> {
+): Promise<{ naming: number; sampled: number }> {
   const rows = await db
-    .select({ id: mentions.id })
-    .from(mentions)
-    .innerJoin(responses, eq(mentions.responseId, responses.id))
+    .select({
+      id: responses.id,
+      naming: sql<boolean>`exists (select 1 from ${mentions} where ${mentions.responseId} = ${responses.id} and ${mentions.isClient})`,
+    })
+    .from(responses)
     .innerJoin(runs, eq(responses.runId, runs.id))
+    .innerJoin(prompts, eq(responses.promptId, prompts.id))
     .where(
       and(
         eq(runs.clientId, clientId),
         eq(runs.adaptersMode, await effectiveAdaptersMode(db, clientId)),
-        eq(mentions.isClient, true),
+        eq(prompts.isControl, false),
         gte(responses.createdAt, from),
         lte(responses.createdAt, to),
       ),
     );
 
-  return rows.length;
+  return { naming: rows.filter((row) => row.naming).length, sampled: rows.length };
 }
 
 export async function createExperiment(

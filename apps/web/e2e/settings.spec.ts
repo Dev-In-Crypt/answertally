@@ -26,7 +26,7 @@ test("agency branding and team invite persist across reload", async ({ page }) =
   // Название и цвет.
   const nameInput = page.getByLabel("Agency name");
   await nameInput.fill("Renamed Agency");
-  await page.getByLabel("Brand colour").fill("#0ea5e9");
+  await page.getByLabel("Brand color").fill("#0ea5e9");
   await page.getByRole("button", { name: "Save changes" }).click();
   await expect(page.getByTestId("settings-status")).toHaveText("Saved");
 

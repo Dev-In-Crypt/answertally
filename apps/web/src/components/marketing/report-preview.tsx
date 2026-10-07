@@ -77,13 +77,18 @@ function DeliveryBody({ payload }: { payload: ReportPayload }) {
       <div className="r-sec">
         <h5>Results</h5>
         <ul className="r-rows">
+          {!payload.firstMeasurement && (
+            <li>
+              <span>Sources cited for the first time</span>
+              <b>{payload.results.newCitedUrls}</b>
+            </li>
+          )}
           <li>
-            <span>Newly cited sources</span>
-            <b>{payload.results.newCitedUrls}</b>
-          </li>
-          <li>
-            <span>Brand mentions in AI answers</span>
-            <b>{payload.results.newBrandMentions}</b>
+            <span>Answers naming {payload.client.name}</span>
+            <b>
+              {payload.results.newBrandMentions}
+              {payload.results.sampledAnswers !== undefined ? ` of ${payload.results.sampledAnswers}` : ""}
+            </b>
           </li>
         </ul>
       </div>

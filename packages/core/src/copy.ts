@@ -137,7 +137,7 @@ export const REPORT_COPY = {
     "There were no untouched topics to compare against in this period, so movement cannot be separated from platform-wide changes.",
   /** Ставится при коротком периоде наблюдения. */
   shortPeriod:
-    "Models typically take weeks to re-crawl and shift citations, so a short period shows early signal rather than settled results.",
+    "Assistants' search results and cited sources typically take weeks to shift, so a short period shows early signal rather than settled results.",
   /** Идёт в каждый аудит: снимок «как сейчас», а не прогноз. */
   opportunityBasis:
     "This audit is a single measurement of how assistants answer today. The ranked work is what the current sources suggest, with expected effort, not a forecast of results.",
@@ -274,7 +274,7 @@ export const PARTNER_COPY = {
    * напечатанная на сайте, и спорить о ней потом будет поздно.
    */
   volume:
-    "Once you are past %THRESHOLD% client accounts, every further account is $%PRICE% a month, %DISCOUNT%% off the rate the top plan works out to. It applies only to the accounts above %THRESHOLD%, never to the ones the plan already covers, so adding a client never makes your bill jump sideways.",
+    "Once you are past %THRESHOLD% client accounts, every further account is $%PRICE% a month, %DISCOUNT%% off the rate the top plan works out to. It applies only to the accounts above %THRESHOLD%, never to the ones the plan already covers, so adding a client never changes the price of your plan.",
   /** Почему скидка марджинальная, а не на всё сразу. */
   volumeShape:
     "We price it this way because the alternative has a cliff in it: if the discount applied to every account at once, your 26th client would cost us more than your 25th, and we would end up discouraging the thing we want.",
@@ -360,7 +360,7 @@ export const OPPORTUNITY_COPY = {
 export const MARKETING_COPY = {
   /** Подвал каждой страницы сайта. */
   siteBasis:
-    "Every figure on this site is estimated from repeated samples of assistant answers. Example agencies, clients, competitors and *.example domains are invented.",
+    "Every figure on this site is estimated from repeated samples of assistant answers. Example agencies, clients, competitors and *.example domains are invented. ChatGPT, Perplexity, Grok and Claude are trademarks of their owners; Answertally is not affiliated with or endorsed by them.",
   /** Карточка «как сделана каждая цифра». */
   methodNote:
     "Everything is estimated from repeated samples of assistant answers. Nothing is published anywhere until you approve it.",
@@ -410,11 +410,11 @@ export const MARKETING_COPY = {
     "Without untouched topics there is nothing to compare against, and the report says so instead of showing a difference.",
   /** Кого не измеряем и почему. */
   notMeasuredSurfaces:
-    "Microsoft Copilot and Google AI Overviews / AI Mode offer no public API, so they are not measured, and no report estimates them.",
+    "Google AI Overviews, AI Mode and Microsoft Copilot have no official API. Standard measurement runs only through official provider APIs, so they are not part of it, and no report estimates them.",
   /** Пределы, названные вслух на главной. */
   limits: {
     quarter:
-      "Models re-crawl and re-cite over weeks. Sixty to ninety days is the honest unit here; a short period shows early signal rather than settled results.",
+      "Assistants' search results and cited sources change over weeks. Sixty to ninety days is the honest unit here; a short period shows early signal rather than settled results.",
     attribution:
       "With one client and no untouched topics to compare against, movement cannot be separated from platform-wide drift, and the report says so where that is the case.",
     ranges:
@@ -440,7 +440,7 @@ export const MARKETING_COPY = {
    * нашем домене, письмо уходит с нашего адреса отправки.
    */
   whiteLabel: {
-    page: "The client sees your logo and colour. The report page does not name us, link to us or mention a plan.",
+    page: "The client sees your logo and color. The report page does not name us, link to us or mention a plan.",
     link: "The link opens without an account. It can be served from a domain you own (ask us and we set it up), and on that domain nothing but the report exists.",
     email:
       "Sent from the product, the email shows your agency's name as the sender, comes from noreply@answertally.com, and replies go to whoever on your team sent it. To keep even that address out of sight, send the link from your own mailbox.",
@@ -478,7 +478,7 @@ export const METHOD_COPY = {
   interval:
     "The range around a share is a 95% interval worked out from the number of answers behind it. Few answers, wide range.",
   withinNoise:
-    "When two periods' ranges overlap, the change is labelled as within what the sample can tell apart, not as up or down.",
+    "When two periods' ranges overlap, the change is labeled as within what the sample can tell apart, not as up or down.",
   confidence:
     "Confidence describes how many answers sit behind a figure, not how good the result is. The same thresholds apply on every screen, in reports and in the API.",
   experiments:

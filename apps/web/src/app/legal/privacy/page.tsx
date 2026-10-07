@@ -162,9 +162,10 @@ export default function PrivacyPage() {
 
       <h2>Where it is</h2>
       <p>
-        The product runs on infrastructure we operate. The assistant providers and the services
+        The product, its database and the stored answers run on Hetzner servers in Germany. The
+        assistant providers and the services
         listed on the sub-processors page are mostly in the United States, so using the product
-        means data travelling there. Where that transfer needs a legal mechanism, we use the
+        means data traveling there. Where that transfer needs a legal mechanism, we use the
         European Commission&rsquo;s standard contractual clauses.
       </p>
 
@@ -188,10 +189,30 @@ export default function PrivacyPage() {
         </p>
       )}
 
+      <h2>Why we are allowed to hold it</h2>
+      <ul>
+        <li>
+          <b>To provide the service you signed up for</b> (GDPR art. 6(1)(b)): your account, your
+          workspace, measurements, reports and the emails the product sends.
+        </li>
+        <li>
+          <b>Legitimate interest</b> (art. 6(1)(f)): keeping the service secure, preventing abuse
+          such as mass sign-ups, and fixing errors.
+        </li>
+        <li>
+          <b>Consent</b> (art. 6(1)(a)): the ad-measurement tags, only after you accept them in
+          the cookie banner. You can withdraw it at any time under Cookie settings.
+        </li>
+        <li>
+          <b>Legal obligation</b> (art. 6(1)(c)): billing records kept for tax purposes.
+        </li>
+      </ul>
+
       <h2>Your rights</h2>
       <p>
-        You can ask what we hold about you, ask for it to be corrected, ask for a copy, or ask us to
-        delete it. If the data belongs to an agency&rsquo;s workspace rather than to you personally,
+        You can ask what we hold about you, ask for it to be corrected, ask for a copy in a
+        portable format, ask us to delete it or restrict its use, object to processing based on
+        legitimate interest, and withdraw consent you gave. If the data belongs to an agency&rsquo;s workspace rather than to you personally,
         ask that agency first. They decide, and we act on their instruction.
       </p>
       <p>

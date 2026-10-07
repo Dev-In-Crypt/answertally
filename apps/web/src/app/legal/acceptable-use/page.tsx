@@ -54,7 +54,7 @@ export default function AcceptableUsePage() {
       <h2>Honest reporting</h2>
       <p>
         The product deliberately refuses to state more than the evidence supports: shares come with
-        ranges and confidence, and a change too small to distinguish from noise is labelled that
+        ranges and confidence, and a change too small to distinguish from noise is labeled that
         way. Do not strip that framing out when you pass a report on.
       </p>
       <p>

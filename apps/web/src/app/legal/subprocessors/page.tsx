@@ -213,8 +213,8 @@ export default function SubprocessorsPage() {
 
       <h2>Hosting</h2>
       <p>
-        The product runs on infrastructure we operate, with the database and stored answers on
-        machines we control. When that hosting provider is fixed, it is named here with the rest.
+        The product, its database and the stored answers run on servers rented from Hetzner in
+        Germany, listed above. We administer those servers ourselves; nobody else operates them.
       </p>
 
       <p>

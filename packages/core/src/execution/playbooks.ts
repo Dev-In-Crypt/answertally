@@ -132,7 +132,7 @@ export const PLAYBOOKS: Record<ActionType, Playbook> = {
 
   structured_data_fix: {
     steps: [
-      "Check which schema types the page should carry for its purpose: product, pricing, FAQ, organisation.",
+      "Check which schema types the page should carry for its purpose: product, pricing, FAQ, organization.",
       "Add or correct the markup so it states the same facts as the visible text.",
       "Validate the markup with the vendor's own testing tool and fix reported errors.",
     ],

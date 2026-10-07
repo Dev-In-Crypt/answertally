@@ -71,7 +71,7 @@ const ROWS: { label: string; cells: Cell[] }[] = [
     cells: [
       { text: "Every plan: a link and a PDF, approved by the client" },
       { text: "Through Looker Studio", href: "https://peec.ai/pricing-agencies" },
-      { text: "No native white-label (their help centre)", href: "https://help.otterly.ai/white-label" },
+      { text: "No native white-label (their help center)", href: "https://help.otterly.ai/white-label" },
       { text: "Not mentioned", href: "https://help.tryprofound.com/articles/8593548222-agency-mode-overview" },
       { text: "Through their API", href: "https://scrunch.com/agencies" },
     ],

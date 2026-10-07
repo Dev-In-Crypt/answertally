@@ -86,7 +86,7 @@ export default function ProposalTemplatePage() {
               </div>
               <div>
                 <dt>Prints on</dt>
-                <dd>A4</dd>
+                <dd>A4 or Letter</dd>
               </div>
               <div>
                 <dt>Is it a contract</dt>
@@ -105,8 +105,8 @@ export default function ProposalTemplatePage() {
         <div className="wrap">
           <div className="pt-bar pt-screen">
             <p className="small">
-              Print it, or copy the structure into your own document. The page is laid out for
-              A4 and drops this site&rsquo;s header and footer when printed.
+              Print it, or copy the structure into your own document. The page prints on
+              A4 or US Letter and drops this site&rsquo;s header and footer when printed.
             </p>
             <PrintButton />
           </div>

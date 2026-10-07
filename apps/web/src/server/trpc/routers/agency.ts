@@ -51,7 +51,7 @@ export const agencyRouter = router({
         // ссылка уходила в отчёт клиенту и в браузер печати PDF на сервере.
         brandColor: z
           .string()
-          .regex(/^#[0-9a-fA-F]{6}$/, "Use a hex colour like #4f46e5")
+          .regex(/^#[0-9a-fA-F]{6}$/, "Use a hex color like #4f46e5")
           .optional(),
       }),
     )

@@ -106,9 +106,10 @@ export default function CookiesPage() {
 
       <h2>If this changes</h2>
       <p>
-        If we ever add something optional (analytics, a support widget, anything that watches what
-        you do), we will ask first, properly, and this page will say what it is before it runs. A
-        banner will appear at that point because there will finally be a real choice behind it.
+        If we add anything else optional (analytics, a support widget, anything that watches what
+        you do), this page will say what it is before it runs, and it will load only after you
+        accept it in the banner. You can change your choice any time under Cookie settings in the
+        footer.
       </p>
       <p>
         What is stored on our side, rather than in your browser, is in the{" "}

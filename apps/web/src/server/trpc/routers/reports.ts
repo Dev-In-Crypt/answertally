@@ -23,7 +23,7 @@ import type { CitationFact, SourceType, VisibilitySnapshot } from "@repo/core";
 import {
   listAgencyReportsWithApproval,
   listCitationFacts,
-  countClientMentionsBetween,
+  countClientAnswersBetween,
   countNewCitedDomains,
   createReport,
   createReportShare,
@@ -148,7 +148,7 @@ export const reportsRouter = router({
         snapshotRows,
         completedActions,
         newCitedUrls,
-        newBrandMentions,
+        clientAnswers,
         experiments,
         allActions,
         allOpportunities,
@@ -156,7 +156,7 @@ export const reportsRouter = router({
         listAllSnapshots(ctx.db, input.clientId),
         listActionsCompletedBetween(ctx.db, input.clientId, periodStart, periodEnd),
         countNewCitedDomains(ctx.db, input.clientId, periodStart, periodEnd),
-        countClientMentionsBetween(ctx.db, input.clientId, periodStart, periodEnd),
+        countClientAnswersBetween(ctx.db, input.clientId, periodStart, periodEnd),
         listExperiments(ctx.db, input.clientId),
         listActions(ctx.db, input.clientId),
         listOpportunities(ctx.db, input.clientId),
@@ -402,7 +402,8 @@ export const reportsRouter = router({
           actionType: action.actionType,
         })),
         newCitedUrls,
-        newBrandMentions,
+        newBrandMentions: clientAnswers.naming,
+        sampledAnswers: clientAnswers.sampled,
         /**
          * Самое влиятельное действие — из экспериментов, у которых после
          * работы набралось достаточно ответов. Раздел был пуст всегда, пока
@@ -537,6 +538,7 @@ export const reportsRouter = router({
 
       const periodEnd = latest.periodEnd;
       const periodStart = latest.periodStart;
+      const auditAnswers = await countClientAnswersBetween(ctx.db, input.clientId, periodStart, periodEnd);
 
       const payload = buildReportPayload({
         clientName: client.name,
@@ -552,7 +554,9 @@ export const reportsRouter = router({
         ],
         completedActions: [],
         newCitedUrls: 0,
-        newBrandMentions: 0,
+        // Раньше здесь стоял 0 при ненулевой доле: аудит не считал ответы вовсе.
+        newBrandMentions: auditAnswers.naming,
+        sampledAnswers: auditAnswers.sampled,
         highestImpact: null,
         // Ближайшие шаги — верх того же ранжированного списка, без выдумок.
         nextSprint: opportunity.rankedActions.slice(0, 3).map((action) => action.title),

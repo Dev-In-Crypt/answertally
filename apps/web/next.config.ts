@@ -32,6 +32,7 @@ const SECURITY_HEADERS = [
   { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=()" },
 ];
 
 const nextConfig: NextConfig = {
@@ -49,6 +50,10 @@ const nextConfig: NextConfig = {
    * входом для критических уязвимостей. Ненужная поверхность — лишний риск.
    */
   images: { unoptimized: true },
+  // Браузеры и боты просят /favicon.ico по старой привычке; значок у нас один, SVG.
+  async rewrites() {
+    return [{ source: "/favicon.ico", destination: "/icon.svg" }];
+  },
   // Версию движка снаружи знать незачем.
   poweredByHeader: false,
   htmlLimitedBots: new RegExp(`${HTML_LIMITED_BOT_UA_RE.source}|${AI_CRAWLERS}`, "i"),
