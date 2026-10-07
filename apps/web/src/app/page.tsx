@@ -190,10 +190,13 @@ export default async function HomePage() {
                 <dt>AI answers measured</dt>
                 <dd>{int(totals.answers + RESEARCH_ANSWERS)}</dd>
               </div>
-              <div>
-                <dt>Cited sources read</dt>
-                <dd>{int(totals.citations)}</dd>
-              </div>
+              {/* Источники ответов исследования в базу не писались — пока их меньше ответов, строка не показывается. */}
+              {totals.citations > totals.answers + RESEARCH_ANSWERS && (
+                <div>
+                  <dt>Cited sources read</dt>
+                  <dd>{int(totals.citations)}</dd>
+                </div>
+              )}
             </dl>
           )}
           <div className="measured-teaser">
