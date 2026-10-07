@@ -1,5 +1,6 @@
 import { PLAN_LIMITS } from "../billing/period";
 import type { PlanId } from "../billing/entitlements";
+import { FREE_CHECK_ALLOWANCE } from "../billing/entitlements";
 import { ASSISTANTS, isMeasurableAssistant } from "../adapters/catalogue";
 import { checkUnits } from "../adapters/pricing";
 import { DEFAULT_PLATFORMS, PLATFORM_IDS, type Platform } from "../adapters/types";
@@ -67,10 +68,9 @@ export interface MeasurementCapabilities {
 const STARTER_ASSISTANTS: readonly Platform[] = [
   "chatgpt",
   "perplexity",
-  "grok",
-  // Поверхности Google — опция на любом платном тарифе, по умолчанию выключены.
   "ai-overviews",
   "ai-mode",
+  // Grok и Claude — с Growth (решение фаундера 07.10.2026).
 ] as const;
 
 /**
@@ -140,7 +140,18 @@ export const MEASUREMENT_CAPABILITIES: Record<PlanId, MeasurementCapabilities> =
  * никто не принимал. Цена проверяется тестом: он падает, когда разрыв
  * исчезает, и зовёт пересмотреть список руками.
  */
-export const FREE_AUDIT_ASSISTANTS: readonly Platform[] = ["chatgpt", "perplexity"] as const;
+export const FREE_AUDIT_ASSISTANTS: readonly Platform[] = ["chatgpt", "perplexity", "ai-overviews"] as const;
+
+/**
+ * Сколько вопросов в бесплатном аудите: столько, сколько влезает в его
+ * лимит при трёх ответах на вопрос у каждого ассистента аудита. Лимит 150
+ * оставлен решением фаундера 07.10.2026, когда в аудит вошёл AI Overviews,
+ * поэтому вопросов стало 16 вместо 24. Считается, а не вписано: поменяется
+ * лимит или набор — поменяется и это.
+ */
+export const FREE_AUDIT_PROMPT_COUNT = Math.floor(
+  FREE_CHECK_ALLOWANCE / (MIN_SAMPLES_PER_CELL * checkUnits(FREE_AUDIT_ASSISTANTS)),
+);
 
 const FREE_AUDIT_CAPABILITIES: MeasurementCapabilities = {
   ...MEASUREMENT_CAPABILITIES.starter,

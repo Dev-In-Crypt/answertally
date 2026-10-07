@@ -59,7 +59,7 @@ describe("готовность эксперимента", () => {
     const scheduleId = (
       await db
         .insert(runSchedules)
-        .values({ clientId, platforms: ["chatgpt", "perplexity", "grok"], samplesPerPrompt: 3 })
+        .values({ clientId, platforms: ["chatgpt", "perplexity", "ai-overviews"], samplesPerPrompt: 3 })
         .returning()
     )[0]!.id;
 

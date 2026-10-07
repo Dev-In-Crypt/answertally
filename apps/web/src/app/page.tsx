@@ -111,7 +111,7 @@ export default async function HomePage() {
               applicationCategory: "BusinessApplication",
               operatingSystem: "Web",
               description:
-                "AI visibility measurement for agencies: sampled answers from ChatGPT, Perplexity, Grok, Claude and Google's AI search (AI Overviews and AI Mode), ranked work with a reason on every item, and white-label client reports.",
+                "AI visibility measurement for agencies: sampled answers from ChatGPT, Perplexity, Google AI Overviews and AI Mode, Grok and Claude, ranked work with a reason on every item, and white-label client reports.",
               publisher: { "@id": `${SITE_URL}/#organization` },
               offers: PLANS.map((plan) => ({
                 "@type": "Offer",
@@ -133,8 +133,8 @@ export default async function HomePage() {
             </h1>
             <p className="lead">
               Answer “Are we in ChatGPT?” with numbers that show their work. Answertally asks
-              ChatGPT and Perplexity, plus Grok, Claude and Google’s AI search when you switch them
-              on, the questions your client’s buyers ask, several times each.{" "}
+              ChatGPT, Perplexity and Google’s AI answers the questions your client’s buyers ask,
+              several times each.{" "}
               {MARKETING_COPY.evidencePromise} <b>Your client sees your brand, not ours.</b>
             </p>
             <div className="ctas">
@@ -160,14 +160,14 @@ export default async function HomePage() {
               <div className="chip-row" aria-label="Assistants measured">
                 <span className="a-chip">ChatGPT</span>
                 <span className="a-chip">Perplexity</span>
-                <span className="a-chip opt">Grok · per client</span>
-                <span className="a-chip opt">Claude · from Growth</span>
-                <span className="a-chip opt" title={GOOGLE_SURFACES_PLAIN}>
-                  Google AI Overviews · per client
+                <span className="a-chip" title={GOOGLE_SURFACES_PLAIN}>
+                  Google AI Overviews
                 </span>
                 <span className="a-chip opt" title={GOOGLE_SURFACES_PLAIN}>
                   Google AI Mode · per client
                 </span>
+                <span className="a-chip opt">Grok · from Growth</span>
+                <span className="a-chip opt">Claude · from Growth</span>
               </div>
               <ul className="trust-strip" aria-label="How client data is handled" data-testid="trust-strip">
                 {TRUST.map((item) => (

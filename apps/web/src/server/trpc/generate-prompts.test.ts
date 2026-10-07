@@ -6,7 +6,9 @@ import {
   deleteAgency,
   listPromptClusters,
   listPromptsByClient,
+  upsertSubscription,
 } from "@repo/db";
+import { FREE_AUDIT_PROMPT_COUNT } from "@repo/core/config/measurement";
 import { appRouter } from "./root";
 import type { SessionUser, TrpcContext } from "./context";
 
@@ -36,6 +38,16 @@ describe("prompts.generate / saveGenerated", () => {
   beforeEach(async () => {
     const agency = await createAgency(db, { name: "Audit Agency", clientLimit: 10 });
     agencyId = agency.id;
+    // Платящее агентство: тесты про сам черновик. Предел бесплатного — отдельно ниже.
+    await upsertSubscription(db, {
+      agencyId,
+      customerId: `cus_${agencyId.slice(0, 8)}`,
+      subscriptionId: `sub_${agencyId.slice(0, 8)}`,
+      plan: "starter",
+      status: "active",
+      currentPeriodEnd: new Date("2099-01-01T00:00:00.000Z"),
+      cancelAtPeriodEnd: false,
+    });
     const client = await createClient(db, {
       agencyId,
       name: "AcmeCRM",
@@ -50,6 +62,25 @@ describe("prompts.generate / saveGenerated", () => {
 
   afterEach(async () => {
     await deleteAgency(db, agencyId);
+  });
+
+  it("до оплаты черновик не больше бесплатного аудита", async () => {
+    const free = await createAgency(db, { name: "Free Agency", clientLimit: 10 });
+    try {
+      const client = await createClient(db, {
+        agencyId: free.id,
+        name: "AcmeCRM",
+        domain: "acmecrm-free.test",
+        industry: "CRM software",
+        brandNames: ["AcmeCRM"],
+        competitorNames: ["Northstack"],
+        status: "prospect",
+      });
+      const { prompts } = await caller(free.id).prompts.generate({ clientId: client.id, count: 30 });
+      expect(prompts).toHaveLength(FREE_AUDIT_PROMPT_COUNT);
+    } finally {
+      await deleteAgency(db, free.id);
+    }
   });
 
   it("генерация ничего не сохраняет — это черновик", async () => {

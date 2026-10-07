@@ -38,7 +38,7 @@ test("landing gives an anonymous visitor the offer, the plans and a way in", asy
   await expect(page.getByTestId("plan-price-growth")).toHaveText("$1,299");
   await expect(page.getByTestId("plan-price-scale")).toHaveText("$2,499");
 
-  // Лимиты видны рядом с ценой. Объяснение allowance («600 checks») — на
+  // Лимиты видны рядом с ценой. Объяснение allowance («950 checks») — на
   // /pricing и проверяется в marketing.spec.ts; главная ведёт туда ссылкой.
   await expect(page.getByText("4,000")).toBeVisible();
   await expect(page.getByRole("link", { name: /Full pricing and what an AI check is/ })).toHaveAttribute(

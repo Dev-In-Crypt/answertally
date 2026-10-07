@@ -55,7 +55,7 @@ describe("aggregateClient", () => {
         .insert(runSchedules)
         .values({
           clientId,
-          platforms: ["chatgpt", "perplexity", "grok"],
+          platforms: ["chatgpt", "perplexity", "ai-overviews"],
           samplesPerPrompt: 3,
         })
         .returning()

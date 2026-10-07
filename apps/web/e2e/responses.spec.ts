@@ -52,9 +52,9 @@ test("raw answers show highlighted client and competitor mentions", async ({ pag
   await page.getByRole("link", { name: "best CRM for startups" }).click();
 
   const responses = page.getByTestId("responses-list");
-  // 2 платформы × 3 сэмпла: агентство ещё не платило, а бесплатный
-  // аудит меряет ChatGPT и Perplexity — Grok в него не входит по цене.
-  await expect(responses.locator("> li")).toHaveCount(6);
+  // 3 платформы × 3 сэмпла: бесплатный аудит меряет ChatGPT, Perplexity
+  // и Google AI Overviews; Grok в него не входит по цене.
+  await expect(responses.locator("> li")).toHaveCount(9);
 
   // Главная проверка: клиент и конкуренты подсвечены в сыром тексте.
   await expect(page.getByTestId("mention-client").first()).toContainText(/Acme/);

@@ -79,7 +79,7 @@ describe("diagnosis на данных прогона", () => {
         .insert(runSchedules)
         .values({
           clientId,
-          platforms: ["chatgpt", "perplexity", "grok"],
+          platforms: ["chatgpt", "perplexity", "ai-overviews"],
           samplesPerPrompt: 2,
         })
         .returning()

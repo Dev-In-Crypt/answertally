@@ -89,7 +89,8 @@ describe("pickUpPendingRuns", () => {
       agencyId,
       customerId: `cus_${agencyId.slice(0, 8)}`,
       subscriptionId: `sub_${agencyId.slice(0, 8)}`,
-      plan: "starter",
+      // Growth: на нём разрешён Grok, про который здесь половина тестов.
+      plan: "growth",
       status: "active",
       currentPeriodEnd: new Date("2099-01-01T00:00:00.000Z"),
       cancelAtPeriodEnd: false,

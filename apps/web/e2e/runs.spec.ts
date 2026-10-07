@@ -99,9 +99,11 @@ test("the plan decides what is offered, and locked assistants are visible", asyn
   await page.goto(`/clients/${clientId}/measure`);
   await expect(page.getByLabel("ChatGPT")).toBeChecked();
   await expect(page.getByLabel("Perplexity")).toBeChecked();
-  // Grok тарифу разрешён, но с 07.10.2026 включается вручную: он весит 5 проверок.
+  await expect(page.getByLabel("Google AI Overviews")).toBeChecked();
+  // С 07.10.2026 Grok, как и Claude, — с Growth.
   await expect(page.getByLabel("Grok")).not.toBeChecked();
-  await expect(page.getByLabel("Grok")).toBeEnabled();
+  await expect(page.getByLabel("Grok")).toBeDisabled();
+  await expect(page.getByTestId("assistant-locked-grok")).toContainText("growth");
 
   // Запертое видно, а не спрятано, и подписано тарифом, на котором включается.
   await expect(page.getByLabel("Claude")).not.toBeChecked();

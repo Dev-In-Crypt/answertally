@@ -33,7 +33,8 @@ describe("usage counters", () => {
 
   beforeEach(async () => {
     const agency = await createAgency(db, { name: "Usage Agency", clientLimit: 10 });
-    await makePaying(db, agency.id);
+    // Growth: на нём Grok разрешён, а тест — про его вес в 5 проверок.
+    await makePaying(db, agency.id, "growth");
     agencyId = agency.id;
 
     const client = await createClient(db, {

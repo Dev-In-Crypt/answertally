@@ -50,7 +50,7 @@ function faqItems(paymentsOn: boolean) {
   },
   {
     q: "Which assistants does the audit use?",
-    a: `${FREE_TRIO}, each with its own cited sources. Paid plans can switch on Grok, Google AI Overviews and AI Mode on any plan, and Claude from Growth, per client.`,
+    a: `${FREE_TRIO}, each with its own cited sources. Paid plans can switch on Google AI Mode on any plan, and Grok and Claude from Growth, per client.`,
   },
   {
     q: "What happens right after the audit?",

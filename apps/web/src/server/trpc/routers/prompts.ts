@@ -12,6 +12,7 @@ import {
 } from "@repo/core";
 import {
   CLUSTER_NAME_MAX,
+  FREE_AUDIT_PROMPT_COUNT,
   PROMPT_TEXT_MAX,
   PROMPTS_PER_CLIENT,
 } from "@repo/core/config/measurement";
@@ -34,6 +35,7 @@ import { assertTenant, protectedProcedure, roleProcedure, router } from "../trpc
 import { errorReporter } from "../../observability";
 import { hit } from "../../rate-limit";
 import { fetchSiteSummary } from "../../site-summary";
+import { entitlementsForAgency } from "../../subscription";
 
 const INTENTS = ["learning", "comparison", "purchase", "other"] as const;
 
@@ -259,20 +261,25 @@ export const promptsRouter = router({
         competitorNames: client.competitorNames,
       };
 
+      // До оплаты — столько вопросов, сколько влезает в бесплатный аудит:
+      // больше черновик не пустит прогон, и человек упрётся в отказ.
+      const entitlements = await entitlementsForAgency(ctx.db, ctx.user.agencyId);
+      const count = entitlements.paying ? input.count : Math.min(input.count, FREE_AUDIT_PROMPT_COUNT);
+
       const ai = aiGenerator();
       if (ai && (await hit(`prompt-drafts:${ctx.user.agencyId}`, AI_DRAFTS_PER_DAY, 86_400))) {
         try {
           const siteSummary = await fetchSiteSummary(client.domain);
-          const prompts = await ai.generate({ ...seed, siteSummary }, input.count);
-          return { prompts, source: "ai" as const, siteRead: siteSummary !== null };
+          const prompts = await ai.generate({ ...seed, siteSummary }, count);
+          return { prompts, source: "ai" as const, siteRead: siteSummary !== null, freeAuditLimit: count < input.count };
         } catch (error) {
           // Шаблоны вместо ошибки: черновик всё равно правится человеком.
           errorReporter.captureError(error, { scope: "prompts.generate_ai", clientId: client.id });
         }
       }
 
-      const prompts = await templateGenerator.generate(seed, input.count);
-      return { prompts, source: "templates" as const, siteRead: false };
+      const prompts = await templateGenerator.generate(seed, count);
+      return { prompts, source: "templates" as const, siteRead: false, freeAuditLimit: count < input.count };
     }),
 
   /** Сохраняет отредактированный черновик: кластеры создаются по именам из него. */

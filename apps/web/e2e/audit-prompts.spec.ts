@@ -39,7 +39,7 @@ test("prospect client gets generated prompts, edited before saving", async ({ pa
   await page.getByTestId("generate-prompts").click();
 
   const draft = page.getByTestId("prompt-draft").locator("li");
-  await expect(draft).toHaveCount(24);
+  await expect(draft).toHaveCount(16);
   // Ничего ещё не сохранено: черновик живёт только на странице.
   await expect(page.getByTestId("clusters-list")).toHaveCount(0);
 
@@ -47,10 +47,10 @@ test("prospect client gets generated prompts, edited before saving", async ({ pa
   // exact: иначе «Prompt 1» совпадает ещё и с «Prompt 10»…«Prompt 19».
   await page.getByLabel("Prompt 1", { exact: true }).fill("best CRM for a two-person team");
   await page.getByRole("button", { name: "Remove prompt 2", exact: true }).click();
-  await expect(draft).toHaveCount(23);
+  await expect(draft).toHaveCount(15);
 
   await page.getByTestId("save-generated").click();
-  await expect(page.getByTestId("generate-summary")).toContainText("Saved 23 prompts");
+  await expect(page.getByTestId("generate-summary")).toContainText("Saved 15 prompts");
 
   // Промпты действительно легли в кластера и видны на экране измерения.
   const clusters = page.getByTestId("clusters-list").locator("> li");

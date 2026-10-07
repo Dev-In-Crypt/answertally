@@ -71,7 +71,7 @@ export const PRICING_NOTES = {
    * Allowance рассчитан на еженедельный опрос, а по умолчанию продукт опрашивает
    * раз в две недели — названы оба числа, чтобы запас не выглядел выдуманным.
    */
-  checks: `One AI check is one ChatGPT or Perplexity answer to one prompt; a Claude answer counts as ${CHECK_WEIGHTS.claude} checks, a Grok answer as ${CHECK_WEIGHTS.grok}, and a Google AI Overviews or AI Mode answer as ${CHECK_WEIGHTS["ai-overviews"]}. A client measured the default way (around two dozen prompts, three samples each, ChatGPT and Perplexity, every two weeks) uses roughly ${int(TYPICAL_CHECKS_BIWEEKLY)} checks a month. Measured weekly, it uses roughly ${int(TYPICAL_CHECKS_PER_CLIENT)} checks, and each plan still covers every client, with ${SPARE_MIN}–${SPARE_MAX}% of the allowance to spare.`,
+  checks: `One AI check is one ChatGPT, Perplexity, Google AI Overviews or AI Mode answer to one prompt; a Claude answer counts as ${CHECK_WEIGHTS.claude} checks and a Grok answer as ${CHECK_WEIGHTS.grok}. A client measured the default way (around two dozen prompts, three samples each, on ChatGPT, Perplexity and Google AI Overviews, every two weeks) uses roughly ${int(TYPICAL_CHECKS_BIWEEKLY)} checks a month. Measured weekly, it uses roughly ${int(TYPICAL_CHECKS_PER_CLIENT)} checks, and each plan still covers every client, with ${SPARE_MIN}–${SPARE_MAX}% of the allowance to spare.`,
   /**
    * Лимит — потолок: следующий прогон сверх него не начнётся (решение
    * фаундера, после аудита расходов). Начатый не обрывается. Обещание
@@ -200,7 +200,7 @@ export const AUDIT_STEPS: { text: string; who: { label: string; ours?: boolean }
     who: [{ label: "drafted for you", ours: true }, { label: "you edit" }],
   },
   {
-    text: "Run the audit: every question, several times, on ChatGPT and Perplexity",
+    text: "Run the audit: every question, several times, on ChatGPT, Perplexity and Google AI Overviews",
     who: [{ label: "the product asks", ours: true }],
   },
   {
@@ -266,7 +266,7 @@ export const OBJECTIONS = [
   },
   {
     q: "“Does it cover Google?”",
-    a: `Yes, Google’s AI answers, not its blue links. ${GOOGLE_SURFACES_PLAIN} Both can be switched on for any client on a paid plan, next to ChatGPT, Perplexity, Grok and Claude.`,
+    a: `Yes, Google’s AI answers, not its blue links. ${GOOGLE_SURFACES_PLAIN} AI Overviews is measured for every client by default, the free audit included; AI Mode can be switched on for any client on a paid plan.`,
   },
   {
     q: "“Where does our clients’ data live?”",

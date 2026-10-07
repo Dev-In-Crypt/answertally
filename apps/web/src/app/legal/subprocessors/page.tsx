@@ -59,7 +59,7 @@ const ASSISTANT_ROWS: Row[] = [
   {
     name: "DataForSEO OÜ",
     purpose:
-      "Runs the tracked questions as Google searches and returns Google's AI Overview or AI Mode answer, when switched on for a client",
+      "Runs the tracked questions as Google searches and returns Google's AI Overview answer (measured by default) or AI Mode answer (when switched on for a client)",
     data: "The question text and the brand and competitor names in it",
     where: "Estonia (European Union)",
   },
@@ -165,9 +165,9 @@ export default function SubprocessorsPage() {
         the question, not your client&rsquo;s account, contacts or files.
       </p>
       <p>
-        Which assistants are asked depends on your plan: the free audit asks ChatGPT and Perplexity;
-        paid plans can switch on Grok and Google&rsquo;s AI search (AI Overviews and AI Mode, through
-        DataForSEO), and Claude from the Growth plan. Each is switched on or off per client, and an
+        Which assistants are asked depends on your plan: the free audit asks ChatGPT, Perplexity and
+        Google AI Overviews (through DataForSEO); paid plans can switch on Google AI Mode, and Grok
+        and Claude from the Growth plan. Each is switched on or off per client, and an
         assistant that is switched off receives nothing.
       </p>
       <Table rows={ASSISTANT_ROWS} caption="Assistant providers we send tracked questions to" />

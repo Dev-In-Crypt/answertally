@@ -2,11 +2,11 @@ import { describe, expect, it } from "vitest";
 import { ANSWER_PRICES } from "../adapters/pricing";
 import { PLAN_LIMITS } from "../billing/period";
 import { FREE_CHECK_ALLOWANCE } from "../billing/entitlements";
-import { DEFAULT_GENERATED_PROMPT_COUNT } from "../prompts/generate";
 import { MIN_SAMPLES_PER_CELL } from "../metrics/visibility";
 import type { PlanId } from "../billing/entitlements";
 import {
   FREE_AUDIT_ASSISTANTS,
+  FREE_AUDIT_PROMPT_COUNT,
   capabilitiesFor,
   capabilitiesForAgency,
   platformsForRun,
@@ -75,9 +75,9 @@ describe("почему набор именно такой", () => {
      * падает, когда разрыв исчезает, и зовёт пересмотреть список руками, а
      * не оставляет устаревшее решение жить само по себе.
      */
-    // Поверхности Google исключены не по цене (они дешевле всех), а потому
-    // что это опция агентства с данными стороннего поставщика.
-    const excluded = capabilitiesFor("starter").assistants.filter(
+    // Сравнение со средним тарифом: на Starter исключённых дорогих уже нет.
+    // AI Mode исключён не по цене, а как опция агентства.
+    const excluded = capabilitiesFor("growth").assistants.filter(
       (id) => !FREE_AUDIT_ASSISTANTS.includes(id) && !id.startsWith("ai-"),
     );
 
@@ -98,7 +98,7 @@ describe("почему набор именно такой", () => {
     const cost = (ids: readonly string[]) =>
       rounds * ids.reduce((sum, id) => sum + ANSWER_PRICES[id as "grok"].usd, 0);
 
-    const full = cost(capabilitiesFor("starter").assistants);
+    const full = cost(capabilitiesFor("growth").assistants);
     const free = cost(FREE_AUDIT_ASSISTANTS);
 
     expect(free * 3).toBeLessThan(full);
@@ -111,7 +111,7 @@ describe("как набор называется на витрине", () => {
      * «what ChatGPT, Perplexity say about it» — это уже не английский.
      * На трёх ассистентах запятая сходила с рук, на двух перестала.
      */
-    expect(freeAuditAssistantSentence()).toBe("ChatGPT and Perplexity");
+    expect(freeAuditAssistantSentence()).toBe("ChatGPT, Perplexity and Google AI Overviews");
     expect(defaultAssistantSentence("starter")).toContain(" and ");
   });
 
@@ -125,8 +125,10 @@ describe("как набор называется на витрине", () => {
 
 describe("лимит бесплатного аудита", () => {
   /** Во что обходится аудит на наборе вопросов по умолчанию. */
+  // С 07.10.2026 аудит — FREE_AUDIT_PROMPT_COUNT вопросов, а не 24: лимит
+  // остался 150, а ассистентов стало три.
   const DEFAULT_AUDIT =
-    DEFAULT_GENERATED_PROMPT_COUNT * MIN_SAMPLES_PER_CELL * FREE_AUDIT_ASSISTANTS.length;
+    FREE_AUDIT_PROMPT_COUNT * MIN_SAMPLES_PER_CELL * FREE_AUDIT_ASSISTANTS.length;
 
   it("покрывает один аудит целиком", () => {
     /**

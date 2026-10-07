@@ -445,7 +445,7 @@ export const MARKETING_COPY = {
    * вопросов и от очереди, а обещание, которое нельзя сдержать, хуже молчания.
    */
   auditTakesTime:
-    "Each question is asked several times on ChatGPT and Perplexity. It takes longer than a page load, on purpose: one answer per question would be noise.",
+    "Each question is asked several times on ChatGPT, Perplexity and Google AI Overviews. It takes longer than a page load, on purpose: one answer per question would be noise.",
   /**
    * Белая этикетка. Абсолюты вроде «ничего нашего» не говорим: ссылка живёт на
    * нашем домене, письмо уходит с нашего адреса отправки.

@@ -49,7 +49,7 @@ test("opportunity report and its PDF are produced for a prospect", async ({ page
   await page.goto(`/clients/${clientId}/measure`);
   await page.getByTestId("generate-prompts").click();
   await page.getByTestId("save-generated").click();
-  await expect(page.getByTestId("generate-summary")).toContainText("Saved 24 prompts");
+  await expect(page.getByTestId("generate-summary")).toContainText("Saved 16 prompts");
 
   await page.goto(`/clients/${clientId}/audit`);
   await page.getByTestId("run-audit").click();

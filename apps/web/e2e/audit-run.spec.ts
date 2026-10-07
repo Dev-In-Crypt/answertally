@@ -39,9 +39,9 @@ test("one audit run leads straight to a ready diagnosis", async ({ page }) => {
   // Промпты берутся генератором (T60) — руками ничего не вводится.
   await page.getByRole("link", { name: "Generate prompts" }).click();
   await page.getByTestId("generate-prompts").click();
-  await expect(page.getByTestId("prompt-draft").locator("li")).toHaveCount(24);
+  await expect(page.getByTestId("prompt-draft").locator("li")).toHaveCount(16);
   await page.getByTestId("save-generated").click();
-  await expect(page.getByTestId("generate-summary")).toContainText("Saved 24 prompts");
+  await expect(page.getByTestId("generate-summary")).toContainText("Saved 16 prompts");
 
   await page.goto(`/clients/${clientId}/audit`);
   await expect(page.getByTestId("audit-steps").locator("li")).toHaveCount(4);

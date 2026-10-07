@@ -107,7 +107,7 @@ export function QuestionPreview({ captchaSiteKey }: { captchaSiteKey: string | n
             {siteRead
               ? "Drafted from the client’s homepage, its category and competitors."
               : "Drafted from the category and competitors: the homepage could not be read."}{" "}
-            The audit asks each one several times on ChatGPT and Perplexity and counts who gets named.
+            The audit asks each one several times on ChatGPT, Perplexity and Google AI Overviews and counts who gets named.
           </p>
           <ol className="qp-list">
             {prompts.map((prompt) => (

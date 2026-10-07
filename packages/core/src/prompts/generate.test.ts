@@ -28,7 +28,7 @@ describe("generatePromptsFromTemplates", () => {
     const prompts = generatePromptsFromTemplates(SEED, GENERATED_PROMPT_RANGE.min);
     const intents = new Set(prompts.map((prompt) => prompt.intent));
 
-    expect(prompts).toHaveLength(20);
+    expect(prompts).toHaveLength(GENERATED_PROMPT_RANGE.min);
     expect([...intents].sort()).toEqual(["comparison", "learning", "other", "purchase"]);
   });
 
@@ -98,7 +98,8 @@ describe("generatePromptsFromTemplates", () => {
 
 describe("clampPromptCount", () => {
   const cases: Array<[number, number]> = [
-    [1, 20],
+    [1, 12],
+    [12, 12],
     [20, 20],
     [24, 24],
     [30, 30],

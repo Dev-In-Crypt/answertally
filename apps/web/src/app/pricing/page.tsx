@@ -43,7 +43,7 @@ const clientLimitsText = `${clientLimits.slice(0, -1).join(", ")} or ${clientLim
 const INCLUDED = [
   {
     title: "Measurement",
-    body: `ChatGPT and Perplexity by default. Switched on per client: Grok and Google’s AI search (AI Overviews and AI Mode) on any plan, Claude from Growth. ${MARKETING_COPY.sampleFloor} ${MARKETING_COPY.cadence}`,
+    body: `ChatGPT, Perplexity and Google AI Overviews by default. Switched on per client: Google AI Mode on any plan, Grok and Claude from Growth. ${MARKETING_COPY.sampleFloor} ${MARKETING_COPY.cadence}`,
   },
   {
     title: "Diagnosis",
@@ -217,7 +217,7 @@ export default function PricingPage() {
           ))}
         </ul>
         <p className="small muted" data-testid="check-weights" style={{ marginTop: 12 }}>
-          How AI checks count: {CHECK_WEIGHT_NOTE.charAt(0).toUpperCase() + CHECK_WEIGHT_NOTE.slice(1)} Everything beyond ChatGPT and Perplexity is switched on per client.
+          How AI checks count: {CHECK_WEIGHT_NOTE.charAt(0).toUpperCase() + CHECK_WEIGHT_NOTE.slice(1)} Google AI Mode, Grok and Claude are switched on per client.
         </p>
       </div>
 
@@ -329,7 +329,7 @@ export default function PricingPage() {
       <section className="sec">
         <div className="wrap">
           <SecHead n={3} title="Included in every plan">
-            {PRICING_NOTES.included} Plans differ in client accounts, AI checks and assistants: Claude is included from Growth.
+            {PRICING_NOTES.included} Plans differ in client accounts, AI checks and assistants: Grok and Claude are included from Growth.
           </SecHead>
           <ol className="incl">
             {INCLUDED.map((item, i) => (

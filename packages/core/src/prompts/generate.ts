@@ -34,7 +34,8 @@ export interface PromptGenerator {
   generate(seed: PromptSeed, count: number): Promise<GeneratedPrompt[]>;
 }
 
-export const GENERATED_PROMPT_RANGE = { min: 20, max: 30 } as const;
+// Нижняя граница 12: бесплатный аудит берёт 16 вопросов (FREE_AUDIT_PROMPT_COUNT).
+export const GENERATED_PROMPT_RANGE = { min: 12, max: 30 } as const;
 export const DEFAULT_GENERATED_PROMPT_COUNT = 24;
 
 const CLUSTERS = {

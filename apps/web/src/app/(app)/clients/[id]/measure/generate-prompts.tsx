@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { DEFAULT_GENERATED_PROMPT_COUNT, GENERATED_PROMPT_RANGE } from "@repo/core";
 import type { GeneratedPrompt } from "@repo/core";
-import { PROMPT_TEXT_MAX } from "@repo/core/config/measurement";
+import { PROMPT_TEXT_MAX, PROMPTS_PER_CLIENT } from "@repo/core/config/measurement";
 import { api } from "@/trpc/react";
 import { buttonClass } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/field";
@@ -58,6 +58,11 @@ export function GeneratePrompts({
             : "Drafted by AI from the category and competitors; the homepage could not be read."
           : "Drafted from generic templates. Expect to rewrite some of them for this client.",
       );
+      if (result.freeAuditLimit) {
+        setOrigin((text) =>
+          `${text ?? ""} The free audit covers ${result.prompts.length} questions; plans measure up to ${PROMPTS_PER_CLIENT}.`,
+        );
+      }
     },
   });
 

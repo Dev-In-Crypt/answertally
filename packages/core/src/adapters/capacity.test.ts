@@ -35,7 +35,8 @@ import type { PlanId } from "../billing/entitlements";
 const PLANS = Object.keys(PLAN_LIMITS) as PlanId[];
 
 describe("сегодняшняя политика тарифов", () => {
-  const STARTER_THREE = ["chatgpt", "perplexity", "grok"] as const;
+  // Набор по умолчанию с 07.10.2026: ChatGPT, Perplexity и AI Overviews.
+  const STARTER_THREE = ["chatgpt", "perplexity", "ai-overviews"] as const;
 
   it.each(PLANS)("тариф %s разрешает опрос раз в две недели и раз в неделю", (plan) => {
     for (const cadence of ["biweekly", "weekly"] as const) {
@@ -74,11 +75,12 @@ describe("сегодняшняя политика тарифов", () => {
     expect(CADENCES[0]).toBe("biweekly");
   });
 
-  it("starter даёт три самых дешёвых ассистента", () => {
+  it("starter даёт самых дешёвых ассистентов", () => {
     // Разброс цены ответа между самым дешёвым и самым дорогим почти
     // пятикратный, и на младшем тарифе он съедал бы маржу быстрее всего.
     // С 07.10.2026 к тройке добавлены поверхности Google — дешёвые, через поставщика выдачи.
-    expect(capabilitiesFor("starter").assistants).toEqual([...STARTER_THREE, "ai-overviews", "ai-mode"]);
+    // Grok и Claude — с Growth (решение фаундера 07.10.2026).
+    expect(capabilitiesFor("starter").assistants).toEqual([...STARTER_THREE, "ai-mode"]);
     expect(
       refuseScheduleForPlan("starter", { cadence: "biweekly", assistants: STARTER_THREE }),
     ).toBeNull();
@@ -407,11 +409,13 @@ describe("ассистенты в форме расписания", () => {
   it("на starter дорогой виден, но заперт и подписан тарифом", () => {
     const assistants = capacityOptions("starter").assistants;
 
-    const locked = assistants.find((a) => a.id === "claude");
-    expect(locked?.allowed).toBe(false);
-    expect(locked?.unlocksOn).toBe("growth");
+    for (const id of ["claude", "grok"] as const) {
+      const locked = assistants.find((a) => a.id === id);
+      expect(locked?.allowed).toBe(false);
+      expect(locked?.unlocksOn).toBe("growth");
+    }
 
-    for (const id of ["chatgpt", "perplexity", "grok"] as const) {
+    for (const id of ["chatgpt", "perplexity", "ai-overviews", "ai-mode"] as const) {
       expect(assistants.find((a) => a.id === id)?.allowed).toBe(true);
     }
   });

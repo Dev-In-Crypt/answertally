@@ -83,7 +83,8 @@ describe("orchestrateRun (mock-режим)", () => {
         .values({
           clientId,
           cadence: "weekly",
-          platforms: ["chatgpt", "perplexity", "grok"],
+          // Набор Starter по умолчанию с 07.10.2026; Grok — с Growth.
+          platforms: ["chatgpt", "perplexity", "ai-overviews"],
           samplesPerPrompt: 3,
         })
         .returning()
@@ -140,7 +141,7 @@ describe("orchestrateRun (mock-режим)", () => {
     const written = await listResponsesByRun(db, runId);
 
     const platforms = new Set(written.map((r) => r.platform));
-    expect([...platforms].sort()).toEqual(["chatgpt", "grok", "perplexity"]);
+    expect([...platforms].sort()).toEqual(["ai-overviews", "chatgpt", "perplexity"]);
 
     const perPlatform = written.filter((r) => r.platform === "chatgpt");
     expect(perPlatform).toHaveLength(6); // 2 промпта × 3 сэмпла

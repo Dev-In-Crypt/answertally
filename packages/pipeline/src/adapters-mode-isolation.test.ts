@@ -121,12 +121,12 @@ describe("изоляция режимов адаптеров", () => {
   });
 
   it("срезы по платформам, которые перестали учитываться, удаляются", async () => {
-    // Сначала стенд намерял обе платформы по умолчанию фикстурами.
+    // Сначала стенд намерял три платформы по умолчанию фикстурами.
     const mockRun = await createRun(db, { clientId, scheduleId: null, trigger: "manual" });
     await completeRun(db, mockRun.id, clientId, "mock");
 
     const before = (await listAllSnapshots(db, clientId)).filter((row) => row.platform !== null);
-    expect(new Set(before.map((row) => row.platform)).size).toBe(2);
+    expect(new Set(before.map((row) => row.platform)).size).toBe(3);
 
     // Потом появилось живое измерение по одному ChatGPT.
     await addLiveResponse();

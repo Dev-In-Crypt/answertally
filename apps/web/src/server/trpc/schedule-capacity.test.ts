@@ -28,9 +28,9 @@ import type { Database } from "@repo/db";
  */
 
 /** Что даёт starter — умолчание для агентства без подписки. */
-const STARTER_ASSISTANTS = ["chatgpt", "perplexity", "grok", "ai-overviews", "ai-mode"] as const;
+const STARTER_ASSISTANTS = ["chatgpt", "perplexity", "ai-overviews", "ai-mode"] as const;
 /** Включены у нового клиента: Grok с 07.10.2026 включается вручную. */
-const DEFAULT_ASSISTANTS = ["chatgpt", "perplexity"] as const;
+const DEFAULT_ASSISTANTS = ["chatgpt", "perplexity", "ai-overviews"] as const;
 const STARTER_CADENCES = ["biweekly", "weekly"] as const;
 
 const { db, close } = createDb();

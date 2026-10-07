@@ -92,7 +92,7 @@ function evidenceRow(assistant: string, named: number, answers: number): Evidenc
 export const EVIDENCE_ROWS: EvidenceRow[] = [
   evidenceRow("ChatGPT", 48, PER_ASSISTANT),
   evidenceRow("Perplexity", 37, PER_ASSISTANT),
-  evidenceRow("Grok", 39, PER_ASSISTANT),
+  evidenceRow("Google AI Overviews", 39, PER_ASSISTANT),
 ];
 
 export const EVIDENCE_TOTAL = evidenceRow(

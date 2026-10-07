@@ -24,8 +24,10 @@ export const PLATFORMS: readonly Platform[] = PLATFORM_IDS;
 export const DEFAULT_PLATFORMS: readonly Platform[] = [
   "chatgpt",
   "perplexity",
-  // Grok вышел из умолчания 07.10.2026 (решение фаундера): его ответ самый
-  // дорогой и списывает 5 проверок. Включается переключателем на клиента.
+  // Решения фаундера 07.10.2026: Grok вышел из умолчания (самый дорогой,
+  // весит 5 проверок), AI Overviews вошёл (ответ над выдачей Google видят
+  // все, и он стоит $0.002).
+  "ai-overviews",
 ] as const;
 
 export interface Citation {
