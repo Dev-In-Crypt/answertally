@@ -70,6 +70,16 @@ const INCLUDED = [
  */
 const FEATURED_PLAN = "growth";
 
+/**
+ * Программа первых агентств — решение основателя 07.10.2026: цена не
+ * меняется, обещание касается только будущих повышений. Счёт «первых десяти»
+ * ведёт основатель; когда места кончатся, блок убирается вручную.
+ */
+const FOUNDING = {
+  title: "Founding agencies",
+  body: "The first 10 agencies to subscribe keep the price they start on for as long as they stay subscribed, whatever the price list does later.",
+};
+
 function faqItems(paymentsOn: boolean) {
   return [
   {
@@ -107,6 +117,7 @@ function faqItems(paymentsOn: boolean) {
       </>
     ),
   },
+  { q: "What is the founding-agency price?", a: FOUNDING.body },
   {
     q: "Is the free audit really free?",
     a: "Yes. Creating a workspace and running the audit costs nothing, and no card is asked for. Each agency gets one free audit; auditing further brands, or measuring the first one over time, runs on a plan.",
@@ -138,7 +149,7 @@ export default function PricingPage() {
             <p className="h4">{buying.heading}</p>
             <p className="small">{buying.lead}</p>
             <Link className="btn primary" href="/signup">
-              Run a free audit
+              Audit your first client free
             </Link>
             <CtaNote>{FREE_AUDIT_NOTE} You pick a plan after the audit, inside the product.</CtaNote>
             {SALES_CONTACT && <TalkOrAudit />}
@@ -148,7 +159,12 @@ export default function PricingPage() {
         <p className="plan-guide" data-testid="plan-guide">
           Pick by how many brands you measure at once: up to {PLANS[0]!.clientLimit} on{" "}
           {PLANS[0]!.name}, up to {PLANS[1]!.clientLimit} on {PLANS[1]!.name}, up to{" "}
-          {PLANS[2]!.clientLimit} on {PLANS[2]!.name}. Not sure yet? Run the free audit first.
+          {PLANS[2]!.clientLimit} on {PLANS[2]!.name}. Start with one client free and see the report
+          before you pay anything.
+        </p>
+
+        <p className="founding" data-testid="founding-offer">
+          <b>{FOUNDING.title}.</b> {FOUNDING.body}
         </p>
 
         <ul className="plans" aria-label="Plans" data-testid="pricing-plans">
@@ -195,7 +211,7 @@ export default function PricingPage() {
                 className={`btn ${plan.id === FEATURED_PLAN ? "primary" : "secondary"}`}
                 href="/signup"
               >
-                Run a free audit
+                Audit your first client free
               </Link>
             </li>
           ))}

@@ -11,7 +11,7 @@ test("landing gives an anonymous visitor the offer, the plans and a way in", asy
 
   await page.goto("/");
 
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("Are we in ChatGPT?");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Show your clients whether it names them");
 
   // Главный призыв ведёт к бесплатному аудиту, то есть на регистрацию.
   await expect(page.getByTestId("landing-cta-audit")).toHaveAttribute("href", "/signup");

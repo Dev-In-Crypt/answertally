@@ -455,7 +455,7 @@ export default function PartnersPage() {
             </p>
             <div className="ctas" style={{ marginTop: 22 }}>
               <Link className="btn primary" href="/signup">
-                Run a free audit
+                Audit a prospect for free
               </Link>
               <SalesCta fallbackLabel="See what the audit includes" fallbackHref="/free-audit" />
             </div>

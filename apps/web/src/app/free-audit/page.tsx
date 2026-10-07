@@ -7,6 +7,7 @@ import { MarketingShell } from "@/components/marketing/chrome";
 import { AUDIT_STEPS, checkoutCopy, SALES_CONTACT } from "@/components/marketing/content";
 import { getPaymentProvider } from "@/server/payments";
 import { ReportPreview } from "@/components/marketing/report-preview";
+import { QuestionPreview } from "@/components/marketing/question-preview";
 
 /**
  * Бесплатный аудит — главный вход в продукт.
@@ -88,8 +89,8 @@ export default function FreeAuditPage() {
               <Link className="btn primary" href="/signup" data-testid="audit-cta">
                 Run a free audit
               </Link>
-              <a className="link" href="#how">
-                What happens, step by step ↓
+              <a className="link" href="#questions">
+                Preview the questions first, no account ↓
               </a>
             </div>
             <CtaNote />
@@ -112,10 +113,21 @@ export default function FreeAuditPage() {
         </section>
       </div>
 
+      {/* 0 · вопросы без регистрации: приманка, не тратит проверок */}
+      <section className="sec" id="questions">
+        <div className="wrap">
+          <SecHead n={1} title="Start with the questions, no account needed">
+            Enter a client’s site and see the buyer questions worth tracking for it, drafted from its
+            homepage, category and competitors. Asking them on the assistants is the free audit.
+          </SecHead>
+          <QuestionPreview />
+        </div>
+      </section>
+
       {/* 1 · что приходит */}
       <section className="sec" id="preview">
         <div className="wrap">
-          <SecHead n={1} title="What comes back">
+          <SecHead n={2} title="What comes back">
             The card above is the example audit, abridged, with invented names. Your client sees your
             agency’s logo and colour.
           </SecHead>
@@ -192,7 +204,7 @@ export default function FreeAuditPage() {
       <section className="sec" id="how">
         <div className="wrap five">
           <div>
-            <SecHead n={2} title="Five steps, one client">
+            <SecHead n={3} title="Five steps, one client">
               You choose the client and check the questions. The product does the asking, reading
               and ranking.
             </SecHead>
@@ -227,7 +239,7 @@ export default function FreeAuditPage() {
       {/* 3 · чем аудит не является */}
       <section className="sec">
         <div className="wrap">
-          <SecHead n={3} title="What the audit is not">
+          <SecHead n={4} title="What the audit is not">
             Worth knowing before you send it, because your client will read it as a promise if you
             let them.
           </SecHead>
@@ -261,7 +273,7 @@ export default function FreeAuditPage() {
       {/* 4 · вопросы */}
       <section className="sec">
         <div className="wrap">
-          <SecHead n={4} title="Before you start" />
+          <SecHead n={5} title="Before you start" />
           <Faq items={faqItems(paymentsOn)} testId="audit-faq" />
         </div>
       </section>

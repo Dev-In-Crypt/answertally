@@ -758,3 +758,30 @@
   .mk .consent { left: auto; max-width: 440px; }
 }
 .foot-link-button { background: none; border: 0; padding: 0; font: inherit; color: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+
+/* Полоса доверия под первым экраном и цепочка «от ответа ИИ до выручки» */
+.mk .trust-strip { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: var(--cw-ink-2); }
+.mk .trust-strip li::before { content: "\2713"; color: var(--client-ink); font-weight: 600; margin-right: 6px; }
+.mk .trust-strip a { color: inherit; text-decoration: underline; text-decoration-color: var(--cw-rule); text-underline-offset: 3px; }
+.mk .chain { display: grid; gap: 8px; margin-top: 12px; counter-reset: chain; }
+.mk .chain li { display: grid; grid-template-columns: 28px 1fr; column-gap: 10px; padding: 10px 14px; border: 1px dashed var(--cw-border); border-radius: 6px; font-size: 14.5px; color: var(--cw-ink-2); counter-increment: chain; }
+.mk .chain li::before { content: counter(chain); grid-row: span 2; font-family: var(--font-mono); color: var(--cw-muted); }
+.mk .chain li.ours { border-style: solid; background: var(--cw-surface); }
+.mk .chain li b { color: var(--cw-ink); font-weight: 600; }
+.mk .founding { margin: 0 0 18px; padding: 12px 16px; border: 1px solid var(--cw-indigo); border-radius: 8px; background: var(--cw-surface); font-size: 14.5px; color: var(--cw-ink-2); }
+.mk .founding b { color: var(--cw-ink); }
+
+/* Предпросмотр вопросов без регистрации */
+.mk .qp-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 18px; align-items: end; max-width: 860px; }
+.mk .qp-form label { display: grid; gap: 6px; font-size: 13.5px; color: var(--cw-ink-2); }
+.mk .qp-form input { height: 42px; padding: 0 12px; border: 1px solid var(--cw-border); border-radius: 8px; background: var(--cw-surface); color: var(--cw-ink); font: 400 15px var(--font-sans); }
+.mk .qp-form input:focus { outline: 2px solid var(--cw-indigo); outline-offset: 1px; }
+.mk .qp-form .btn { justify-self: start; }
+.mk .qp-result { margin-top: 28px; display: grid; gap: 16px; max-width: 860px; }
+.mk .qp-list { display: grid; gap: 6px; }
+.mk .qp-list li { display: grid; grid-template-columns: 150px 1fr; gap: 12px; padding: 9px 14px; border: 1px solid var(--cw-border); border-radius: 6px; background: var(--cw-surface); font-size: 14.5px; color: var(--cw-ink); }
+.mk .qp-intent { font-family: var(--font-mono); font-size: 11.5px; color: var(--cw-muted); text-transform: uppercase; padding-top: 3px; }
+@media (max-width: 640px) {
+  .mk .qp-form { grid-template-columns: minmax(0, 1fr); }
+  .mk .qp-list li { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+}

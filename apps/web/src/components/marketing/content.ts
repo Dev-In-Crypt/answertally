@@ -186,7 +186,7 @@ export const AUDIT_STEPS: { text: string; who: { label: string; ours?: boolean }
     who: [{ label: "you" }],
   },
   {
-    text: "Generate the buyer questions from templates, or import your own list, then edit them until they read the way buyers ask",
+    text: "Get the buyer questions drafted from the client’s site and competitors, or import your own list, then edit them until they read the way buyers ask",
     who: [{ label: "drafted for you", ours: true }, { label: "you edit" }],
   },
   {
@@ -249,6 +249,14 @@ export const OBJECTIONS = [
   {
     q: "“Will my client see your name?”",
     a: `${MARKETING_COPY.whiteLabel.page} ${MARKETING_COPY.whiteLabel.link}`,
+  },
+  {
+    q: "“How is this different from other AI visibility tools?”",
+    a: "Many lead with a single visibility score or a position. We show how often each assistant names your client, with the range and the answers behind it, which sources those answers cite, and the work that follows from it, in a report under your brand. If a number moves, you can open the answers and see why.",
+  },
+  {
+    q: "“Where does our clients’ data live?”",
+    a: "On servers in Germany. The data processing terms and the list of sub-processors are published, and nothing you put in is used to train models.",
   },
 ];
 

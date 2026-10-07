@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { MARKETING_COPY, SAMPLE_DELIVERY_REPORT } from "@repo/core";
+import { MARKETING_COPY, METHOD_COPY, SAMPLE_DELIVERY_REPORT } from "@repo/core";
 import { CtaNote, Faq, MethodLink, SecHead, SrcChip } from "@/components/marketing/bits";
 import { MarketingShell } from "@/components/marketing/chrome";
 import { JsonLd } from "@/components/marketing/json-ld";
@@ -37,6 +37,23 @@ export const metadata: Metadata = {
 };
 
 const WL = MARKETING_COPY.whiteLabel;
+
+/** Полоса доверия: только то, что записано в юридических страницах. */
+const TRUST = [
+  { label: "Hosted in the EU (Germany)", href: "/legal/subprocessors" },
+  { label: "Data processing terms for agencies", href: "/legal/dpa" },
+  { label: "Published sub-processors", href: "/legal/subprocessors" },
+  { label: "No model training on your data", href: "/legal/privacy" },
+] as const;
+
+/** Цепочка от ответа ИИ до выручки: что меряем мы, что — аналитика клиента. */
+const CHAIN = [
+  { label: "AI visibility", note: "how often assistants name the client", ours: true },
+  { label: "Cited sources", note: "the pages those answers lean on", ours: true },
+  { label: "Work done", note: "ranked actions, and what followed them", ours: true },
+  { label: "AI referral traffic", note: "visits from assistants, in their analytics" },
+  { label: "Leads and revenue", note: "in their CRM" },
+];
 
 export default async function HomePage() {
   return (
@@ -82,12 +99,12 @@ export default async function HomePage() {
           <div>
             <div className="kicker">AI visibility for agencies</div>
             <h1 className="display" id="hero-title">
-              Answer “Are we in ChatGPT?” <em>with numbers that show their work.</em>
+              Buyers now ask ChatGPT what to buy. <em>Show your clients whether it names them.</em>
             </h1>
             <p className="lead">
-              Answertally asks ChatGPT, Perplexity and Grok the questions your client’s buyers ask,
-              several times each. {MARKETING_COPY.evidencePromise} Your client gets it as a report in
-              your brand.
+              Answer “Are we in ChatGPT?” with numbers that show their work. Answertally asks
+              ChatGPT, Perplexity and Grok the questions your client’s buyers ask, several times each.{" "}
+              {MARKETING_COPY.evidencePromise} <b>Your client sees your brand, not ours.</b>
             </p>
             <div className="ctas">
               <Link className="btn primary" href="/signup" data-testid="landing-cta-audit">
@@ -98,6 +115,11 @@ export default async function HomePage() {
               </Link>
             </div>
             <CtaNote />
+            <p className="small">
+              <Link className="link" href="/free-audit#questions">
+                Or see which questions we would track for a client, no account needed →
+              </Link>
+            </p>
             <div className="hero-meta">
               <p className="method-line" data-testid="hero-method">
                 <span className="label">Method</span>
@@ -110,6 +132,13 @@ export default async function HomePage() {
                 <span className="a-chip">Grok</span>
                 <span className="a-chip opt">Claude · from Growth</span>
               </div>
+              <ul className="trust-strip" aria-label="How client data is handled" data-testid="trust-strip">
+                {TRUST.map((item) => (
+                  <li key={item.label}>
+                    <Link href={item.href}>{item.label}</Link>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
 
@@ -160,7 +189,7 @@ export default async function HomePage() {
               <h3 className="h4">Priced per client, team included</h3>
               <p className="small">
                 About {usd(PER_CLIENT_MIN)}–{usd(PER_CLIENT_MAX)} per client a month, depending on the
-                plan. No seats and no credits to count.
+                plan. No per-seat or per-prompt pricing.
               </p>
               <Link className="link" href="/pricing#resale">
                 Work it out with your own prices →
@@ -302,10 +331,46 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 4 · возражения */}
+      {/* 4 · отличие от «балла»: главный аргумент против остального рынка */}
+      <section className="sec" id="evidence">
+        <div className="wrap">
+          <SecHead n={4} title="Evidence, not a score">
+            A single score or a rank is easy to sell and impossible for your client to check. The
+            first time it swings for no reason, the agency takes the blame. Answertally shows the
+            answers behind every number instead.
+          </SecHead>
+          <div className="split even">
+            <div className="side">
+              <h3 className="h4">What we never claim</h3>
+              <ul className="never x" data-testid="landing-never">
+                {METHOD_COPY.neverClaim.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+            <div className="side">
+              <h3 className="h4">Where it fits in your client’s numbers</h3>
+              <ol className="chain" data-testid="landing-chain">
+                {CHAIN.map((step) => (
+                  <li key={step.label} className={step.ours ? "ours" : undefined}>
+                    <b>{step.label}</b>
+                    <span>{step.note}</span>
+                  </li>
+                ))}
+              </ol>
+              <p className="small muted" style={{ marginTop: 12 }}>
+                We measure the first three. Your client’s analytics already covers the rest, so the
+                story from AI answers to revenue is told with numbers each side can check.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 5 · возражения */}
       <section className="sec" id="questions">
         <div className="wrap">
-          <SecHead n={4} title="What agencies ask before they buy">
+          <SecHead n={5} title="What agencies ask before they buy">
             In the words we hear most, with straight answers.
           </SecHead>
           <Faq items={OBJECTIONS} testId="landing-objections" />
@@ -333,10 +398,10 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 5 · тарифы коротко */}
+      {/* 6 · тарифы коротко */}
       <section className="sec" id="pricing">
         <div className="wrap">
-          <SecHead n={5} title="Priced per client, your team included">
+          <SecHead n={6} title="Priced per client, your team included">
             {PRICING_NOTES.unit} {PRICING_NOTES.included}
           </SecHead>
           <ul className="g3" data-testid="pricing-plans">
