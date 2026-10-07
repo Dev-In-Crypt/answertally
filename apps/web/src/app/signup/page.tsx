@@ -3,6 +3,10 @@ import Link from "next/link";
 import { MARKETING_COPY } from "@repo/core";
 import { freeAuditAssistantSentence } from "@repo/core/adapters/capacity";
 import { AuthForm } from "@/components/auth-form";
+import { captchaSiteKey } from "@/server/captcha";
+
+// Ключ проверки читается из окружения сервера при запросе, а не при сборке.
+export const dynamic = "force-dynamic";
 import { MarketingShell } from "@/components/marketing/chrome";
 
 /**
@@ -54,7 +58,7 @@ export default function SignupPage() {
 
           <div className="auth-cols">
             <div className="auth-form">
-              <AuthForm mode="signup" />
+              <AuthForm mode="signup" captchaSiteKey={captchaSiteKey()} />
               <p className="small auth-alt" data-testid="signup-consent">
                 By creating an account you agree to the <Link href="/legal/terms">Terms</Link> and
                 the <Link href="/legal/privacy">Privacy policy</Link>.

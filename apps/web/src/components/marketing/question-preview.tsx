@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { Turnstile } from "@/components/turnstile";
 
 type Prompt = { text: string; intent: string; isControl: boolean };
 
@@ -16,10 +17,11 @@ const INTENT_LABEL: Record<string, string> = {
  * Предпросмотр вопросов без регистрации. Показывает только черновик вопросов:
  * спросить их у ассистентов — уже после регистрации, в бесплатном аудите.
  */
-export function QuestionPreview() {
+export function QuestionPreview({ captchaSiteKey }: { captchaSiteKey: string | null }) {
   const [state, setState] = useState<"idle" | "busy" | "done" | "limit" | "error">("idle");
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [siteRead, setSiteRead] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -28,7 +30,10 @@ export function QuestionPreview() {
     try {
       const response = await fetch("/api/preview-questions", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: {
+          "content-type": "application/json",
+          ...(captchaToken ? { "x-captcha-response": captchaToken } : {}),
+        },
         body: JSON.stringify({
           domain: String(form.get("domain") ?? ""),
           name: String(form.get("name") ?? ""),
@@ -40,6 +45,8 @@ export function QuestionPreview() {
             .slice(0, 5),
         }),
       });
+      // Токен одноразовый: следующая попытка получит новый.
+      setCaptchaToken(null);
       if (response.status === 429) return setState("limit");
       if (!response.ok) return setState("error");
       const body = (await response.json()) as { prompts: Prompt[]; siteRead: boolean };
@@ -70,7 +77,12 @@ export function QuestionPreview() {
           <span>Competitors, comma-separated (optional)</span>
           <input name="competitors" maxLength={400} placeholder="Brand A, Brand B" />
         </label>
-        <button className="btn primary" type="submit" disabled={state === "busy"}>
+        {captchaSiteKey && <Turnstile siteKey={captchaSiteKey} onToken={setCaptchaToken} />}
+        <button
+          className="btn primary"
+          type="submit"
+          disabled={state === "busy" || (Boolean(captchaSiteKey) && !captchaToken)}
+        >
           {state === "busy" ? "Reading the site and drafting…" : "Show the questions"}
         </button>
       </form>

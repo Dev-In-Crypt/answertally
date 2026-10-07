@@ -1,4 +1,5 @@
 import { betterAuth } from "better-auth";
+import { captcha } from "better-auth/plugins";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { APIError, createAuthMiddleware, isAPIError } from "better-auth/api";
 import {
@@ -25,6 +26,7 @@ import {
 import { db } from "@/server/db";
 import { appUrl, getEmailSender } from "@/server/email";
 import { hit } from "@/server/rate-limit";
+import { captchaSecret } from "@/server/captcha";
 
 
 /** Токен приглашения из тела регистрации — его шлёт форма на `/invite/[token]`. */
@@ -211,7 +213,17 @@ export async function isInviteSignUp(request: Request): Promise<boolean> {
   }
 }
 
+const turnstileSecret = captchaSecret();
+
 export const auth = betterAuth({
+  /**
+   * Проверка «не бот» только на регистрации: каждая заводит бесплатный аудит,
+   * а он стоит денег. Вход не трогаем — там бот ничего не выигрывает, а
+   * человеку лишний шаг. Без секрета (разработка, e2e) плагина нет.
+   */
+  plugins: turnstileSecret
+    ? [captcha({ provider: "cloudflare-turnstile", secretKey: turnstileSecret, endpoints: ["/sign-up/email"] })]
+    : [],
   secret: process.env.BETTER_AUTH_SECRET,
   baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
   database: drizzleAdapter(db, {

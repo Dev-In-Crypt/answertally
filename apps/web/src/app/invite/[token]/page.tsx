@@ -2,6 +2,7 @@ import Link from "next/link";
 import { canonicalEmail } from "@repo/core";
 import { findUserByCanonicalEmail, getAgencyById, getInvitationByToken } from "@repo/db";
 import { AuthForm } from "@/components/auth-form";
+import { captchaSiteKey } from "@/server/captcha";
 import { db } from "@/server/db";
 
 export default async function InvitePage({ params }: { params: Promise<{ token: string }> }) {
@@ -71,7 +72,7 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
         </p>
       </div>
 
-      <AuthForm mode="signup" lockedEmail={email} inviteToken={token} />
+      <AuthForm mode="signup" lockedEmail={email} inviteToken={token} captchaSiteKey={captchaSiteKey()} />
     </main>
   );
 }

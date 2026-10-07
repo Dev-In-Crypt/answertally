@@ -10,6 +10,7 @@ import { SUPPORT_EMAIL } from "@/config/site";
 import { buttonClass } from "@/components/ui/button";
 import { controlClass } from "@/components/ui/field";
 import { cn } from "@/lib/utils";
+import { Turnstile } from "@/components/turnstile";
 
 type Mode = "login" | "signup";
 
@@ -18,6 +19,7 @@ export function AuthForm({
   lockedEmail,
   inviteToken,
   next = "/dashboard",
+  captchaSiteKey,
 }: {
   mode: Mode;
   lockedEmail?: string;
@@ -25,6 +27,8 @@ export function AuthForm({
   inviteToken?: string;
   /** Куда вести после входа — уже проверенный `safeNextPath` путь. */
   next?: string;
+  /** Есть — регистрация проходит проверку «не бот» (Turnstile). */
+  captchaSiteKey?: string | null;
 }) {
   const router = useRouter();
   const [name, setName] = useState("");
@@ -37,6 +41,8 @@ export function AuthForm({
   const [awaitingEmail, setAwaitingEmail] = useState<string | null>(null);
   /** Письмо ушло повторно — при попытке войти с неподтверждённым адресом. */
   const [resent, setResent] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const needsCaptcha = mode === "signup" && Boolean(captchaSiteKey);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -62,11 +68,13 @@ export function AuthForm({
               name,
               callbackURL,
               ...(inviteToken ? { inviteToken } : { agencyName }),
-            }),
+            }, captchaToken ? { headers: { "x-captcha-response": captchaToken } } : undefined),
           )
         : await settled(signIn.email({ email, password, callbackURL }));
 
     setPending(false);
+    // Токен одноразовый: после попытки нужен новый.
+    if (needsCaptcha) setCaptchaToken(null);
 
     // Адрес не подтверждён: сервер уже отправил свежую ссылку. Сказать
     // «Email not verified» и оставить человека с этим — тупик.
@@ -183,7 +191,12 @@ export function AuthForm({
           autoComplete={mode === "signup" ? "new-password" : "current-password"}
           className={cn(controlClass, "h-10 px-3")}
         />
+        {mode === "signup" && (
+          <span className="text-xs text-muted-foreground">At least 8 characters.</span>
+        )}
       </label>
+
+      {needsCaptcha && captchaSiteKey && <Turnstile siteKey={captchaSiteKey} onToken={setCaptchaToken} />}
 
       {error && (
         <p role="alert" data-testid="form-error" className="text-sm text-destructive">
@@ -191,7 +204,11 @@ export function AuthForm({
         </p>
       )}
 
-      <button type="submit" disabled={pending} className={buttonClass("primary", "lg")}>
+      <button
+        type="submit"
+        disabled={pending || (needsCaptcha && !captchaToken)}
+        className={buttonClass("primary", "lg")}
+      >
         {pending ? "Please wait…" : mode === "signup" ? "Create account" : "Sign in"}
       </button>
     </form>

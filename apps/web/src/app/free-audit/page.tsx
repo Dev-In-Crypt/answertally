@@ -8,6 +8,7 @@ import { AUDIT_STEPS, checkoutCopy, SALES_CONTACT } from "@/components/marketing
 import { getPaymentProvider } from "@/server/payments";
 import { ReportPreview } from "@/components/marketing/report-preview";
 import { QuestionPreview } from "@/components/marketing/question-preview";
+import { captchaSiteKey } from "@/server/captcha";
 
 /**
  * Бесплатный аудит — главный вход в продукт.
@@ -120,7 +121,7 @@ export default function FreeAuditPage() {
             Enter a client’s site and see the buyer questions worth tracking for it, drafted from its
             homepage, category and competitors. Asking them on the assistants is the free audit.
           </SecHead>
-          <QuestionPreview />
+          <QuestionPreview captchaSiteKey={captchaSiteKey()} />
         </div>
       </section>
 

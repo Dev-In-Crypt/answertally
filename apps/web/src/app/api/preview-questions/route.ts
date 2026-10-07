@@ -9,6 +9,7 @@ import {
 import { errorReporter } from "@/server/observability";
 import { hit } from "@/server/rate-limit";
 import { fetchSiteSummary } from "@/server/site-summary";
+import { verifyCaptcha } from "@/server/captcha";
 
 /**
  * Предпросмотр вопросов без регистрации: сайт клиента → черновик вопросов,
@@ -37,6 +38,10 @@ export async function POST(request: Request): Promise<Response> {
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
   if (!(await hit(`preview:${ip}`, PER_IP_PER_DAY, 86_400))) {
     return Response.json({ error: "limit" }, { status: 429 });
+  }
+
+  if (!(await verifyCaptcha(request.headers.get("x-captcha-response"), ip))) {
+    return Response.json({ error: "captcha" }, { status: 403 });
   }
 
   const parsed = input.safeParse(await request.json().catch(() => null));
