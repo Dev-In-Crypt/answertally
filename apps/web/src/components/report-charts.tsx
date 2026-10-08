@@ -81,9 +81,11 @@ interface Bar {
 /** Горизонтальные полосы с подписью и числом в строке. Шкала — 0–100%. */
 export function BarList({ bars, testId }: { bars: Bar[]; testId?: string }) {
   return (
-    <ul data-testid={testId} className="flex flex-col gap-2.5 text-sm">
+    // Одна сетка на весь список (строки — display: contents): иначе ширина
+    // числа справа своя у каждой строки, и полосы одной шкалы выходят разной длины.
+    <ul data-testid={testId} className="grid grid-cols-[minmax(0,9rem)_1fr_auto] items-center gap-x-3 gap-y-2.5 text-sm">
       {bars.map((bar) => (
-        <li key={bar.key} className="grid grid-cols-[minmax(0,9rem)_1fr_auto] items-center gap-3">
+        <li key={bar.key} className="contents">
           <span className={`truncate ${bar.strong ? "font-semibold" : ""}`} title={bar.label}>
             {bar.label}
           </span>
@@ -150,7 +152,8 @@ export function TrendLine({ points }: { points: { weekStart: string; sharePct: n
   const w = 600;
   const h = 180;
   const pad = { l: 36, r: 12, t: 12, b: 26 };
-  const top = Math.max(10, Math.ceil(Math.max(...points.map((p) => p.sharePct)) / 10) * 10);
+  // Запас сверху под подпись последней точки.
+  const top = Math.max(10, Math.ceil((Math.max(...points.map((p) => p.sharePct)) + 5) / 10) * 10);
   const x = (i: number) => pad.l + (points.length === 1 ? 0 : (i / (points.length - 1)) * (w - pad.l - pad.r));
   const y = (v: number) => pad.t + (1 - v / top) * (h - pad.t - pad.b);
   const line = points.map((p, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)},${y(p.sharePct).toFixed(1)}`).join(" ");
