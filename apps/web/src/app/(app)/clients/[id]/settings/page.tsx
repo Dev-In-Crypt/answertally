@@ -1,5 +1,6 @@
 "use client";
 
+import { categoryLabel, type ClientCategoryId } from "@repo/core/config/categories";
 import { use } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/trpc/react";
@@ -73,6 +74,7 @@ export default function EditClientPage({
       ["Name", client.data.name],
       ["Domain", client.data.domain],
       ["Industry", client.data.industry || "–"],
+      ["Category", categoryLabel(client.data.category) ?? "–"],
       ["Brand names", client.data.brandNames.join(", ") || "–"],
       ["Competitors", client.data.competitorNames.join(", ") || "–"],
     ];
@@ -126,6 +128,7 @@ export default function EditClientPage({
           name: client.data.name,
           domain: client.data.domain,
           industry: client.data.industry ?? "",
+          category: client.data.category ?? "",
           brandNames: client.data.brandNames,
           competitorNames: client.data.competitorNames,
           isProspect: client.data.status === "prospect",
@@ -140,6 +143,7 @@ export default function EditClientPage({
             domain: values.domain,
             // Пустое поле — явный null: отсутствующий ключ значит «не трогать».
             industry: values.industry || null,
+            category: (values.category || null) as ClientCategoryId | null,
             brandNames: values.brandNames,
             competitorNames: values.competitorNames,
             status: values.isProspect ? "prospect" : "active",

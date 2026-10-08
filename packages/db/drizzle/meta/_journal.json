@@ -211,6 +211,13 @@
       "when": 1791382006331,
       "tag": "0029_google_surfaces",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1791475562555,
+      "tag": "0030_client_category",
+      "breakpoints": true
     }
   ]
 }

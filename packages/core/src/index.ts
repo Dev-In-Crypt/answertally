@@ -137,3 +137,4 @@ export { createEmailSender, parseEmailMode } from "./email/registry";
 export type { EmailMode } from "./email/registry";
 export * from "./observability/logger";
 export * from "./observability/errors";
+export * from "./config/categories";

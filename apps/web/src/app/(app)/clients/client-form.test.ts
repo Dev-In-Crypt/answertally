@@ -5,6 +5,7 @@ const ok: ClientFormValues = {
   name: "Acme",
   domain: "acme.com",
   industry: "",
+  category: "",
   brandNames: ["Acme"],
   competitorNames: ["Globex"],
   isProspect: false,

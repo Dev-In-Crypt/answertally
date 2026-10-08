@@ -1,5 +1,6 @@
 "use client";
 
+import type { ClientCategoryId } from "@repo/core/config/categories";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Users } from "lucide-react";
@@ -62,6 +63,7 @@ export default function NewClientPage() {
             name: values.name,
             domain: values.domain,
             industry: values.industry || undefined,
+            ...(values.category ? { category: values.category as ClientCategoryId } : {}),
             brandNames: values.brandNames,
             competitorNames: values.competitorNames,
             status: values.isProspect ? "prospect" : "active",

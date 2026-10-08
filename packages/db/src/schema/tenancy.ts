@@ -59,6 +59,11 @@ export const clients = pgTable(
     name: text("name").notNull(),
     domain: text("domain").notNull(),
     industry: text("industry"),
+    /**
+     * Категория из списка CLIENT_CATEGORIES (@repo/core) — для общего индекса
+     * источников. Пусто — клиент в индекс не попадает.
+     */
+    category: text("category"),
     /** Варианты написания бренда клиента — используются при матчинге упоминаний (T18). */
     brandNames: text("brand_names").array().notNull().default([]),
     competitorNames: text("competitor_names").array().notNull().default([]),

@@ -1,6 +1,9 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import {
+  CATEGORY_INDEX_MIN_WORKSPACES,
+  CATEGORY_INDEX_WINDOW_DAYS,
+  CLIENT_CATEGORY_IDS,
   canAddClient,
   competitorGapPp,
   compareAssistantSets,
@@ -9,6 +12,7 @@ import {
   PRIORITY_THRESHOLDS,
 } from "@repo/core";
 import {
+  categorySourceIndex,
   countClientsByAgency,
   createClient,
   deleteClient,
@@ -48,6 +52,8 @@ const clientInput = z.object({
     .transform(normalizeDomain)
     .refine((value) => value.includes("."), "Enter a domain, for example acme.com"),
   industry: z.string().max(200).optional(),
+  /** Категория для общего индекса источников; не выбрана — клиент в индекс не идёт. */
+  category: z.enum(CLIENT_CATEGORY_IDS).nullable().optional(),
   brandNames: nameList.default([]),
   competitorNames: nameList.default([]),
   /**
@@ -204,6 +210,19 @@ export const clientsRouter = router({
     const client = await getClientById(ctx.db, input.id);
     assertTenant(client, ctx.user.agencyId);
     return client;
+  }),
+
+  /**
+   * Где ассистенты берут ответы в категории клиента — по всем агентствам.
+   * Наружу — только домены и счёт, и только от трёх агентств (условия, раздел 5).
+   */
+  categoryIndex: protectedProcedure.input(z.object({ id: z.uuid() })).query(async ({ ctx, input }) => {
+    const client = await getClientById(ctx.db, input.id);
+    assertTenant(client, ctx.user.agencyId);
+    if (!client.category) return { category: null, workspaces: 0, answers: 0, top: [] };
+    const since = new Date(Date.now() - CATEGORY_INDEX_WINDOW_DAYS * 86_400_000);
+    const index = await categorySourceIndex(ctx.db, client.category, since, CATEGORY_INDEX_MIN_WORKSPACES);
+    return { category: client.category, ...index };
   }),
 
   create: roleProcedure("admin")

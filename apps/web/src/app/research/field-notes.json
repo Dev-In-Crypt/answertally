@@ -82,7 +82,8 @@
           "own": false
         }
       ]
-    }
+    },
+    "categoryId": "home-bedding"
   },
   {
     "brand": "Plausible",
@@ -160,7 +161,8 @@
           "own": false
         }
       ]
-    }
+    },
+    "categoryId": "analytics-software"
   },
   {
     "brand": "Graza",
@@ -240,7 +242,8 @@
           "own": false
         }
       ]
-    }
+    },
+    "categoryId": "food-beverage"
   },
   {
     "brand": "Kubera",
@@ -320,7 +323,8 @@
           "own": false
         }
       ]
-    }
+    },
+    "categoryId": "personal-finance"
   },
   {
     "brand": "Tally",
@@ -400,7 +404,8 @@
           "own": false
         }
       ]
-    }
+    },
+    "categoryId": "forms-surveys"
   },
   {
     "brand": "Cal.com",
@@ -482,7 +487,8 @@
           "own": false
         }
       ]
-    }
+    },
+    "categoryId": "scheduling-software"
   },
   {
     "brand": "Tuta",
@@ -564,7 +570,8 @@
           "own": false
         }
       ]
-    }
+    },
+    "categoryId": "email-communication"
   },
   {
     "brand": "Bombas",
@@ -646,6 +653,7 @@
           "own": false
         }
       ]
-    }
+    },
+    "categoryId": "apparel-footwear"
   }
 ]

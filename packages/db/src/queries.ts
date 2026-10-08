@@ -3020,3 +3020,60 @@ export async function refreshInvitation(
   }
   return refreshed;
 }
+
+/**
+ * Общий индекс источников категории: какие сайты ассистенты цитируют в ответах
+ * по клиентам этой категории у всех агентств (условия, раздел 5).
+ *
+ * Отдаёт только домен и число ответов — ни клиентов, ни агентств. Домены самих
+ * клиентов категории выброшены: иначе по ним читалось бы, кого кто измеряет.
+ * Пока агентств меньше `minWorkspaces`, список пуст — по одному-двум агентствам
+ * вклад каждого угадывается.
+ *
+ * ponytail: считается на лету при открытии экрана; при росте — ночная таблица.
+ */
+export async function categorySourceIndex(
+  db: Database,
+  category: string,
+  since: Date,
+  minWorkspaces: number,
+): Promise<{ workspaces: number; answers: number; top: { domain: string; answers: number }[] }> {
+  const scope = and(
+    eq(clients.category, category),
+    eq(runs.adaptersMode, "live"),
+    eq(prompts.isControl, false),
+    gte(responses.createdAt, since),
+  );
+  const [totals] = await db
+    .select({
+      workspaces: sql<number>`count(distinct ${clients.agencyId})::int`,
+      answers: sql<number>`count(distinct ${responses.id})::int`,
+    })
+    .from(responses)
+    .innerJoin(runs, eq(responses.runId, runs.id))
+    .innerJoin(clients, eq(runs.clientId, clients.id))
+    .innerJoin(prompts, eq(responses.promptId, prompts.id))
+    .where(scope);
+  const workspaces = totals?.workspaces ?? 0;
+  const answers = totals?.answers ?? 0;
+  if (workspaces < minWorkspaces) return { workspaces, answers, top: [] };
+
+  const answersCiting = sql<number>`count(distinct ${responses.id})::int`;
+  const top = await db
+    .select({ domain: citations.domain, answers: answersCiting })
+    .from(citations)
+    .innerJoin(responses, eq(citations.responseId, responses.id))
+    .innerJoin(runs, eq(responses.runId, runs.id))
+    .innerJoin(clients, eq(runs.clientId, clients.id))
+    .innerJoin(prompts, eq(responses.promptId, prompts.id))
+    .where(
+      and(
+        scope,
+        sql`not exists (select 1 from clients c2 where c2.category = ${category} and (${citations.domain} = c2.domain or ${citations.domain} like '%.' || c2.domain))`,
+      ),
+    )
+    .groupBy(citations.domain)
+    .orderBy(desc(answersCiting))
+    .limit(10);
+  return { workspaces, answers, top };
+}

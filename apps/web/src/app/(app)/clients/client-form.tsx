@@ -1,5 +1,6 @@
 "use client";
 
+import { CLIENT_CATEGORIES } from "@repo/core/config/categories";
 import { useState } from "react";
 import { normalizeDomain } from "@repo/core";
 import { buttonClass } from "@/components/ui/button";
@@ -9,6 +10,8 @@ export interface ClientFormValues {
   name: string;
   domain: string;
   industry: string;
+  /** Пустая строка — категория не выбрана. */
+  category: string;
   brandNames: string[];
   competitorNames: string[];
   isProspect: boolean;
@@ -70,6 +73,7 @@ export function ClientForm({
   const [name, setName] = useState(initial?.name ?? "");
   const [domain, setDomain] = useState(initial?.domain ?? "");
   const [industry, setIndustry] = useState(initial?.industry ?? "");
+  const [category, setCategory] = useState(initial?.category ?? "");
   const [brandNames, setBrandNames] = useState((initial?.brandNames ?? []).join(", "));
   const [competitorNames, setCompetitorNames] = useState(
     (initial?.competitorNames ?? []).join(", "),
@@ -87,6 +91,7 @@ export function ClientForm({
           name: name.trim(),
           domain: domain.trim(),
           industry: industry.trim(),
+          category,
           brandNames: parseList(brandNames),
           competitorNames: parseList(competitorNames),
           isProspect,
@@ -128,6 +133,27 @@ export function ClientForm({
           placeholder="B2B SaaS / CRM"
           className={inputClass}
         />
+      </label>
+
+      <label className="flex flex-col gap-1.5">
+        <span className="text-sm font-medium">Category</span>
+        <span className="text-sm text-muted-foreground">
+          Shows which sites assistants cite across your client&rsquo;s category, counted over all
+          agencies, without names.
+        </span>
+        <select
+          data-testid="client-category"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          className={inputClass}
+        >
+          <option value="">Not set</option>
+          {CLIENT_CATEGORIES.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.label}
+            </option>
+          ))}
+        </select>
       </label>
 
       <label className="flex flex-col gap-1.5">
