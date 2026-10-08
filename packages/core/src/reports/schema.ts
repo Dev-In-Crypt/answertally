@@ -172,6 +172,36 @@ export const reportPayloadSchema = z.object({
         .max(10),
     })
     .optional(),
+  /**
+   * Данные для диаграмм отчёта (08.10.2026). Все три необязательные: отчёты,
+   * выпущенные раньше, хранятся неизменными и показываются без диаграмм.
+   *
+   * Доля по каждому ассистенту на конец периода — те же клетки, из которых
+   * собрана общая цифра, а не отдельный расчёт.
+   */
+  byAssistant: z
+    .array(
+      z.object({
+        assistant: z.string().min(1),
+        sharePct: z.number().min(0).max(100),
+        answers: z.number().int().min(0),
+      }),
+    )
+    .max(10)
+    .optional(),
+  /** Доли отслеживаемых конкурентов на конец периода, по убыванию. */
+  competitors: z
+    .array(z.object({ name: z.string().min(1), sharePct: z.number().min(0).max(100) }))
+    .max(5)
+    .optional(),
+  /**
+   * Недельные точки доли клиента. Только когда весь период мерили одним
+   * набором ассистентов: иначе линия соединяла бы разные знаменатели.
+   */
+  trend: z
+    .array(z.object({ weekStart: z.string(), sharePct: z.number().min(0).max(100) }))
+    .max(60)
+    .optional(),
   /** Оговорки, которые обязаны дойти до клиента вместе с цифрами. */
   caveats: z.array(z.string().min(1)),
 });

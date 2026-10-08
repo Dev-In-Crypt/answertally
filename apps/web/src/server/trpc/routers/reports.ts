@@ -540,6 +540,21 @@ export const reportsRouter = router({
       const periodStart = latest.periodStart;
       const auditAnswers = await countClientAnswersBetween(ctx.db, input.clientId, periodStart, periodEnd);
 
+      // Доля по ассистентам той же недели — для диаграммы в отчёте. Один
+      // прогон, поэтому «первая» и «последняя» неделя совпадают.
+      const auditCells = snapshotRows
+        .filter(
+          (row) =>
+            row.clusterId === null &&
+            row.platform !== null &&
+            row.periodStart.getTime() === latest.periodStart.getTime(),
+        )
+        .map((row) => ({
+          assistantId: row.platform as string,
+          sampleCount: row.sampleCount,
+          clientVisibilityPct: Number(row.clientVisibilityPct),
+        }));
+
       const payload = buildReportPayload({
         clientName: client.name,
         periodStart,
@@ -562,6 +577,7 @@ export const reportsRouter = router({
         nextSprint: opportunity.rankedActions.slice(0, 3).map((action) => action.title),
         caveats,
         opportunity,
+        ...(auditCells.length > 0 ? { assistantCells: { first: auditCells, last: auditCells } } : {}),
       });
 
       const report = await createReport(ctx.db, {

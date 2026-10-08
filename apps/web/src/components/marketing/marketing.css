@@ -231,13 +231,14 @@
 .mk .sw { width: 18px; height: 12px; border-radius: 2px; display: inline-block; flex: none; }
 
 /* ================= landing ================= */
-.mk .hero { display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr); gap: 56px; align-items: center; padding: 56px 0 88px; }
+.mk .hero { display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr); gap: 56px; align-items: center; padding: 56px 0 56px; }
 .mk .hero .kicker { margin-bottom: 22px; }
 .mk .hero .lead { margin-top: 24px; max-width: 560px; }
 .mk .hero .ctas { margin-top: 32px; }
 .mk .plan-guide { margin: 0 0 20px; font-size: 15.5px; color: var(--cw-muted); max-width: 720px; }
 .mk .cta-note { margin-top: 10px; font-size: 13.5px; color: var(--cw-muted); }
-.mk .hero-meta { margin-top: 36px; padding-top: 18px; border-top: 1px dashed var(--cw-rule); display: grid; gap: 10px; }
+.mk .hero-meta { margin-top: 32px; }
+.mk .hero-foot { display: grid; gap: 10px; padding: 20px 0 48px; border-top: 1px dashed var(--cw-rule); }
 .mk .manual { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 56px; align-items: start; }
 .mk .timesheet li { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 10px; align-items: baseline; padding: 14px 18px; border-bottom: 1px solid var(--cw-border); font-size: 15.5px; }
 .mk .timesheet li:last-child { border-bottom: 0; }
@@ -617,7 +618,7 @@
   /* На узком экране отступ съел бы половину строки: ответ идёт во всю ширину. */
   .mk .faq details p { margin-left: 0; }
   .mk .btn { white-space: normal; text-align: center; line-height: 1.25; }
-  .mk .hero { padding: 40px 0 64px; gap: 40px; }
+  .mk .hero { padding: 40px 0 40px; gap: 40px; }
   .mk .manual, .mk .deliv-foot, .mk .aud { grid-template-columns: minmax(0, 1fr); gap: 24px; }
   .mk .pull { font-size: 24px; }
   .mk .timesheet li { grid-template-columns: 22px minmax(0, 1fr); padding: 12px 14px; }

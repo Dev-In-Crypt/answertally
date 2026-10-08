@@ -50,6 +50,15 @@ function snapshot(
   };
 }
 
+/** Клетки по ассистентам для диаграммы «по ассистентам»: в сумме — доля снимка. */
+function cells(chatgpt: number, perplexity: number, google: number, sampleCount: number) {
+  return [
+    { assistantId: "chatgpt", sampleCount, clientVisibilityPct: chatgpt },
+    { assistantId: "perplexity", sampleCount, clientVisibilityPct: perplexity },
+    { assistantId: "ai-overviews", sampleCount, clientVisibilityPct: google },
+  ];
+}
+
 /**
  * Ранжированные работы. Формулировки причин повторяют стиль настоящих правил
  * диагностики: сначала факт из измерений, потом что из него следует.
@@ -119,6 +128,9 @@ export const SAMPLE_AUDIT_REPORT: ReportPayload = buildReportPayload({
   highestImpact: null,
   nextSprint: RANKED_ACTIONS.slice(0, 3).map((action) => action.title),
   caveats: [REPORT_COPY.opportunityBasis, REPORT_COPY.scopeEstimate],
+  // 5, 6 и 4 из 43–44 ответов: в сумме те же 15 из 130.
+  assistantCells: { first: cells(11.4, 14, 9.3, 43), last: cells(11.4, 14, 9.3, 43) },
+  measuredPlatforms: ["chatgpt", "perplexity", "ai-overviews"],
   opportunity: buildAuditProposal({
     currentVisibilityPct: 11.5,
     competitorVisibility: COMPETITORS_AT_AUDIT,
@@ -145,6 +157,12 @@ export const SAMPLE_DELIVERY_REPORT: ReportPayload = buildReportPayload({
       "2026-07-06T00:00:00.000Z",
       "2026-07-13T00:00:00.000Z",
     ),
+    // Промежуточные недели — для линии по неделям; концы периода те же.
+    snapshot(20.8, { Quillstack: 41.6, Loambox: 33.1, Tidepin: 22.9 }, "2026-07-20T00:00:00.000Z", "2026-07-27T00:00:00.000Z"),
+    snapshot(22.1, { Quillstack: 41.9, Loambox: 32.8, Tidepin: 23.4 }, "2026-08-03T00:00:00.000Z", "2026-08-10T00:00:00.000Z"),
+    snapshot(21.5, { Quillstack: 42.4, Loambox: 32.2, Tidepin: 23.8 }, "2026-08-17T00:00:00.000Z", "2026-08-24T00:00:00.000Z"),
+    snapshot(24.9, { Quillstack: 42.1, Loambox: 31.9, Tidepin: 24.1 }, "2026-08-31T00:00:00.000Z", "2026-09-07T00:00:00.000Z"),
+    snapshot(26.3, { Quillstack: 41.8, Loambox: 31.6, Tidepin: 24.5 }, "2026-09-14T00:00:00.000Z", "2026-09-21T00:00:00.000Z"),
     snapshot(
       28.6,
       { Quillstack: 42, Loambox: 31.4, Tidepin: 24.8 },
@@ -183,6 +201,8 @@ export const SAMPLE_DELIVERY_REPORT: ReportPayload = buildReportPayload({
     "Refresh the integrations page with current partners",
   ],
   caveats: [],
+  assistantCells: { first: cells(22.2, 16.7, 19.4, 24), last: cells(33.3, 25, 27.5, 24) },
+  measuredPlatforms: ["chatgpt", "perplexity", "ai-overviews"],
 });
 
 /**

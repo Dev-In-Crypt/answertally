@@ -19,7 +19,7 @@ import { collectConsoleErrors } from "./console";
  */
 
 const PAGES = [
-  { path: "/", h1: /Buyers now ask ChatGPT/, title: /Answertally/ },
+  { path: "/", h1: /Buyers ask ChatGPT/, title: /Answertally/ },
   { path: "/product", h1: /From the answers assistants give/, title: /AI Visibility Platform for Agencies · Answertally/ },
   { path: "/method", h1: /How we measure/, title: /How We Measure AI Visibility · Answertally/ },
   { path: "/pricing", h1: /Priced per client/, title: /Pricing: AI Visibility Tracking per Client · Answertally/ },

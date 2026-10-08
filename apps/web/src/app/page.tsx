@@ -129,13 +129,12 @@ export default async function HomePage() {
           <div>
             <div className="kicker">AI visibility for agencies</div>
             <h1 className="display" id="hero-title">
-              Buyers now ask ChatGPT what to buy. <em>Show your clients whether it names them.</em>
+              Buyers ask ChatGPT what to buy. <em>Show your clients whether it names them.</em>
             </h1>
+            {/* Одна фраза: что делаем и что агентство отдаёт клиенту. Подробности — ниже по странице. */}
             <p className="lead">
-              Answer “Are we in ChatGPT?” with numbers that show their work. Answertally asks
-              ChatGPT, Perplexity and Google’s AI answers the questions your client’s buyers ask,
-              several times each.{" "}
-              {MARKETING_COPY.evidencePromise} <b>Your client sees your brand, not ours.</b>
+              We ask ChatGPT, Perplexity and Google the questions your client’s buyers ask, and turn
+              the answers into a report in your brand.
             </p>
             <div className="ctas">
               <Link className="btn primary" href="/signup" data-testid="landing-cta-audit">
@@ -146,17 +145,7 @@ export default async function HomePage() {
               </Link>
             </div>
             <CtaNote />
-            <p className="small">
-              <Link className="link" href="/free-audit#questions">
-                Or see which questions we would track for a client, no account needed →
-              </Link>
-            </p>
             <div className="hero-meta">
-              <p className="method-line" data-testid="hero-method">
-                <span className="label">Method</span>
-                <span>{MARKETING_COPY.methodLine}</span>
-                <MethodLink />
-              </p>
               <div className="chip-row" aria-label="Assistants measured">
                 <span className="a-chip">ChatGPT</span>
                 <span className="a-chip">Perplexity</span>
@@ -169,13 +158,6 @@ export default async function HomePage() {
                 <span className="a-chip opt">Grok · from Growth</span>
                 <span className="a-chip opt">Claude · from Growth</span>
               </div>
-              <ul className="trust-strip" aria-label="How client data is handled" data-testid="trust-strip">
-                {TRUST.map((item) => (
-                  <li key={item.label}>
-                    <Link href={item.href}>{item.label}</Link>
-                  </li>
-                ))}
-              </ul>
             </div>
           </div>
 
@@ -186,6 +168,28 @@ export default async function HomePage() {
             </span>
           </div>
         </section>
+        {/* Метод, обещание доказательств и данные клиента — под hero, а не в нём:
+            первый экран отвечает только на «что это и что делать дальше». */}
+        <div className="hero-foot">
+          <p className="method-line" data-testid="hero-method">
+            <span className="label">Method</span>
+            <span>{MARKETING_COPY.methodLine}</span>
+            <MethodLink />
+          </p>
+          <p className="small">
+            {MARKETING_COPY.evidencePromise} Your client sees your brand, not ours.{" "}
+            <Link className="link" href="/free-audit#questions">
+              See which questions we would track, no account needed →
+            </Link>
+          </p>
+          <ul className="trust-strip" aria-label="How client data is handled" data-testid="trust-strip">
+            {TRUST.map((item) => (
+              <li key={item.label}>
+                <Link href={item.href}>{item.label}</Link>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
 
       {/* исследование и счётчик: настоящие данные вместо отзывов, которых ещё нет */}

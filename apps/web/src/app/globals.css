@@ -315,6 +315,9 @@
 
     background: var(--background);
     color: var(--foreground);
+    /* Диаграммы отчёта — цветные заливки; без этого браузер при печати их выбеливает. */
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 
   /*

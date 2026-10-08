@@ -1,4 +1,5 @@
 import { ASSISTANTS, formatDay, formatPeriod, leadText, MEASUREMENT_COPY, type ReportPayload } from "@repo/core";
+import { AssistantBars, assistantColor, CompetitorBars, DeltaBar, ShareRing, TrendLine } from "./report-charts";
 
 /** Имена ассистентов из каталога: в отчёте клиента идентификаторов быть не должно. */
 const ASSISTANT_LABELS: Record<string, string> = Object.fromEntries(
@@ -156,7 +157,51 @@ export function ReportView({
             hint="Versus the best-performing tracked competitor"
           />
         </div>
+
+        {/* Те же цифры картинкой: клиент сначала смотрит, потом читает. */}
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="rounded-lg border p-5">
+            <ShareRing
+              sharePct={payload.visibility.after}
+              caption={
+                payload.results.sampledAnswers !== undefined
+                  ? `of answers named ${payload.client.name}: ${payload.results.newBrandMentions} of ${payload.results.sampledAnswers} sampled this period`
+                  : `of answers named ${payload.client.name} this period`
+              }
+            />
+          </div>
+          {payload.competitors && payload.competitors.length > 0 && (
+            <div className="flex flex-col gap-3 rounded-lg border p-5">
+              <h2 className="text-sm font-medium">Named in answers, against tracked competitors</h2>
+              <CompetitorBars
+                clientName={payload.client.name}
+                clientPct={payload.visibility.after}
+                competitors={payload.competitors}
+              />
+            </div>
+          )}
+        </div>
       </section>
+
+      {payload.byAssistant && payload.byAssistant.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-lg font-medium">By assistant</h2>
+          <AssistantBars rows={payload.byAssistant} labels={ASSISTANT_LABELS} />
+          <p className="text-sm text-muted-foreground">
+            Each assistant is counted on its own answers; the figure above combines them.
+          </p>
+        </section>
+      )}
+
+      {payload.trend && payload.trend.length > 1 && (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-lg font-medium">Week by week</h2>
+          <TrendLine points={payload.trend} />
+          <p className="text-sm text-muted-foreground">
+            Share of answers naming {payload.client.name}, by week, on the same assistants throughout.
+          </p>
+        </section>
+      )}
 
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-medium">Work completed</h2>
@@ -182,10 +227,11 @@ export function ReportView({
         <section className="flex flex-col gap-3">
           <h2 className="text-lg font-medium">What moved</h2>
           <ul data-testid="report-movement" className="flex flex-col gap-1 text-sm">
-            {payload.movement.map((item) => (
-              <li key={item.prompt} className="flex justify-between gap-4 border-b py-2 last:border-0">
-                <span>{item.prompt}</span>
-                <span className="metric shrink-0 font-medium">
+            {payload.movement.map((item, _i, all) => (
+              <li key={item.prompt} className="flex items-center justify-between gap-4 border-b py-2 last:border-0">
+                <span className="flex-1">{item.prompt}</span>
+                <DeltaBar deltaPp={item.deltaPp} maxAbs={Math.max(...all.map((m) => Math.abs(m.deltaPp)))} />
+                <span className="metric w-28 shrink-0 text-right font-medium">
                   {item.sharePct}% ({item.deltaPp >= 0 ? "+" : ""}
                   {item.deltaPp} pp)
                 </span>
@@ -243,7 +289,14 @@ export function ReportView({
                 key={entry.assistant}
                 className="flex justify-between border-b py-2 last:border-0"
               >
-                <span>{ASSISTANT_LABELS[entry.assistant] ?? entry.assistant}</span>
+                <span className="flex items-center gap-2">
+                  <span
+                    aria-hidden
+                    className="h-2.5 w-2.5 rounded-full"
+                    style={{ background: assistantColor(entry.assistant) }}
+                  />
+                  {ASSISTANT_LABELS[entry.assistant] ?? entry.assistant}
+                </span>
                 <span className="metric font-medium">
                   {entry.sessions.toLocaleString("en-US")}
                 </span>

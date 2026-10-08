@@ -125,6 +125,34 @@ export function formatContributionRange(incrementalPp: number | null): string | 
 }
 
 /** Собирает и валидирует payload. Невалидный отчёт наружу не уходит. */
+/** Данные диаграмм из тех же входов, что и цифры отчёта. */
+function chartData(
+  inputs: ReportInputs,
+  last: VisibilitySnapshot | null,
+  sameAssistantsThroughout: boolean,
+): Pick<ReportPayload, "byAssistant" | "competitors" | "trend"> {
+  const byAssistant = (inputs.assistantCells?.last ?? [])
+    .filter((cell) => cell.sampleCount > 0)
+    .map((cell) => ({ assistant: cell.assistantId, sharePct: cell.clientVisibilityPct, answers: cell.sampleCount }));
+  const competitors = Object.entries(last?.competitorVisibility ?? {})
+    .map(([name, sharePct]) => ({ name, sharePct: round1(sharePct) }))
+    .sort((a, b) => b.sharePct - a.sharePct)
+    .slice(0, 5);
+  const points = inputs.snapshots.filter((s) => s.sufficient);
+  const trend =
+    sameAssistantsThroughout && points.length >= 2
+      ? points.slice(-60).map((s) => ({
+          weekStart: s.periodStart.toISOString().slice(0, 10),
+          sharePct: s.clientVisibilityPct,
+        }))
+      : [];
+  return {
+    ...(byAssistant.length > 1 ? { byAssistant } : {}),
+    ...(competitors.length > 0 ? { competitors } : {}),
+    ...(trend.length > 0 ? { trend } : {}),
+  };
+}
+
 export function buildReportPayload(inputs: ReportInputs): ReportPayload {
   const first = inputs.snapshots.at(0) ?? null;
   const last = inputs.snapshots.at(-1) ?? null;
@@ -206,6 +234,7 @@ export function buildReportPayload(inputs: ReportInputs): ReportPayload {
       ? { whatWeLearned: inputs.whatWeLearned }
       : {}),
     opportunity: inputs.opportunity ?? null,
+    ...chartData(inputs, last, basis === null || basis.delta === "show"),
     // Пояснение о природе измерения идёт в каждом отчёте, а не по желанию,
     // и описывает то, что измерялось на самом деле.
     caveats: [

@@ -168,3 +168,31 @@ describe("buildReportPayload", () => {
     expect(payload.period).toEqual({ start: "2026-08-01", end: "2026-08-31" });
   });
 });
+
+describe("данные диаграмм", () => {
+  const cell = (assistantId: string, clientVisibilityPct: number) => ({ assistantId, sampleCount: 15, clientVisibilityPct });
+
+  it("доля по ассистентам, конкуренты по убыванию и линия по неделям", () => {
+    const both = [cell("chatgpt", 28), cell("perplexity", 34)];
+    const payload = buildReportPayload(inputs({ assistantCells: { first: both, last: both } }));
+
+    expect(payload.byAssistant).toEqual([
+      { assistant: "chatgpt", sharePct: 28, answers: 15 },
+      { assistant: "perplexity", sharePct: 34, answers: 15 },
+    ]);
+    expect(payload.competitors).toEqual([{ name: "HubSpot", sharePct: 37 }]);
+    expect(payload.trend?.map((p) => p.sharePct)).toEqual([23, 31]);
+  });
+
+  it("набор ассистентов менялся — линии нет: точки стоят на разных знаменателях", () => {
+    const payload = buildReportPayload(
+      inputs({ assistantCells: { first: [cell("chatgpt", 20)], last: [cell("chatgpt", 28), cell("perplexity", 34)] } }),
+    );
+
+    expect(payload.trend).toBeUndefined();
+  });
+
+  it("одна точка — не линия", () => {
+    expect(buildReportPayload(inputs({ snapshots: [snapshot(23)] })).trend).toBeUndefined();
+  });
+});
