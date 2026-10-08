@@ -82,7 +82,9 @@ test("opportunity report and its PDF are produced for a prospect", async ({ page
 
   const html = await anonPage.content();
   expect(html).not.toContain("estimatedMarginPct");
-  expect(html).not.toContain("27.1");
+  // Голое число маржи («27.1») не ищется: в отчёте есть диаграмма конкурентов,
+  // и доля одного из них может совпасть с маржой — так и случилось с Clasp.
+  // Утечку ловят имя поля выше и слово «margin» в тексте.
   expect(html).not.toMatch(/\bproven\b|\bproof\b|\bguaranteed\b|\bcaused\b/i);
   await anonymous.close();
 
@@ -102,6 +104,5 @@ test("opportunity report and its PDF are produced for a prospect", async ({ page
   expect(text).toContain("Where the opportunity is");
   expect(text).toContain("$3,500");
   // Внутренние деньги в клиентский документ не попадают.
-  expect(text).not.toContain("27.1");
   expect(text.toLowerCase()).not.toContain("margin");
 });
