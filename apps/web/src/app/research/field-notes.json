@@ -273,5 +273,99 @@
       "What are good customer relationship management tools for a solo consultant?",
       "Which online form builders work well for collecting client details before a call?"
     ]
+  },
+  {
+    "brand": "Tuta",
+    "category": "encrypted email service",
+    "cells": [
+      {
+        "assistant": "chatgpt",
+        "named": 34,
+        "answers": 39
+      },
+      {
+        "assistant": "perplexity",
+        "named": 30,
+        "answers": 39
+      },
+      {
+        "assistant": "ai-overviews",
+        "named": 30,
+        "answers": 35
+      }
+    ],
+    "purchase": {
+      "named": 20,
+      "answers": 25
+    },
+    "control": {
+      "named": 0,
+      "answers": 27
+    },
+    "questions": [
+      "Which email providers offer end-to-end encryption by default?",
+      "What are good alternatives to Proton Mail for private email?",
+      "Which email services are preparing for future quantum-computer threats?",
+      "What are the best ad-free email services with encrypted calendars?",
+      "Which private email providers include calendar and contact syncing?",
+      "What are good alternatives to Fastmail for privacy-focused email?",
+      "Which email services are open source and protect message privacy?",
+      "What are good alternatives to Mailfence for encrypted email?",
+      "What are the best private email services with a free plan?",
+      "Which encrypted email providers offer a free plan without ads?",
+      "What does a paid private email plan usually cost per month?",
+      "Which private email provider is easiest to switch to from a regular inbox?",
+      "What are good private cloud storage services for personal files?",
+      "Which password managers make it easy to share logins securely?",
+      "What are good private web browsers that block online tracking?",
+      "Which VPN services are simple to use on a phone?"
+    ]
+  },
+  {
+    "brand": "Bombas",
+    "category": "socks and basics",
+    "cells": [
+      {
+        "assistant": "chatgpt",
+        "named": 10,
+        "answers": 39
+      },
+      {
+        "assistant": "perplexity",
+        "named": 5,
+        "answers": 39
+      },
+      {
+        "assistant": "ai-overviews",
+        "named": 4,
+        "answers": 39
+      }
+    ],
+    "purchase": {
+      "named": 2,
+      "answers": 27
+    },
+    "control": {
+      "named": 1,
+      "answers": 26
+    },
+    "questions": [
+      "Which cushioned socks stay comfortable on long walks without bunching?",
+      "What are good no-show socks that stay put in low-cut sneakers?",
+      "Which everyday socks have a smooth toe seam for sensitive feet?",
+      "Best options for socks with arch support that don't feel too tight?",
+      "Which socks have a heel tab to help prevent blisters during runs?",
+      "What are good lightweight merino socks for warm-weather hikes?",
+      "Which socks stay up on your calves without digging in?",
+      "What are the best options for soft, breathable underwear for everyday wear?",
+      "What are good lightweight everyday T-shirts that hold their shape?",
+      "What are good compression socks for long flights?",
+      "Where can I buy well-made everyday socks online?",
+      "Are premium cushioned socks worth the price for daily wear?",
+      "Which soft cotton socks make a useful gift under $50?",
+      "Which walking shoes have a roomy toe box for wide feet?",
+      "What are good lightweight rain jackets for day hikes?",
+      "how much does socks and basics usually cost"
+    ]
   }
 ]
