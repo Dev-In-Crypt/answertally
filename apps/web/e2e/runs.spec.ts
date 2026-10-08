@@ -99,16 +99,15 @@ test("the plan decides what is offered, and locked assistants are visible", asyn
   await page.goto(`/clients/${clientId}/measure`);
   await expect(page.getByLabel("ChatGPT")).toBeChecked();
   await expect(page.getByLabel("Perplexity")).toBeChecked();
-  await expect(page.getByLabel("Google AI Overviews")).toBeChecked();
-  // С 07.10.2026 Grok, как и Claude, — с Growth.
+  // С 08.10.2026 Claude в умолчании, Google AI Overviews — по желанию.
+  await expect(page.getByLabel("Claude")).toBeChecked();
+  await expect(page.getByLabel("Google AI Overviews")).not.toBeChecked();
+  await expect(page.getByLabel("Google AI Overviews")).toBeEnabled();
+
+  // Запертое видно, а не спрятано, и подписано тарифом, на котором включается.
   await expect(page.getByLabel("Grok")).not.toBeChecked();
   await expect(page.getByLabel("Grok")).toBeDisabled();
   await expect(page.getByTestId("assistant-locked-grok")).toContainText("growth");
-
-  // Запертое видно, а не спрятано, и подписано тарифом, на котором включается.
-  await expect(page.getByLabel("Claude")).not.toBeChecked();
-  await expect(page.getByLabel("Claude")).toBeDisabled();
-  await expect(page.getByTestId("assistant-locked-claude")).toContainText("growth");
 
   // Умолчание сохраняется без отказа.
   await page.getByRole("button", { name: "Save schedule" }).click();

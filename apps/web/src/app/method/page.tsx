@@ -168,17 +168,17 @@ export default function MethodPage() {
               <div className="chip-row">
                 <span className="a-chip">ChatGPT</span>
                 <span className="a-chip">Perplexity</span>
-                <span className="a-chip">Google AI Overviews</span>
+                <span className="a-chip">Claude</span>
               </div>
               <p className="small" style={{ margin: "16px 0 8px" }}>
                 Switched on per client, using more AI checks rather than costing extra: Google AI
-                Mode on any plan, Grok and Claude from Growth.{" "}
+                Overviews and AI Mode on any plan, Grok from Growth.{" "}
                 {GOOGLE_SURFACES_PLAIN} {CHECK_WEIGHT_NOTE.charAt(0).toUpperCase() + CHECK_WEIGHT_NOTE.slice(1)}
               </p>
               <div className="chip-row">
+                <span className="a-chip opt">Google AI Overviews</span>
                 <span className="a-chip opt">Google AI Mode</span>
                 <span className="a-chip opt">Grok</span>
-                <span className="a-chip opt">Claude</span>
               </div>
               <p className="small" style={{ margin: "16px 0 8px" }}>Not measured</p>
               <div className="chip-row">

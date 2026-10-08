@@ -77,8 +77,8 @@ test("golden path: from signup to a verifiable visibility number", async ({ page
 
     const answers = page.getByTestId("responses-list").locator("> li");
     // toHaveCount ждёт загрузки, в отличие от count() — иначе счёт снимается с пустой страницы.
-    // 3 платформы × 3 сэмпла: бесплатный аудит меряет ChatGPT, Perplexity
-    // и Google AI Overviews; Grok в него не входит по цене.
+    // 3 платформы × 3 сэмпла: бесплатный аудит меряет Perplexity,
+    // Google AI Overviews и Claude; Grok в него не входит по цене.
     await expect(answers).toHaveCount(9);
     const count = await answers.count();
     total += count;

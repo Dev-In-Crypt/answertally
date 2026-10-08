@@ -68,9 +68,11 @@ export interface MeasurementCapabilities {
 const STARTER_ASSISTANTS: readonly Platform[] = [
   "chatgpt",
   "perplexity",
+  // Claude на Starter с 08.10.2026: ответ Haiku 5.5 дешевле ответа ChatGPT.
+  "claude",
   "ai-overviews",
   "ai-mode",
-  // Grok и Claude — с Growth (решение фаундера 07.10.2026).
+  // Grok — с Growth (решение фаундера 07.10.2026).
 ] as const;
 
 /**
@@ -140,13 +142,16 @@ export const MEASUREMENT_CAPABILITIES: Record<PlanId, MeasurementCapabilities> =
  * никто не принимал. Цена проверяется тестом: он падает, когда разрыв
  * исчезает, и зовёт пересмотреть список руками.
  */
-export const FREE_AUDIT_ASSISTANTS: readonly Platform[] = ["chatgpt", "perplexity", "ai-overviews"] as const;
+// Решение фаундера 08.10.2026: бесплатный аудит — на трёх самых дешёвых
+// ответах разных компаний (Perplexity $0.0014, AI Overviews $0.004, Claude
+// $0.016); ChatGPT ($0.023) — с оплатой. Аудит стоит ~$1.1 вместо ~$2.
+export const FREE_AUDIT_ASSISTANTS: readonly Platform[] = ["perplexity", "ai-overviews", "claude"] as const;
 
 /**
  * Сколько вопросов в бесплатном аудите: столько, сколько влезает в его
  * лимит при трёх ответах на вопрос у каждого ассистента аудита. Лимит 150
- * оставлен решением фаундера 07.10.2026, когда в аудит вошёл AI Overviews,
- * поэтому вопросов стало 16 вместо 24. Считается, а не вписано: поменяется
+ * оставлен решением фаундера 07.10.2026 при трёх ассистентах аудита
+ * (с 08.10.2026 — Perplexity, Google AI Overviews, Claude), поэтому вопросов 16, а не 24. Считается, а не вписано: поменяется
  * лимит или набор — поменяется и это.
  */
 export const FREE_AUDIT_PROMPT_COUNT = Math.floor(

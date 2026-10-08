@@ -34,13 +34,13 @@ test("landing gives an anonymous visitor the offer, the plans and a way in", asy
 
   // Три тарифа с суммами из PLAN_LIMITS — витрина и API берут их из одного места.
   await expect(page.getByTestId("pricing-plans").locator("> li")).toHaveCount(3);
-  await expect(page.getByTestId("plan-price-starter")).toHaveText("$499");
-  await expect(page.getByTestId("plan-price-growth")).toHaveText("$1,299");
-  await expect(page.getByTestId("plan-price-scale")).toHaveText("$2,499");
+  await expect(page.getByTestId("plan-price-starter")).toHaveText("$199");
+  await expect(page.getByTestId("plan-price-growth")).toHaveText("$599");
+  await expect(page.getByTestId("plan-price-scale")).toHaveText("$1,199");
 
   // Лимиты видны рядом с ценой. Объяснение allowance («950 checks») — на
   // /pricing и проверяется в marketing.spec.ts; главная ведёт туда ссылкой.
-  await expect(page.getByText("4,000")).toBeVisible();
+  await expect(page.getByText("3,000")).toBeVisible();
   await expect(page.getByRole("link", { name: /Full pricing and what an AI check is/ })).toHaveAttribute(
     "href",
     "/pricing",
@@ -92,7 +92,8 @@ test("the audit example shows the ranked work without the agency's internal econ
   await page.goto("/sample-report/audit");
 
   await expect(page.getByTestId("report-opportunity")).toBeVisible();
-  await expect(page.getByTestId("opportunity-actions").locator("li")).toHaveCount(6);
+  // Только верхние пункты: внутри каждого ещё шаги «How it is done».
+  await expect(page.getByTestId("opportunity-actions").locator("> li")).toHaveCount(6);
   await expect(page.getByTestId("opportunity-visibility")).toContainText("11.5%");
   await expect(page.getByTestId("opportunity-retainer")).toContainText("$3,500");
 

@@ -43,13 +43,12 @@ export default function DpaPage() {
         for it.
       </p>
       <p>
-        We do not step outside the processor role for your workspace data, with one exception you
-        agree to in the <Link href="/legal/terms">terms</Link> and can opt out of: a shared count of
-        which public websites assistants cite, by category. It holds only the cited domain, the
-        category and the count, never a client, competitor, question, answer or agency, and a
-        category appears only once at least three workspaces have contributed. These counts contain
-        no personal data. Anything beyond that, such as a benchmark of clients across agencies or a
-        parser trained on real answers, would make us a controller, and we would ask you first.
+        For your workspace data we act as processor, with one exception you agree to in the{" "}
+        <Link href="/legal/terms">terms</Link>: we may derive aggregated or de-identified data from it
+        to analyse and improve the service, including a shared count of which public websites
+        assistants cite, by category. For that derived data we are the controller; it is built so
+        that it identifies no person, client, competitor or agency, and we do not use personal data
+        from your workspace for it.
       </p>
 
       <h2>2. What we process, and for whom</h2>

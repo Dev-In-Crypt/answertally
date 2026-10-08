@@ -295,20 +295,19 @@ describe("ClaudeAdapter", () => {
     expect(() => new ClaudeAdapter({ apiKey: "k", model: "claude-future" })).toThrow(/pricing/i);
   });
 
-  it("без явной модели берётся Sonnet 5, а не Haiku и не Opus/Fable", () => {
-    // Решение фаундера: Haiku хуже держит источники в составных ответах, а
-    // Opus/Fable — просто дороже на порядок без нужды для этой задачи.
+  it("без явной модели берётся Haiku 5.5 (решение фаундера 08.10.2026)", () => {
+    // Замер: бренд называется так же часто, как у Sonnet 5, при цене в 4.5 раза ниже.
     expect(new ClaudeAdapter({ apiKey: "k" })).toMatchObject({ platform: "claude" });
-    expect(DEFAULT_CLAUDE_MODEL).toBe("claude-sonnet-5");
-    expect(CLAUDE_PRICING["claude-sonnet-5"]).toEqual({
-      inputPerMillion: 2,
-      outputPerMillion: 10,
+    expect(DEFAULT_CLAUDE_MODEL).toBe("claude-haiku-5-5");
+    expect(CLAUDE_PRICING["claude-haiku-5-5"]).toEqual({
+      inputPerMillion: 0.1,
+      outputPerMillion: 0.5,
       webSearchPerThousandCalls: 10,
     });
   });
 
-  it("дефолтная модель считает стоимость по цене Sonnet 5, не Haiku", async () => {
-    const fetchImpl = fetchReturning(apiResponse({ model: "claude-sonnet-5" }));
+  it("дефолтная модель считает стоимость по цене Haiku 5.5", async () => {
+    const fetchImpl = fetchReturning(apiResponse({ model: "claude-haiku-5-5" }));
     // Без override модели — то, что реально уйдёт в прод без явной настройки.
     const result = await new ClaudeAdapter({
       apiKey: "test-key",
@@ -316,7 +315,7 @@ describe("ClaudeAdapter", () => {
       sleep: () => Promise.resolve(),
     }).execute("best CRM");
 
-    // 5000/1e6*2 + 700/1e6*10 + 2/1000*10 = 0.01 + 0.007 + 0.02.
-    expect(result.costUsd).toBeCloseTo(0.037, 6);
+    // 5000/1e6*0.1 + 700/1e6*0.5 + 2/1000*10 = 0.0005 + 0.00035 + 0.02.
+    expect(result.costUsd).toBeCloseTo(0.02085, 6);
   });
 });

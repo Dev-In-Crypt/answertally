@@ -24,10 +24,9 @@ export const PLATFORMS: readonly Platform[] = PLATFORM_IDS;
 export const DEFAULT_PLATFORMS: readonly Platform[] = [
   "chatgpt",
   "perplexity",
-  // Решения фаундера 07.10.2026: Grok вышел из умолчания (самый дорогой,
-  // весит 5 проверок), AI Overviews вошёл (ответ над выдачей Google видят
-  // все, и он стоит $0.002).
-  "ai-overviews",
+  // Решение фаундера 08.10.2026: Claude (Haiku 5.5, вес 1) вместо Google AI
+  // Overviews; Google включается по желанию на любом тарифе, Grok — с Growth.
+  "claude",
 ] as const;
 
 export interface Citation {

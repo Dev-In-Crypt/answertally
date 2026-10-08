@@ -29,6 +29,6 @@ test("the plan screen states what the agency gets and what it cannot do yet", as
   await expect(page.getByTestId("open-portal")).toHaveCount(0);
 
   // Все три плана перечислены с ценами: агентство должно видеть, куда расти.
-  await expect(page.getByText("$1,299")).toBeVisible();
-  await expect(page.getByText("$2,499")).toBeVisible();
+  await expect(page.getByText("$599")).toBeVisible();
+  await expect(page.getByText("$1,199")).toBeVisible();
 });

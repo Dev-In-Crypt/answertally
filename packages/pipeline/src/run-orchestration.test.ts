@@ -83,8 +83,8 @@ describe("orchestrateRun (mock-режим)", () => {
         .values({
           clientId,
           cadence: "weekly",
-          // Набор Starter по умолчанию с 07.10.2026; Grok — с Growth.
-          platforms: ["chatgpt", "perplexity", "ai-overviews"],
+          // Набор по умолчанию с 08.10.2026; Grok — с Growth.
+          platforms: ["chatgpt", "perplexity", "claude"],
           samplesPerPrompt: 3,
         })
         .returning()
@@ -141,7 +141,7 @@ describe("orchestrateRun (mock-режим)", () => {
     const written = await listResponsesByRun(db, runId);
 
     const platforms = new Set(written.map((r) => r.platform));
-    expect([...platforms].sort()).toEqual(["ai-overviews", "chatgpt", "perplexity"]);
+    expect([...platforms].sort()).toEqual(["chatgpt", "claude", "perplexity"]);
 
     const perPlatform = written.filter((r) => r.platform === "chatgpt");
     expect(perPlatform).toHaveLength(6); // 2 промпта × 3 сэмпла
@@ -180,7 +180,7 @@ describe("orchestrateRun (mock-режим)", () => {
      */
     await db
       .update(runSchedules)
-      .set({ platforms: ["chatgpt", "claude"] })
+      .set({ platforms: ["chatgpt", "grok"] })
       .where(eq(runSchedules.id, scheduleId));
 
     const outcome = await orchestrateRun(db, runId, "mock");
@@ -211,7 +211,8 @@ describe("orchestrateRun (mock-режим)", () => {
     const written = await listResponsesByRun(db, runId);
 
     expect(outcome.status).toBe("done");
-    expect([...new Set(written.map((r) => r.platform))].sort()).toEqual(["chatgpt", "perplexity"]);
+    // ChatGPT с 08.10.2026 тоже только с оплатой: бесплатный аудит на самых дешёвых ответах.
+    expect([...new Set(written.map((r) => r.platform))].sort()).toEqual(["perplexity"]);
     // Что заплатившему Grok достаётся — проверяет соседний тест ниже;
     // повторять это здесь значило бы завести вторую точку правды.
   });

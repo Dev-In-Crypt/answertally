@@ -42,7 +42,7 @@ export interface PlanLimits {
  * Одна проверка — один ответ одной платформы на один промпт.
  *
  * Клиент при обычной работе (24 промпта × 3 сэмпла × 3 ассистента по
- * умолчанию — ChatGPT, Perplexity, AI Overviews, все весом 1 — недельные
+ * умолчанию — ChatGPT, Perplexity, Claude, все весом 1 — недельные
  * прогоны) расходует ≈935 проверок в месяц. Allowance выставлен с запасом ~40% к этому расходу, а не «на
  * глаз»: прежние 6 000 / 25 000 / 70 000 обещали втрое больше, чем продукт
  * потребляет, и клиент, забравший обещанное на дорогом плане, обошёлся бы в
@@ -67,9 +67,10 @@ export const CHECKS_PER_CLIENT_MONTH = 935;
 export const ESTIMATED_COST_PER_ANSWER_USD = ANSWER_PRICES.chatgpt.usd;
 
 export const PLAN_LIMITS: Record<"starter" | "growth" | "scale", PlanLimits> = {
-  starter: { clientLimit: 3, aiCheckAllowance: 4_000, priceUsd: 499 },
-  growth: { clientLimit: 10, aiCheckAllowance: 13_000, priceUsd: 1_299 },
-  scale: { clientLimit: 25, aiCheckAllowance: 28_500, priceUsd: 2_499 },
+  // Решение фаундера 08.10.2026: цены вдвое ниже, лимиты под них (худший случай ~50% цены).
+  starter: { clientLimit: 3, aiCheckAllowance: 3_000, priceUsd: 199 },
+  growth: { clientLimit: 10, aiCheckAllowance: 10_000, priceUsd: 599 },
+  scale: { clientLimit: 25, aiCheckAllowance: 22_000, priceUsd: 1_199 },
 };
 
 export interface UsageStatus {

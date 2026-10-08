@@ -69,7 +69,8 @@ export const DEFAULT_PLAN: PlanId = "starter";
  * банк отклонил разовый платёж — это не отказ от продукта. Клиентские
  * отчёты в это время должны продолжать открываться.
  */
-export const PAST_DUE_GRACE_DAYS = 14;
+// 7 дней вместо 14 — решение фаундера 08.10.2026 (защита от «пользоваться, не платя»).
+export const PAST_DUE_GRACE_DAYS = 7;
 
 const CANCEL_SETTLE_MS = 86_400_000;
 

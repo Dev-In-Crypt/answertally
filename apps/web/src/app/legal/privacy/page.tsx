@@ -137,11 +137,11 @@ export default function PrivacyPage() {
         </li>
         <li>We do not train models on your data, or let our providers do so.</li>
         <li>
-          We do not use one customer&rsquo;s data to improve what another customer sees, with one
-          narrow exception: a shared count of which public websites assistants cite, by category,
-          with no client, competitor, question or agency in it, shown only where at least three
-          workspaces contributed. The <Link href="/legal/terms">terms</Link> describe it, and any
-          workspace can opt out.
+          We do not show one customer another customer&rsquo;s identifiable data. We do analyse
+          workspace data in aggregated or de-identified form to improve the service, and show every
+          customer a shared count of which public websites assistants cite, by category, with no
+          client, competitor, question or agency in it; the{" "}
+          <Link href="/legal/terms">terms</Link> describe it.
         </li>
         <li>
           We do not track people across other websites

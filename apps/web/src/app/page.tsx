@@ -111,7 +111,7 @@ export default async function HomePage() {
               applicationCategory: "BusinessApplication",
               operatingSystem: "Web",
               description:
-                "AI visibility measurement for agencies: sampled answers from ChatGPT, Perplexity, Google AI Overviews and AI Mode, Grok and Claude, ranked work with a reason on every item, and white-label client reports.",
+                "AI visibility measurement for agencies: sampled answers from ChatGPT, Perplexity, Claude, Google AI Overviews and AI Mode, and Grok, ranked work with a reason on every item, and white-label client reports.",
               publisher: { "@id": `${SITE_URL}/#organization` },
               offers: PLANS.map((plan) => ({
                 "@type": "Offer",
@@ -149,14 +149,14 @@ export default async function HomePage() {
               <div className="chip-row" aria-label="Assistants measured">
                 <span className="a-chip">ChatGPT</span>
                 <span className="a-chip">Perplexity</span>
-                <span className="a-chip" title={GOOGLE_SURFACES_PLAIN}>
-                  Google AI Overviews
+                <span className="a-chip">Claude</span>
+                <span className="a-chip opt" title={GOOGLE_SURFACES_PLAIN}>
+                  Google AI Overviews · per client
                 </span>
                 <span className="a-chip opt" title={GOOGLE_SURFACES_PLAIN}>
                   Google AI Mode · per client
                 </span>
                 <span className="a-chip opt">Grok · from Growth</span>
-                <span className="a-chip opt">Claude · from Growth</span>
               </div>
             </div>
           </div>

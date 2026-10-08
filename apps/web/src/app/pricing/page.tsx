@@ -43,7 +43,7 @@ const clientLimitsText = `${clientLimits.slice(0, -1).join(", ")} or ${clientLim
 const INCLUDED = [
   {
     title: "Measurement",
-    body: `ChatGPT, Perplexity and Google AI Overviews by default. Switched on per client: Google AI Mode on any plan, Grok and Claude from Growth. ${MARKETING_COPY.sampleFloor} ${MARKETING_COPY.cadence}`,
+    body: `ChatGPT, Perplexity and Claude by default. Switched on per client: Google AI Overviews and AI Mode on any plan, Grok from Growth. ${MARKETING_COPY.sampleFloor} ${MARKETING_COPY.cadence}`,
   },
   {
     title: "Diagnosis",
@@ -111,8 +111,8 @@ function faqItems(paymentsOn: boolean) {
     q: "Can we get a refund?",
     a: (
       <>
-        In the first 14 days of your first paid month, yes: we refund the rest of that month in
-        proportion to the days left. After that, a started month is not refunded. A wrong charge is always refunded in
+        In the first 14 days of your first paid month, yes: we refund the unused part of that month,
+        the share of days or of AI checks left, whichever is smaller, less the payment fee. After that, a started month is not refunded. A wrong charge is always refunded in
         full, and if measurement was broken on our side we refund or credit that part. <Link href="/legal/refunds">The full policy</Link>
       </>
     ),
@@ -217,7 +217,7 @@ export default function PricingPage() {
           ))}
         </ul>
         <p className="small muted" data-testid="check-weights" style={{ marginTop: 12 }}>
-          How AI checks count: {CHECK_WEIGHT_NOTE.charAt(0).toUpperCase() + CHECK_WEIGHT_NOTE.slice(1)} Google AI Mode, Grok and Claude are switched on per client.
+          How AI checks count: {CHECK_WEIGHT_NOTE.charAt(0).toUpperCase() + CHECK_WEIGHT_NOTE.slice(1)} Google AI Overviews, AI Mode and Grok are switched on per client.
         </p>
       </div>
 
@@ -272,7 +272,7 @@ export default function PricingPage() {
             </div>
             <div className="card def">
               <div className="cap">What an AI check is</div>
-              <p className="big">One answer to one prompt from ChatGPT, Perplexity or Google. Claude counts 4, Grok 5.</p>
+              <p className="big">One answer to one prompt from ChatGPT, Perplexity, Claude or Google. Grok counts 5.</p>
               <div className="eq" role="img" aria-label="1 prompt times 1 assistant times 1 answer equals 1 AI check">
                 <span className="t"><b>1</b><span>prompt</span></span>
                 <span className="op">×</span>
@@ -329,7 +329,7 @@ export default function PricingPage() {
       <section className="sec">
         <div className="wrap">
           <SecHead n={3} title="Included in every plan">
-            {PRICING_NOTES.included} Plans differ in client accounts, AI checks and assistants: Grok and Claude are included from Growth.
+            {PRICING_NOTES.included} Plans differ in client accounts, AI checks and assistants: Grok is included from Growth.
           </SecHead>
           <ol className="incl">
             {INCLUDED.map((item, i) => (

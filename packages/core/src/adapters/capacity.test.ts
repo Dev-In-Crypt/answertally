@@ -79,8 +79,8 @@ describe("сегодняшняя политика тарифов", () => {
     // Разброс цены ответа между самым дешёвым и самым дорогим почти
     // пятикратный, и на младшем тарифе он съедал бы маржу быстрее всего.
     // С 07.10.2026 к тройке добавлены поверхности Google — дешёвые, через поставщика выдачи.
-    // Grok и Claude — с Growth (решение фаундера 07.10.2026).
-    expect(capabilitiesFor("starter").assistants).toEqual([...STARTER_THREE, "ai-mode"]);
+    // Grok — с Growth; Claude на Starter с 08.10.2026 (Haiku 5.5, вес 1).
+    expect(capabilitiesFor("starter").assistants).toEqual(["chatgpt", "perplexity", "claude", "ai-overviews", "ai-mode"]);
     expect(
       refuseScheduleForPlan("starter", { cadence: "biweekly", assistants: STARTER_THREE }),
     ).toBeNull();
@@ -89,12 +89,12 @@ describe("сегодняшняя политика тарифов", () => {
   it("starter отказывает в дорогом ассистенте и называет его", () => {
     const refusal = refuseScheduleForPlan("starter", {
       cadence: "biweekly",
-      assistants: ["claude"],
+      assistants: ["grok"],
     });
 
     expect(refusal?.code).toBe("assistant");
     // В отказе названы и запертый, и то, что взамен доступно.
-    expect(refusal?.message).toContain("Claude");
+    expect(refusal?.message).toContain("Grok");
     expect(refusal?.message).toContain("ChatGPT");
   });
 
@@ -409,13 +409,11 @@ describe("ассистенты в форме расписания", () => {
   it("на starter дорогой виден, но заперт и подписан тарифом", () => {
     const assistants = capacityOptions("starter").assistants;
 
-    for (const id of ["claude", "grok"] as const) {
-      const locked = assistants.find((a) => a.id === id);
-      expect(locked?.allowed).toBe(false);
-      expect(locked?.unlocksOn).toBe("growth");
-    }
+    const locked = assistants.find((a) => a.id === "grok");
+    expect(locked?.allowed).toBe(false);
+    expect(locked?.unlocksOn).toBe("growth");
 
-    for (const id of ["chatgpt", "perplexity", "ai-overviews", "ai-mode"] as const) {
+    for (const id of ["chatgpt", "perplexity", "claude", "ai-overviews", "ai-mode"] as const) {
       expect(assistants.find((a) => a.id === id)?.allowed).toBe(true);
     }
   });

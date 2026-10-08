@@ -90,8 +90,8 @@ const WILL_PUBLISH = [
     body: "Every share with the interval around it and the number of answers behind it, on the same basis the product uses.",
   },
   {
-    title: "The model versions and dates",
-    body: "Which model answered and when. An assistant's behavior changes between versions, so a figure without a version is not repeatable.",
+    title: "The dates",
+    body: "When each answer was collected. Assistants change their behavior over time, so a figure without a date is not repeatable.",
   },
   {
     title: "What went wrong",

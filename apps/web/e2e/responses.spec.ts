@@ -52,8 +52,8 @@ test("raw answers show highlighted client and competitor mentions", async ({ pag
   await page.getByRole("link", { name: "best CRM for startups" }).click();
 
   const responses = page.getByTestId("responses-list");
-  // 3 платформы × 3 сэмпла: бесплатный аудит меряет ChatGPT, Perplexity
-  // и Google AI Overviews; Grok в него не входит по цене.
+  // 3 платформы × 3 сэмпла: бесплатный аудит меряет Perplexity,
+  // Google AI Overviews и Claude; Grok в него не входит по цене.
   await expect(responses.locator("> li")).toHaveCount(9);
 
   // Главная проверка: клиент и конкуренты подсвечены в сыром тексте.
@@ -72,7 +72,7 @@ test("raw answers show highlighted client and competitor mentions", async ({ pag
   // измерений несравнима между собой (провайдер меняет модель под тем же именем).
   // Имена моделей — из набора бесплатного аудита: агентство только
   // зарегистрировалось и ещё не платило, а Grok туда не входит по цене.
-  await expect(responses).toContainText("gpt-4o");
+  await expect(responses).toContainText("claude-haiku-4-5-fixture");
   await expect(responses).toContainText("sonar-pro-2026-04");
   await expect(responses.locator("> li").first()).toContainText("$0.");
 });

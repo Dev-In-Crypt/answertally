@@ -89,9 +89,14 @@ export default function RefundsPage() {
       <ul>
         <li>
           <strong>Your first 14 days.</strong> If something is not working out in the first 14
-          days of your first paid month, write to us and we refund the rest of that month in
-          proportion to the days left. For example, a third of the month gone on a $499 plan means
-          about $333 back.
+          days of your first paid month, write to us and we refund the unused part of that month:
+          the share of days left or the share of the month&rsquo;s AI checks left, whichever is
+          smaller, less the payment provider&rsquo;s fee for that charge (3.9% + $0.40), which it
+          does not return to us. This is once per customer: a new workspace for the same agency does
+          not start a new 14 days, and we may decline a refund where sign-ups and refund requests
+          repeat. For example, on a $199 plan with a third of the month gone and a
+          tenth of the checks used, about $124 comes back; with the checks already used up, nothing
+          does, because those answers have been bought and paid for on your behalf.
         </li>
         <li>
           <strong>We charged you wrongly.</strong> Double charge, a plan you did not choose, billing
@@ -112,7 +117,7 @@ export default function RefundsPage() {
       <h2>Failed payments</h2>
       <p>
         A card that expires or a payment a bank rejects does not switch you off that day. There is a
-        grace period, the product tells you what happened, and your clients&rsquo; report links keep
+        7-day grace period, the product tells you what happened, and your clients&rsquo; report links keep
         working throughout it. After the grace period runs out without payment, measurement stops,
         but stored data is not deleted.
       </p>

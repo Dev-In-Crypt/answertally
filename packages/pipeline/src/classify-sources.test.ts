@@ -15,6 +15,7 @@ import { citations, promptClusters, prompts, runSchedules } from "@repo/db/schem
 import { sources } from "@repo/db/schema/sources";
 import { orchestrateRun } from "./run-orchestration";
 import { classifyRunSources } from "./classify-sources";
+import { makePaying } from "./test-support";
 
 /** Verify T30 на стороне БД: домены цитат заводятся и классифицируются правилами. */
 
@@ -32,6 +33,8 @@ describe("classifyRunSources", () => {
 
     const agency = await createAgency(db, { name: "Sources Agency", clientLimit: 10 });
     agencyId = agency.id;
+    // Фикстуры цитат — ответа ChatGPT; ChatGPT с 08.10.2026 спрашивается только у платящих.
+    await makePaying(db, agencyId);
 
     const client = await createClient(db, {
       agencyId,

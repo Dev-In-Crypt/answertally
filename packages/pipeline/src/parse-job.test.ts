@@ -50,7 +50,7 @@ describe("parseRun", () => {
         .values({
           clientId: client.id,
           cadence: "weekly",
-          platforms: ["chatgpt"],
+          platforms: ["perplexity"],
           samplesPerPrompt: 1,
         })
         .returning()
@@ -127,7 +127,7 @@ describe("parseRun", () => {
     const scheduleId = (
       await db
         .insert(runSchedules)
-        .values({ clientId: client.id, platforms: ["chatgpt"], samplesPerPrompt: 1 })
+        .values({ clientId: client.id, platforms: ["perplexity"], samplesPerPrompt: 1 })
         .returning()
     )[0]!.id;
 

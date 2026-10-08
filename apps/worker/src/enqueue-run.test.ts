@@ -103,7 +103,7 @@ describe("pickUpPendingRuns", () => {
     return [...new Set(call[0].children.map((child) => child.queueName))].sort();
   }
 
-  it("ставит ручной живой прогон в очередь: 2 промпта × 2 платформы × 3 сэмпла", async () => {
+  it("ставит ручной живой прогон в очередь: 2 промпта × 3 платформы × 3 сэмпла", async () => {
     await makePaying();
     const run = await manualRun();
     const { flow, add } = fakeFlow();
@@ -111,7 +111,8 @@ describe("pickUpPendingRuns", () => {
     const result = await pickUpPendingRuns(db, flow, "live");
 
     expect(result.queuedRuns).toBe(1);
-    expect(result.queuedJobs).toBe(12);
+    // Умолчание Starter с 08.10.2026 — ChatGPT, Perplexity, Claude; ключи у всех трёх есть.
+    expect(result.queuedJobs).toBe(18);
     expect(add).toHaveBeenCalledTimes(1);
     expect((await getRunById(db, run.id))?.status).toBe("running");
   });

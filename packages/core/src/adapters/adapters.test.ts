@@ -140,10 +140,9 @@ describe("контракт адаптера", () => {
 });
 
 describe("набор по умолчанию", () => {
-  it("ChatGPT, Perplexity и AI Overviews, и входит в полный набор", () => {
-    // 07.10.2026: Grok вышел из умолчания (самый дорогой, весит 5 проверок),
-    // AI Overviews вошёл.
-    expect([...DEFAULT_PLATFORMS]).toEqual(["chatgpt", "perplexity", "ai-overviews"]);
+  it("ChatGPT, Perplexity и Claude, и входит в полный набор", () => {
+    // 08.10.2026: Claude (Haiku 5.5, вес 1) вместо AI Overviews; Grok — с Growth.
+    expect([...DEFAULT_PLATFORMS]).toEqual(["chatgpt", "perplexity", "claude"]);
     for (const platform of DEFAULT_PLATFORMS) {
       expect(PLATFORMS).toContain(platform);
     }
@@ -160,6 +159,6 @@ describe("набор по умолчанию", () => {
   });
 
   it("дорогой ассистент сам не включается: он стоит денег, о которых не просили", () => {
-    expect(DEFAULT_PLATFORMS).not.toContain("claude");
+    expect(DEFAULT_PLATFORMS).not.toContain("grok");
   });
 });

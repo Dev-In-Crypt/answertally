@@ -25,7 +25,7 @@ import { MarketingShell } from "@/components/marketing/chrome";
 export const metadata: Metadata = {
   alternates: { canonical: "/signup" },
   title: "Create your workspace · Answertally",
-  description: "Run the free audit on one brand on ChatGPT, Perplexity and Google AI Overviews. No card.",
+  description: "Run the free audit on one brand on Perplexity, Google AI Overviews and Claude. No card.",
   robots: { index: false },
 };
 

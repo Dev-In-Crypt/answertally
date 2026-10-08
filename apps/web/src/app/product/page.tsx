@@ -211,9 +211,8 @@ export default function ProductPage() {
             <div className="card fact">
               <b>3 + 3</b>
               <span>
-                ChatGPT, Perplexity and Google AI Overviews (the AI answer above Google results) by
-                default. Switched on per client: Google AI Mode on any plan, Grok and Claude from
-                Growth.
+                ChatGPT, Perplexity and Claude by default. Switched on per client: Google AI Overviews
+                (the AI answer above Google results) and AI Mode on any plan, Grok from Growth.
               </span>
             </div>
             <div className="card fact">

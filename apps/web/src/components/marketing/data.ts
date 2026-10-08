@@ -92,7 +92,7 @@ function evidenceRow(assistant: string, named: number, answers: number): Evidenc
 export const EVIDENCE_ROWS: EvidenceRow[] = [
   evidenceRow("ChatGPT", 48, PER_ASSISTANT),
   evidenceRow("Perplexity", 37, PER_ASSISTANT),
-  evidenceRow("Google AI Overviews", 39, PER_ASSISTANT),
+  evidenceRow("Claude", 39, PER_ASSISTANT),
 ];
 
 export const EVIDENCE_TOTAL = evidenceRow(
@@ -257,7 +257,7 @@ export const PLANS: {
     checksPerClient: Math.round(limits.aiCheckAllowance / limits.clientLimit / 10) * 10,
     // Цена за клиента при полном плане — считается, а не вписывается.
     perClientUsd: Math.round(limits.priceUsd / limits.clientLimit),
-    typicalUse: limits.clientLimit * TYPICAL_CHECKS_PER_CLIENT,
+    typicalUse: limits.clientLimit * TYPICAL_CHECKS_BIWEEKLY,
     assistants: allowedAssistantLabels(id).join(", "),
   };
 });

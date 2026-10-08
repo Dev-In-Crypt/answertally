@@ -30,8 +30,9 @@ describe("оптовые условия", () => {
 
   it("скидка на аккаунт сверх порога — ровно объявленная", () => {
     expect(VOLUME_DISCOUNT).toBe(0.2);
-    expect(VOLUME_ACCOUNT_PRICE_USD).toBe(80);
-    expect(1 - VOLUME_ACCOUNT_PRICE_USD / LIST_ACCOUNT_PRICE_USD).toBeCloseTo(VOLUME_DISCOUNT, 2);
+    expect(VOLUME_ACCOUNT_PRICE_USD).toBe(38);
+    // Округление до доллара: $48 → $38 — это 20.8%, а не ровно 20%.
+    expect(1 - VOLUME_ACCOUNT_PRICE_USD / LIST_ACCOUNT_PRICE_USD).toBeCloseTo(VOLUME_DISCOUNT, 1);
   });
 
   it("до порога платится цена тарифа и ни центом меньше", () => {

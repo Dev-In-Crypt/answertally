@@ -66,8 +66,17 @@ export default function AcceptableUsePage() {
 
       <h2>The ordinary things</h2>
       <ul>
-        <li>Do not share accounts, or resell access to the product as a product.</li>
-        <li>Do not probe, scrape or overload the service, or work around its limits.</li>
+        <li>
+          Using the product for your own clients, and sending them reports in your brand, is what it
+          is for. Reselling or sublicensing access to the product itself, or to its raw answers as a
+          data feed, is not.
+        </li>
+        <li>Do not share accounts between agencies, or open several workspaces to multiply free audits or allowances.</li>
+        <li>
+          Do not probe, scrape or overload the service, drive it with scripts or bots outside the
+          API, or work around its limits.
+        </li>
+        <li>Do not use the product, or its answers, to build a competing product.</li>
         <li>Do not upload material you have no right to, or measure brands you have no business measuring.</li>
         <li>Do not use the service to break the law, wherever you or your clients are.</li>
       </ul>

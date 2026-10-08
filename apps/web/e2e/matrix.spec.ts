@@ -58,7 +58,8 @@ test("the client overview leads with the prompt × assistant matrix", async ({ p
   await expect(page.getByTestId("unmeasured-note")).toContainText("do not ask");
 
   // Измеренные ячейки несут проценты.
-  await expect(page.getByTestId("matrix-cell").first()).toContainText("%");
+  // ChatGPT в бесплатном аудите не спрашивается (08.10.2026): его столбец — прочерки.
+  await expect(page.getByTestId("matrix-cell").filter({ hasText: "%" }).first()).toBeVisible();
 
   // Одна фраза, которую агентство перескажет клиенту.
   await expect(page.getByTestId("one-line-read")).toContainText("Ledgerbrook");

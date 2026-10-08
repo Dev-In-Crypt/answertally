@@ -254,12 +254,13 @@ describe("billing plan changes", () => {
     await giveSubscription({ currentPeriodEnd: new Date(Date.now() + 15 * 86_400_000) });
 
     const state = await caller(agencyId).billing.subscription();
-    expect(state.aiChecks).toMatchObject({ free: false, allowance: 13_000 });
+    expect(state.aiChecks).toMatchObject({ free: false, allowance: 10_000 });
     const byId = Object.fromEntries(state.plans.map((plan) => [plan.id, plan]));
     expect(byId.starter?.estimatedChargeNowUsd).toBeNull();
     expect(byId.growth?.estimatedChargeNowUsd).toBeNull();
     expect(byId.scale?.estimatedChargeNowUsd).toBeGreaterThan(0);
-    expect(byId.scale?.estimatedChargeNowUsd).toBeLessThan(1_200);
+    // Доплата Growth → Scale меньше разницы цен ($1,199 − $599).
+    expect(byId.scale?.estimatedChargeNowUsd).toBeLessThan(600);
   });
 
   it("экран знает, что платёжные кнопки не для участника", async () => {

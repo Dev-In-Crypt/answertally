@@ -111,7 +111,7 @@ describe("как набор называется на витрине", () => {
      * «what ChatGPT, Perplexity say about it» — это уже не английский.
      * На трёх ассистентах запятая сходила с рук, на двух перестала.
      */
-    expect(freeAuditAssistantSentence()).toBe("ChatGPT, Perplexity and Google AI Overviews");
+    expect(freeAuditAssistantSentence()).toBe("Perplexity, Google AI Overviews and Claude");
     expect(defaultAssistantSentence("starter")).toContain(" and ");
   });
 
@@ -161,16 +161,14 @@ describe("platformsForRun — кого спросит прогон", () => {
   });
 
   it("из расписания выбрасывает то, чего бесплатному аудиту не положено", () => {
-    // Ровно та ошибка: расписание с Grok у неплатящего.
-    expect(platformsForRun(free, ["chatgpt", "perplexity", "grok"])).toEqual([
-      "chatgpt",
-      "perplexity",
-    ]);
+    // Ровно та ошибка: расписание с Grok у неплатящего. ChatGPT с 08.10.2026
+    // тоже только с оплатой: бесплатный аудит — на самых дешёвых ответах.
+    expect(platformsForRun(free, ["chatgpt", "perplexity", "grok"])).toEqual(["perplexity"]);
   });
 
   it("из расписания выбрасывает то, чего не даёт тариф", () => {
-    expect(platformsForRun(starter, ["chatgpt", "claude"])).toEqual(["chatgpt"]);
-    expect(platformsForRun(scale, ["chatgpt", "claude"])).toEqual(["chatgpt", "claude"]);
+    expect(platformsForRun(starter, ["chatgpt", "grok"])).toEqual(["chatgpt"]);
+    expect(platformsForRun(scale, ["chatgpt", "grok"])).toEqual(["chatgpt", "grok"]);
   });
 
   it("из расписания выбрасывает платформу, которую перестали измерять", () => {

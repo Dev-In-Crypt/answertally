@@ -56,7 +56,8 @@ export interface AnswerPrice {
 export const ANSWER_PRICES: Record<Platform, AnswerPrice> = {
   perplexity: { usd: 0.0014, basis: "measured", on: "2026-09-29" },
   chatgpt: { usd: 0.0234, basis: "measured", on: "2026-10-07" },
-  claude: { usd: 0.0817, basis: "measured", on: "2026-09-29" },
+  // Haiku 5.5, 10 ответов 08.10.2026: в среднем $0.0164 (Sonnet 5 был $0.074–0.082).
+  claude: { usd: 0.0164, basis: "measured", on: "2026-10-08" },
   // Самый дорогой из всех. С 07.10.2026 вне набора по умолчанию и весит
   // 5 проверок (CHECK_WEIGHTS).
   grok: { usd: 0.1058, basis: "measured", on: "2026-09-29" },
@@ -108,7 +109,8 @@ export function answersCostUsd(assistants: readonly string[], answersEach: numbe
 export const CHECK_WEIGHTS: Record<Platform, number> = {
   chatgpt: 1,
   perplexity: 1,
-  claude: 4,
+  // Haiku 5.5 дешевле ChatGPT — вес 1 (решение фаундера 08.10.2026).
+  claude: 1,
   grok: 5,
   gemini: 4,
   "ai-overviews": 1,

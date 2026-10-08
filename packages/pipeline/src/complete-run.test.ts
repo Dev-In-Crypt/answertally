@@ -69,7 +69,7 @@ describe("completeRun", () => {
     const run = await createRun(db, { clientId, scheduleId: null, trigger: "manual" });
     const outcome = await completeRun(db, run.id, clientId, "mock");
 
-    // 2 промпта × 3 платформы по умолчанию (ChatGPT, Perplexity, AI Overviews) × 3 сэмпла.
+    // 2 промпта × 3 платформы по умолчанию (ChatGPT, Perplexity, Claude) × 3 сэмпла.
     expect(outcome.responses).toBe(18);
     expect(outcome.status).toBe("done");
     expect(outcome.failed).toBe(0);

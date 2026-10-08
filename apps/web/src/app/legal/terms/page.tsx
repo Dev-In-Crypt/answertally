@@ -115,19 +115,19 @@ export default function TermsPage() {
       <h2>5. Data</h2>
       <p>
         You keep ownership of everything you put into the product and of the reports it produces. We
-        use it to run the service for you, and for one narrow shared purpose described in the next
-        paragraph. We do not train models on it.
+        use it to run the service for you, and we may use it in aggregated or de-identified form to
+        analyse, improve and develop the service, for example to see which kinds of sources
+        assistants cite in a category, or which recommendations tend to be followed by a change. We
+        do not sell it, we do not show one customer another customer&rsquo;s identifiable data, and we
+        do not train models on it.
       </p>
       <p>
-        <b>Shared source index.</b> We count which public websites the assistants cite in answers, by
-        category (for example &ldquo;encrypted email&rdquo;), across all workspaces, and show those
-        counts to every customer so each agency knows where coverage gets read. What goes in is only
-        the cited website&rsquo;s domain, the category and the count. Never your clients&rsquo; names
-        or domains, competitor names, the questions, the answers, or which agency measured what. A
-        category is shown only once at least three different workspaces have measured in it, so no
-        one can work out who contributed. You can opt your workspace out at any time by writing to{" "}
-        {SUPPORT_EMAIL}. For workspaces created before 8 October 2026 this applies from 8 November
-        2026.
+        <b>Shared source index.</b> Part of that aggregate is shown to every customer: which public
+        websites the assistants cite, by category (for example &ldquo;encrypted email&rdquo;), with
+        counts. It holds only the cited website&rsquo;s domain, the category and the count, never your
+        clients&rsquo; names or domains, competitor names, the questions, the answers or which agency
+        measured what, and a category appears only once at least three different workspaces have
+        measured in it.
       </p>
       <p>
         We do keep the raw answers assistants gave, for as long as the workspace exists. This is not
@@ -176,8 +176,15 @@ export default function TermsPage() {
       <h2>8. Suspension and ending the agreement</h2>
       <p>
         You may stop at any time. We may suspend or end a workspace if payment fails and is not
-        fixed within the period we allow, if the product is used in a way that breaches the
-        acceptable use policy, or if we are required to.
+        fixed within 7 days, if the product is used in a way that breaches the acceptable use
+        policy, or if we are required to.
+      </p>
+      <p>
+        <b>Disputed payments.</b> If you dispute a charge with your bank or card issuer instead of
+        writing to us, we suspend the workspace while the dispute is open. If the period was used
+        (measurements run, reports produced), the amount stays owed, and we may share the record of
+        that use with the payment provider to answer the dispute. Write to us first: a wrong charge
+        is refunded in full, without a dispute.
       </p>
       <p>
         Where we can, we will warn you first and give you a chance to fix it. Where we cannot,

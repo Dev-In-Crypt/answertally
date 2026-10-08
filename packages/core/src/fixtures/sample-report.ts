@@ -51,11 +51,11 @@ function snapshot(
 }
 
 /** Клетки по ассистентам для диаграммы «по ассистентам»: в сумме — доля снимка. */
-function cells(chatgpt: number, perplexity: number, google: number, sampleCount: number) {
+function cells(chatgpt: number, perplexity: number, claude: number, sampleCount: number) {
   return [
     { assistantId: "chatgpt", sampleCount, clientVisibilityPct: chatgpt },
     { assistantId: "perplexity", sampleCount, clientVisibilityPct: perplexity },
-    { assistantId: "ai-overviews", sampleCount, clientVisibilityPct: google },
+    { assistantId: "claude", sampleCount, clientVisibilityPct: claude },
   ];
 }
 
@@ -140,8 +140,7 @@ export const SAMPLE_AUDIT_REPORT: ReportPayload = buildReportPayload({
   caveats: [REPORT_COPY.opportunityBasis, REPORT_COPY.scopeEstimate],
   // 5, 6 и 4 из 43–44 ответов: в сумме те же 15 из 130.
   assistantCells: { first: cells(11.4, 14, 9.3, 43), last: cells(11.4, 14, 9.3, 43) },
-  measuredPlatforms: ["chatgpt", "perplexity", "ai-overviews"],
-  googleOverviews: { shown: 41, searches: 43 },
+  measuredPlatforms: ["chatgpt", "perplexity", "claude"],
   opportunity: buildAuditProposal({
     currentVisibilityPct: 11.5,
     competitorVisibility: COMPETITORS_AT_AUDIT,
@@ -212,9 +211,13 @@ export const SAMPLE_DELIVERY_REPORT: ReportPayload = buildReportPayload({
     "Refresh the integrations page with current partners",
   ],
   caveats: [],
-  assistantCells: { first: cells(22.2, 16.7, 19.4, 24), last: cells(33.3, 25, 27.5, 24) },
+  // Агентство включило клиенту Google AI Overviews: в примере видно и его.
+  assistantCells: {
+    first: [...cells(22.2, 16.7, 19.4, 24), { assistantId: "ai-overviews", sampleCount: 24, clientVisibilityPct: 16.7 }],
+    last: [...cells(33.3, 25, 27.5, 24), { assistantId: "ai-overviews", sampleCount: 24, clientVisibilityPct: 29.2 }],
+  },
   googleOverviews: { shown: 22, searches: 24 },
-  measuredPlatforms: ["chatgpt", "perplexity", "ai-overviews"],
+  measuredPlatforms: ["chatgpt", "perplexity", "claude", "ai-overviews"],
 });
 
 /**

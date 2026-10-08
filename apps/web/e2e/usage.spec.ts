@@ -47,8 +47,8 @@ test("usage page shows the checks the answers used", async ({ page }) => {
 
   await page.getByRole("link", { name: "best CRM for startups" }).click();
   const answers = page.getByTestId("responses-list").locator("> li");
-  // 3 платформы × 3 сэмпла: бесплатный аудит меряет ChatGPT, Perplexity
-  // и Google AI Overviews; Grok в него не входит по цене.
+  // 3 платформы × 3 сэмпла: бесплатный аудит меряет Perplexity,
+  // Google AI Overviews и Claude; Grok в него не входит по цене.
   await expect(answers).toHaveCount(9);
   const answerCount = await answers.count();
 

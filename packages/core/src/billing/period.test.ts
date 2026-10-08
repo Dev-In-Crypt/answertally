@@ -80,19 +80,22 @@ describe("PLAN_LIMITS", () => {
      * лимита каждый месяц, ничего не нарушая.
      */
     for (const plan of [PLAN_LIMITS.starter, PLAN_LIMITS.growth, PLAN_LIMITS.scale]) {
-      const typical = plan.clientLimit * CHECKS_PER_CLIENT_MONTH;
+      // С 08.10.2026 (цены вдвое ниже) лимит гарантирует умолчание — замер раз
+      // в две недели у всех клиентов; еженедельно влезают Starter и Growth.
+      const typical = (plan.clientLimit * CHECKS_PER_CLIENT_MONTH) / 2;
       expect(plan.aiCheckAllowance / typical).toBeGreaterThan(1.2);
 
       /**
        * Верхняя граница теперь в деньгах, а не в «не больше 1.6× обычного»:
        * с весами (Grok 5, Claude 4) запас нужен под включённые дорогие
        * ассистенты. Даже если весь лимит уйдёт на самый невыгодный для нас
-       * ассистент, расход не превысит трети цены тарифа.
+       * ассистент, расход не превысит половины цены тарифа (решение фаундера
+       * 08.10.2026 при снижении цен; раньше была треть).
        */
       const worstCost = Math.max(
         ...PLATFORM_IDS.map((id) => (plan.aiCheckAllowance / checkWeight(id)) * ANSWER_PRICES[id].usd),
       );
-      expect(worstCost).toBeLessThan(plan.priceUsd / 3);
+      expect(worstCost).toBeLessThan(plan.priceUsd / 2);
     }
   });
 
