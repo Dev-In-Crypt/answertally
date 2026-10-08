@@ -261,10 +261,45 @@ export default function ResearchPage() {
         </div>
       </section>
 
+      {/* Где ассистенты берут ответы — первая версия базы источников по категориям. */}
+      <section className="sec" id="sources">
+        <div className="wrap">
+          <SecHead n={2} title="Where the assistants look, by category">
+            The sites cited most often in answers to each brand’s questions, counted once per
+            answer. This is where coverage gets read, so it is where an agency starts. A brand’s own
+            site is marked.
+          </SecHead>
+          <div className="g2" data-testid="research-sources">
+            {FIELD_NOTES_1.map((brand) => (
+              <div className="limit" key={brand.brand}>
+                <h3>
+                  {brand.category} <span className="muted small">· {brand.brand}</span>
+                </h3>
+                <ol className="small" style={{ marginTop: 10, paddingLeft: 18, listStyle: "decimal" }}>
+                  {brand.sources.top.map((source) => (
+                    <li key={source.domain}>
+                      {source.domain}
+                      {source.own ? " (own site)" : ""}{" "}
+                      <span className="muted">
+                        · {source.answers} of {brand.sources.answers} answers
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            ))}
+          </div>
+          <p className="small muted" style={{ marginTop: 12 }}>
+            Up to twelve sources were kept per answer. Review sites and roundups dominate consumer
+            categories; in software, competitors’ own pages and documentation do.
+          </p>
+        </div>
+      </section>
+
       {/* 2 · вопрос полного исследования */}
       <section className="sec" id="question">
         <div className="wrap">
-          <SecHead n={2} title="What the full study asks">
+          <SecHead n={3} title="What the full study asks">
             Narrow on purpose. A study that tries to describe &ldquo;AI search&rdquo; as a whole
             ends up describing nothing that can be checked.
           </SecHead>
@@ -315,7 +350,7 @@ export default function ResearchPage() {
       {/* 2 · метод */}
       <section className="sec" id="method">
         <div className="wrap">
-          <SecHead n={3} title="How the full study is run">
+          <SecHead n={4} title="How the full study is run">
             The same way the product measures a client, which is the point: if the method is not
             good enough for a study, it is not good enough to bill an agency for.
           </SecHead>
@@ -348,7 +383,7 @@ export default function ResearchPage() {
       {/* 3 · что опубликуем */}
       <section className="sec" id="publish">
         <div className="wrap">
-          <SecHead n={4} title="What gets published with it">
+          <SecHead n={5} title="What gets published with it">
             A number on its own cannot be checked. These go out with it, or it does not go out.
           </SecHead>
           <ul className="incl" data-testid="research-publish">
@@ -368,7 +403,7 @@ export default function ResearchPage() {
       {/* 4 · чего не будем утверждать */}
       <section className="sec" id="never">
         <div className="wrap">
-          <SecHead n={5} title="What we will not claim, even with the data">
+          <SecHead n={6} title="What we will not claim, even with the data">
             Said now, while there are no results to be tempted by.
           </SecHead>
           <div className="split">

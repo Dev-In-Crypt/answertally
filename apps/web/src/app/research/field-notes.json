@@ -47,7 +47,42 @@
       "Which mattress toppers add a plush feel to a firm bed?",
       "What are good sleep masks for blocking out light while traveling?",
       "Which pajamas are comfortable for warm summer nights?"
-    ]
+    ],
+    "sources": {
+      "answers": 126,
+      "top": [
+        {
+          "domain": "sleepfoundation.org",
+          "answers": 38,
+          "own": false
+        },
+        {
+          "domain": "goodhousekeeping.com",
+          "answers": 38,
+          "own": false
+        },
+        {
+          "domain": "brooklinen.com",
+          "answers": 28,
+          "own": true
+        },
+        {
+          "domain": "nytimes.com",
+          "answers": 21,
+          "own": false
+        },
+        {
+          "domain": "ncoa.org",
+          "answers": 13,
+          "own": false
+        },
+        {
+          "domain": "llbean.com",
+          "answers": 13,
+          "own": false
+        }
+      ]
+    }
   },
   {
     "brand": "Plausible",
@@ -90,7 +125,42 @@
       "Which website analytics tools offer a free trial?",
       "What website analytics software has a free plan for a low-traffic site?",
       "How much do privacy-friendly website analytics tools cost in the US?"
-    ]
+    ],
+    "sources": {
+      "answers": 98,
+      "top": [
+        {
+          "domain": "plausible.io",
+          "answers": 45,
+          "own": true
+        },
+        {
+          "domain": "matomo.org",
+          "answers": 32,
+          "own": false
+        },
+        {
+          "domain": "usefathom.com",
+          "answers": 31,
+          "own": false
+        },
+        {
+          "domain": "docs.umami.is",
+          "answers": 22,
+          "own": false
+        },
+        {
+          "domain": "developers.cloudflare.com",
+          "answers": 16,
+          "own": false
+        },
+        {
+          "domain": "umami.is",
+          "answers": 16,
+          "own": false
+        }
+      ]
+    }
   },
   {
     "brand": "Graza",
@@ -135,7 +205,42 @@
       "Which avocado oils are best for high-heat cooking?",
       "What are good countertop air fryers for a small kitchen?",
       "Which ceramic nonstick pans are good for everyday cooking?"
-    ]
+    ],
+    "sources": {
+      "answers": 60,
+      "top": [
+        {
+          "domain": "target.com",
+          "answers": 13,
+          "own": false
+        },
+        {
+          "domain": "foodnetwork.com",
+          "answers": 10,
+          "own": false
+        },
+        {
+          "domain": "amazon.com",
+          "answers": 8,
+          "own": false
+        },
+        {
+          "domain": "nytimes.com",
+          "answers": 7,
+          "own": false
+        },
+        {
+          "domain": "nbcnews.com",
+          "answers": 7,
+          "own": false
+        },
+        {
+          "domain": "tastecooking.com",
+          "answers": 7,
+          "own": false
+        }
+      ]
+    }
   },
   {
     "brand": "Kubera",
@@ -180,7 +285,42 @@
       "What estate planning services help organize account and asset information for heirs?",
       "Which password managers are best for sharing emergency access with family?",
       "What tax software works well for people with rental property and investment income?"
-    ]
+    ],
+    "sources": {
+      "answers": 63,
+      "top": [
+        {
+          "domain": "kubera.com",
+          "answers": 26,
+          "own": true
+        },
+        {
+          "domain": "quicken.com",
+          "answers": 15,
+          "own": false
+        },
+        {
+          "domain": "robberger.com",
+          "answers": 14,
+          "own": false
+        },
+        {
+          "domain": "mycapitally.com",
+          "answers": 12,
+          "own": false
+        },
+        {
+          "domain": "vyzer.co",
+          "answers": 9,
+          "own": false
+        },
+        {
+          "domain": "mezzi.com",
+          "answers": 8,
+          "own": false
+        }
+      ]
+    }
   },
   {
     "brand": "Tally",
@@ -225,7 +365,42 @@
       "What are good appointment scheduling tools for a solo consultant?",
       "Which online payment providers are good for collecting deposits?",
       "how much does online form builder usually cost"
-    ]
+    ],
+    "sources": {
+      "answers": 63,
+      "top": [
+        {
+          "domain": "paperform.co",
+          "answers": 21,
+          "own": false
+        },
+        {
+          "domain": "jotform.com",
+          "answers": 21,
+          "own": false
+        },
+        {
+          "domain": "webflow.com",
+          "answers": 13,
+          "own": false
+        },
+        {
+          "domain": "softr.io",
+          "answers": 13,
+          "own": false
+        },
+        {
+          "domain": "orbitforms.ai",
+          "answers": 13,
+          "own": false
+        },
+        {
+          "domain": "zapier.com",
+          "answers": 12,
+          "own": false
+        }
+      ]
+    }
   },
   {
     "brand": "Cal.com",
@@ -272,7 +447,42 @@
       "Which video meeting apps are a good fit for client conversations?",
       "What are good customer relationship management tools for a solo consultant?",
       "Which online form builders work well for collecting client details before a call?"
-    ]
+    ],
+    "sources": {
+      "answers": 106,
+      "top": [
+        {
+          "domain": "cal.com",
+          "answers": 49,
+          "own": true
+        },
+        {
+          "domain": "calendly.com",
+          "answers": 31,
+          "own": false
+        },
+        {
+          "domain": "simplybook.me",
+          "answers": 14,
+          "own": false
+        },
+        {
+          "domain": "cronofy.com",
+          "answers": 14,
+          "own": false
+        },
+        {
+          "domain": "developer.nylas.com",
+          "answers": 13,
+          "own": false
+        },
+        {
+          "domain": "help.acuityscheduling.com",
+          "answers": 12,
+          "own": false
+        }
+      ]
+    }
   },
   {
     "brand": "Tuta",
@@ -319,7 +529,42 @@
       "Which password managers make it easy to share logins securely?",
       "What are good private web browsers that block online tracking?",
       "Which VPN services are simple to use on a phone?"
-    ]
+    ],
+    "sources": {
+      "answers": 113,
+      "top": [
+        {
+          "domain": "proton.me",
+          "answers": 54,
+          "own": false
+        },
+        {
+          "domain": "tuta.com",
+          "answers": 54,
+          "own": true
+        },
+        {
+          "domain": "allaboutcookies.org",
+          "answers": 19,
+          "own": false
+        },
+        {
+          "domain": "reddit.com",
+          "answers": 19,
+          "own": false
+        },
+        {
+          "domain": "cyberinsider.com",
+          "answers": 13,
+          "own": false
+        },
+        {
+          "domain": "blog.mailfence.com",
+          "answers": 11,
+          "own": false
+        }
+      ]
+    }
   },
   {
     "brand": "Bombas",
@@ -366,6 +611,41 @@
       "Which walking shoes have a roomy toe box for wide feet?",
       "What are good lightweight rain jackets for day hikes?",
       "how much does socks and basics usually cost"
-    ]
+    ],
+    "sources": {
+      "answers": 117,
+      "top": [
+        {
+          "domain": "google.com",
+          "answers": 17,
+          "own": false
+        },
+        {
+          "domain": "darntough.com",
+          "answers": 12,
+          "own": false
+        },
+        {
+          "domain": "bombas.com",
+          "answers": 12,
+          "own": true
+        },
+        {
+          "domain": "thewearify.com",
+          "answers": 11,
+          "own": false
+        },
+        {
+          "domain": "goodhousekeeping.com",
+          "answers": 10,
+          "own": false
+        },
+        {
+          "domain": "menshealth.com",
+          "answers": 10,
+          "own": false
+        }
+      ]
+    }
   }
 ]
