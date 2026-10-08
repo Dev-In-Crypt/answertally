@@ -24,6 +24,8 @@ export interface ActionBrief {
   steps: string[];
   acceptance: string[];
   pitfalls: string[];
+  /** Как увидеть результат в следующих замерах — без обещания, что он будет. */
+  verify: string[];
 }
 
 export interface BriefInput {
@@ -103,6 +105,23 @@ function objectiveFor(input: BriefInput): string {
   }
 }
 
+/**
+ * Как проверить, что работа дошла до ответов. Только то, что продукт сам
+ * покажет в следующих замерах: «стало лучше» он не обещает (инвариант 2).
+ */
+export function verifyLines(actionType: ActionType, sourceDomain?: string | null): string[] {
+  const first =
+    sourceDomain && actionType !== "create_page"
+      ? `In the next measurements, check whether answers that cite ${sourceDomain} now name the client.`
+      : actionType === "create_page" || actionType === "refresh_page"
+        ? "In the next measurements, check whether the client's own page is cited for these questions and whether those answers name the client."
+        : "In the next measurements, check whether answers to the affected questions name the client more often.";
+  return [
+    first,
+    "Allow four to eight weeks: assistants pick up new pages and coverage slowly, and one week moves within the range.",
+  ];
+}
+
 /** Детерминированная сборка: одинаковый вход — одинаковый бриф. */
 export function buildBriefFromTemplate(input: BriefInput): ActionBrief {
   const playbook = playbookFor(input.actionType);
@@ -114,6 +133,7 @@ export function buildBriefFromTemplate(input: BriefInput): ActionBrief {
     steps: [...playbook.steps],
     acceptance: [...playbook.acceptance],
     pitfalls: [...(playbook.pitfalls ?? [])],
+    verify: verifyLines(input.actionType, input.sourceDomain),
   };
 }
 

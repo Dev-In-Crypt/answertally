@@ -557,7 +557,7 @@ function ActionBriefPanel({ actionId }: { actionId: string }) {
     return null;
   }
 
-  const { objective, context, steps, acceptance, pitfalls } = brief.data;
+  const { objective, context, steps, acceptance, pitfalls, verify } = brief.data;
 
   /**
    * Бриф уезжает в чужой инструмент: работу делают люди в Notion, Asana или
@@ -575,6 +575,9 @@ function ActionBriefPanel({ actionId }: { actionId: string }) {
     "Accepted when:",
     ...acceptance.map((line) => `- ${line}`),
     ...(pitfalls.length > 0 ? ["", "Watch out for:", ...pitfalls.map((line) => `- ${line}`)] : []),
+    "",
+    "How to check it reached the answers:",
+    ...verify.map((line) => `- ${line}`),
   ].join("\n");
 
   return (
@@ -633,6 +636,15 @@ function ActionBriefPanel({ actionId }: { actionId: string }) {
           </ul>
         </div>
       )}
+
+      <div className="flex flex-col gap-1.5">
+        <h4 className="text-sm font-medium">How to check it reached the answers</h4>
+        <ul data-testid="brief-verify" className="flex flex-col gap-1.5 text-sm text-muted-foreground">
+          {verify.map((line) => (
+            <li key={line}>{line}</li>
+          ))}
+        </ul>
+      </div>
     </section>
   );
 }

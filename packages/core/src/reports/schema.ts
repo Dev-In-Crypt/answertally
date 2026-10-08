@@ -9,6 +9,16 @@ import { z } from "zod";
  * а не число, притворяющееся точным.
  */
 
+/**
+ * Как делается работа и как увидеть результат (08.10.2026) — из плейбуков,
+ * чтобы клиент агентства понимал, что именно будет сделано. Необязательные:
+ * отчёты, выпущенные раньше, остаются валидными.
+ */
+const howItIsDone = {
+  steps: z.array(z.string().min(1)).max(8).optional(),
+  check: z.array(z.string().min(1)).max(4).optional(),
+};
+
 export const reportPayloadSchema = z.object({
   client: z.object({ name: z.string().min(1) }),
   period: z.object({
@@ -67,6 +77,7 @@ export const reportPayloadSchema = z.object({
         reason: z.string().min(1),
         affectedPrompts: z.number().int().nonnegative(),
         evidence: z.enum(["low", "medium", "high"]),
+        ...howItIsDone,
       }),
     )
     .max(5)
@@ -115,6 +126,7 @@ export const reportPayloadSchema = z.object({
             reason: z.string().min(1),
             estimatedImpact: z.enum(["low", "medium", "high"]),
             effort: z.enum(["low", "medium", "high"]),
+            ...howItIsDone,
           }),
         )
         .max(20),

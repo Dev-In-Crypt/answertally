@@ -1,5 +1,8 @@
 import { REPORT_COPY } from "../copy";
 import type { ReportPayload } from "./schema";
+import type { ActionType } from "../diagnosis/recommendations";
+import { verifyLines } from "../execution/brief";
+import { playbookFor } from "../execution/playbooks";
 
 /**
  * Экономика предложения по итогам бесплатного аудита.
@@ -70,6 +73,9 @@ export interface AuditProposalInputs {
     reason: string;
     estimatedImpact: "low" | "medium" | "high";
     effort: "low" | "medium" | "high";
+    /** Есть — к пункту добавляются шаги плейбука и как проверить результат. */
+    actionType?: ActionType;
+    sourceDomain?: string;
   }[];
   retainerUsd?: number;
   effortHours?: { min: number; max: number };
@@ -96,12 +102,20 @@ export function buildAuditProposal(inputs: AuditProposalInputs): ProposalBlock {
     gapPp: Math.round((inputs.currentVisibilityPct - competitorAverageVisibilityPct) * 10) / 10,
     // Двадцать пунктов — это уже не предложение, а список задач; спек
     // ограничивает верх, а не требует его добрать.
-    rankedActions: inputs.rankedActions.slice(0, 20),
+    rankedActions: inputs.rankedActions.slice(0, 20).map(({ actionType, sourceDomain, ...action }) => ({
+      ...action,
+      ...(actionType ? howItIsDone(actionType, sourceDomain) : {}),
+    })),
     scopeDays: inputs.scopeDays ?? PROPOSAL_DEFAULTS.scopeDays,
     suggestedRetainerUsd: retainerUsd,
     estimatedEffortHours: effortHours,
     estimatedMarginPct: estimateMarginPct(retainerUsd, effortHours, hourlyCostUsd),
   };
+}
+
+/** Шаги плейбука и проверка результата — для пункта отчёта. */
+export function howItIsDone(actionType: ActionType, sourceDomain?: string | null): { steps: string[]; check: string[] } {
+  return { steps: [...playbookFor(actionType).steps], check: verifyLines(actionType, sourceDomain) };
 }
 
 /** Оговорки, без которых аудит читается как обещание. */

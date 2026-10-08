@@ -55,6 +55,36 @@ function formatPp(value: number | null): string {
   return `${value >= 0 ? "+" : ""}${value} pp`;
 }
 
+/**
+ * Как делается пункт и как увидеть результат. Свёрнуто: отчёт читают по
+ * диагонали, а шаги нужны тому, кто будет делать. В PDF раскрывается.
+ */
+function HowItIsDone({ steps, check }: { steps?: string[] | undefined; check?: string[] | undefined }) {
+  if (!steps?.length && !check?.length) return null;
+  return (
+    <details className="mt-1 pl-5 text-sm" data-testid="how-it-is-done">
+      <summary className="cursor-pointer text-xs font-medium text-primary">How it is done</summary>
+      {steps && steps.length > 0 && (
+        <ol className="mt-2 flex list-inside list-decimal flex-col gap-1 text-muted-foreground">
+          {steps.map((step) => (
+            <li key={step}>{step}</li>
+          ))}
+        </ol>
+      )}
+      {check && check.length > 0 && (
+        <div className="mt-2 flex flex-col gap-1">
+          <span className="text-xs font-medium">How to see the result</span>
+          {check.map((line) => (
+            <p key={line} className="text-muted-foreground">
+              {line}
+            </p>
+          ))}
+        </div>
+      )}
+    </details>
+  );
+}
+
 export function ReportView({
   payload,
   agency,
@@ -390,6 +420,7 @@ export function ReportView({
                   <span className="block pl-5 text-xs text-muted-foreground">
                     Estimated impact: {action.estimatedImpact} · Effort: {action.effort}
                   </span>
+                  <HowItIsDone steps={action.steps} check={action.check} />
                 </li>
               ))}
             </ol>
@@ -438,6 +469,7 @@ export function ReportView({
                   {item.affectedPrompts === 1 ? "question" : "questions"} · evidence:{" "}
                   {item.evidence}
                 </span>
+                <HowItIsDone steps={item.steps} check={item.check} />
               </li>
             ))}
           </ul>

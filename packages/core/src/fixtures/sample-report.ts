@@ -68,6 +68,8 @@ const RANKED_ACTIONS = [
     title: "Get the client covered on reviewhub.example",
     reason:
       "reviewhub.example is cited in 18% of answers for this category (14 citations). Quillstack and Loambox appear in those answers; Fernpost does not.",
+    actionType: "review_platform" as const,
+    sourceDomain: "reviewhub.example",
     estimatedImpact: "high" as const,
     effort: "medium" as const,
   },
@@ -75,6 +77,8 @@ const RANKED_ACTIONS = [
     title: "Get the client covered on forum.example",
     reason:
       "forum.example is cited in 12% of answers here (9 citations), and threads comparing the category name competitors without mentioning Fernpost.",
+    actionType: "ugc_community" as const,
+    sourceDomain: "forum.example",
     estimatedImpact: "medium" as const,
     effort: "medium" as const,
   },
@@ -82,6 +86,7 @@ const RANKED_ACTIONS = [
     title: "Publish a page that answers this cluster directly",
     reason:
       "No page from fernpost.example appears among the 9 sources cited for the comparison cluster, so there is nothing of the client's own to cite.",
+    actionType: "create_page" as const,
     estimatedImpact: "medium" as const,
     effort: "medium" as const,
   },
@@ -89,6 +94,8 @@ const RANKED_ACTIONS = [
     title: "Refresh the fernpost.example pricing page",
     reason:
       "The page is cited 6 times here, but the brand is not mentioned in those answers: it is being read without carrying the name.",
+    actionType: "refresh_page" as const,
+    sourceDomain: "fernpost.example",
     estimatedImpact: "medium" as const,
     effort: "low" as const,
   },
@@ -96,6 +103,8 @@ const RANKED_ACTIONS = [
     title: "Get the client covered on listings.example",
     reason:
       "listings.example is cited in 7% of answers here (5 citations), with two competitors listed and the client absent.",
+    actionType: "source_outreach" as const,
+    sourceDomain: "listings.example",
     estimatedImpact: "medium" as const,
     effort: "low" as const,
   },
@@ -103,6 +112,7 @@ const RANKED_ACTIONS = [
     title: "Answer the migration question in the docs",
     reason:
       "Three answers recommend a competitor specifically for migration; the client's docs do not cover it at all.",
+    actionType: "create_page" as const,
     estimatedImpact: "low" as const,
     effort: "low" as const,
   },

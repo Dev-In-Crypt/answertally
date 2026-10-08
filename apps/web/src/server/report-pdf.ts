@@ -86,6 +86,11 @@ async function render(options: PdfOptions): Promise<Uint8Array> {
       content: `[data-testid="approve-form"] { display: none !important; }`,
     });
 
+    // «How it is done» в отчёте свёрнут на экране; на бумаге раскрыть нечем.
+    await page.evaluate(() => {
+      for (const details of document.querySelectorAll("details")) details.open = true;
+    });
+
     return await page.pdf({
       format: "A4",
       printBackground: true,

@@ -178,3 +178,22 @@ describe("payload аудита", () => {
     expect(regular.opportunity).toBeNull();
   });
 });
+
+describe("как делается пункт аудита", () => {
+  it("тип работы известен — шаги плейбука и как увидеть результат", () => {
+    const block = buildAuditProposal({
+      currentVisibilityPct: 10,
+      competitorVisibility: { A: 30 },
+      rankedActions: [
+        { title: "Get covered on x.example", reason: "cited", estimatedImpact: "high", effort: "low", actionType: "review_platform", sourceDomain: "x.example" },
+        { title: "Manual item", reason: "agency note", estimatedImpact: "low", effort: "low" },
+      ],
+    });
+    const [typed, manual] = block.rankedActions;
+    expect(typed?.steps?.length).toBeGreaterThan(0);
+    expect(typed?.check?.[0]).toContain("x.example");
+    // Внутренние поля в отчёт не уезжают.
+    expect(typed).not.toHaveProperty("actionType");
+    expect(manual?.steps).toBeUndefined();
+  });
+});

@@ -19,6 +19,9 @@ import {
   reportReadyEmail,
   summariseTraffic,
   NO_AI_OVERVIEW_TEXT,
+  ACTION_TYPES,
+  howItIsDone,
+  type ActionType,
 } from "@repo/core";
 import type { CitationFact, SourceType, VisibilitySnapshot } from "@repo/core";
 import {
@@ -91,6 +94,15 @@ function defaultPeriod(): { start: Date; end: Date } {
   const end = new Date();
   const start = new Date(end.getTime() - 30 * 24 * 60 * 60 * 1000);
   return { start, end };
+}
+
+/** Шаги и проверка по первому предложенному действию возможности. */
+function firstActionHow(actions: Record<string, unknown>[]): { steps?: string[]; check?: string[] } {
+  const first = actions[0];
+  const type = first?.actionType;
+  if (typeof type !== "string" || !(ACTION_TYPES as readonly string[]).includes(type)) return {};
+  const domain = typeof first?.sourceDomain === "string" ? first.sourceDomain : null;
+  return howItIsDone(type as ActionType, domain);
 }
 
 export const reportsRouter = router({
@@ -441,6 +453,9 @@ export const reportsRouter = router({
           reason: opportunity.reason,
           affectedPrompts: opportunity.affectedPromptIds.length,
           evidence: opportunity.evidenceLevel,
+          // Как делается — по первому предложенному действию, если оно
+          // известного типа; иначе пункт идёт без шагов, а не с чужими.
+          ...firstActionHow(opportunity.recommendedActions),
         })),
         caveats,
       });
@@ -527,6 +542,8 @@ export const reportsRouter = router({
           reason: recommendation.reason,
           estimatedImpact: recommendation.estimatedImpact,
           effort: recommendation.effort,
+          actionType: recommendation.actionType,
+          ...(recommendation.sourceDomain ? { sourceDomain: recommendation.sourceDomain } : {}),
         })),
         ...(input.retainerUsd !== undefined ? { retainerUsd: input.retainerUsd } : {}),
         effortHours,
