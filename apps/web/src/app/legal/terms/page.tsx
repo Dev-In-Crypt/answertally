@@ -115,8 +115,19 @@ export default function TermsPage() {
       <h2>5. Data</h2>
       <p>
         You keep ownership of everything you put into the product and of the reports it produces. We
-        use it to run the service for you, and for nothing else. We do not train models on it and we
-        do not use one customer&rsquo;s data to improve what another customer sees.
+        use it to run the service for you, and for one narrow shared purpose described in the next
+        paragraph. We do not train models on it.
+      </p>
+      <p>
+        <b>Shared source index.</b> We count which public websites the assistants cite in answers, by
+        category (for example &ldquo;encrypted email&rdquo;), across all workspaces, and show those
+        counts to every customer so each agency knows where coverage gets read. What goes in is only
+        the cited website&rsquo;s domain, the category and the count. Never your clients&rsquo; names
+        or domains, competitor names, the questions, the answers, or which agency measured what. A
+        category is shown only once at least three different workspaces have measured in it, so no
+        one can work out who contributed. You can opt your workspace out at any time by writing to{" "}
+        {SUPPORT_EMAIL}. For workspaces created before 8 October 2026 this applies from 8 November
+        2026.
       </p>
       <p>
         We do keep the raw answers assistants gave, for as long as the workspace exists. This is not
