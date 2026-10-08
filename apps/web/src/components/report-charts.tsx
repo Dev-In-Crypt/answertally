@@ -76,6 +76,8 @@ interface Bar {
   color: string;
   note?: string;
   strong?: boolean;
+  /** Подпись числа вместо процента (счётчики работ); шкала тогда — доля от максимума. */
+  display?: string;
 }
 
 /** Горизонтальные полосы с подписью и числом в строке. Шкала — 0–100%. */
@@ -89,14 +91,14 @@ export function BarList({ bars, testId }: { bars: Bar[]; testId?: string }) {
           <span className={`truncate ${bar.strong ? "font-semibold" : ""}`} title={bar.label}>
             {bar.label}
           </span>
-          <span className="h-3 overflow-hidden rounded-full bg-muted" title={`${bar.label}: ${pct(bar.value)}`}>
+          <span className="h-3 overflow-hidden rounded-full bg-muted" title={`${bar.label}: ${bar.display ?? pct(bar.value)}`}>
             <span
               className="block h-full rounded-full"
               style={{ width: `${Math.min(100, Math.max(0, bar.value))}%`, background: bar.color, minWidth: bar.value > 0 ? 4 : 0 }}
             />
           </span>
           <span className="metric whitespace-nowrap text-right font-medium">
-            {pct(bar.value)}
+            {bar.display ?? pct(bar.value)}
             {bar.note && <span className="ml-1 font-normal text-muted-foreground">{bar.note}</span>}
           </span>
         </li>
@@ -190,6 +192,42 @@ export function TrendLine({ points }: { points: { weekStart: string; sharePct: n
         </text>
       </svg>
     </figure>
+  );
+}
+
+/** Счётчики (сделанная работа): длина полосы — от самого большого числа. */
+export function CountBars({ rows, testId }: { rows: { label: string; count: number }[]; testId?: string }) {
+  const max = Math.max(1, ...rows.map((row) => row.count));
+  return (
+    <BarList
+      testId={testId}
+      bars={rows.map((row) => ({
+        key: row.label,
+        label: row.label,
+        value: (row.count / max) * 100,
+        color: "var(--primary)",
+        display: String(row.count),
+      }))}
+    />
+  );
+}
+
+/** Доля поисков Google, где над выдачей был AI-ответ. */
+export function GoogleOverviewsShown({ shown, searches }: { shown: number; searches: number }) {
+  return (
+    <div className="flex flex-col gap-2" data-testid="report-google-overviews">
+      <BarList
+        bars={[
+          {
+            key: "aio",
+            label: "AI answer shown",
+            value: (shown / searches) * 100,
+            color: assistantColor("ai-overviews"),
+            note: `· ${shown} of ${searches} searches`,
+          },
+        ]}
+      />
+    </div>
   );
 }
 

@@ -61,6 +61,8 @@ export interface ReportInputs {
    * Не передали — сравнение остаётся как было: старые вызовы не ломаются.
    */
   assistantCells?: { first: readonly AssistantCell[]; last: readonly AssistantCell[] };
+  /** Поиски Google с блоком AI Overview; нет поисков — не передаётся. */
+  googleOverviews?: NonNullable<ReportPayload["googleOverviews"]>;
   /** Раздел бесплатного аудита; у платящего клиента его нет. */
   opportunity?: NonNullable<ReportPayload["opportunity"]> | null;
   topOpportunities?: NonNullable<ReportPayload["topOpportunities"]>;
@@ -235,6 +237,9 @@ export function buildReportPayload(inputs: ReportInputs): ReportPayload {
       : {}),
     opportunity: inputs.opportunity ?? null,
     ...chartData(inputs, last, basis === null || basis.delta === "show"),
+    ...(inputs.googleOverviews && inputs.googleOverviews.searches > 0
+      ? { googleOverviews: inputs.googleOverviews }
+      : {}),
     // Пояснение о природе измерения идёт в каждом отчёте, а не по желанию,
     // и описывает то, что измерялось на самом деле.
     caveats: [

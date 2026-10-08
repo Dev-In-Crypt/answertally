@@ -196,3 +196,16 @@ describe("данные диаграмм", () => {
     expect(buildReportPayload(inputs({ snapshots: [snapshot(23)] })).trend).toBeUndefined();
   });
 });
+
+describe("AI Overview в поисках Google", () => {
+  it("кладётся в отчёт, когда поиски были", () => {
+    expect(buildReportPayload(inputs({ googleOverviews: { shown: 35, searches: 37 } })).googleOverviews).toEqual({
+      shown: 35,
+      searches: 37,
+    });
+  });
+
+  it("поисков не было — строки нет, а не «0 из 0»", () => {
+    expect(buildReportPayload(inputs({ googleOverviews: { shown: 0, searches: 0 } })).googleOverviews).toBeUndefined();
+  });
+});

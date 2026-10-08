@@ -1795,6 +1795,40 @@ export async function countClientAnswersBetween(
   return { naming: rows.filter((row) => row.naming).length, sampled: rows.length };
 }
 
+/**
+ * Сколько поисков Google за период показали блок AI Overview.
+ *
+ * Ответ без блока адаптер пишет фиксированным текстом (`noBlockText`, из
+ * @repo/core — db от core не зависит, поэтому текст передаёт вызывающий).
+ */
+export async function countGoogleOverviewsShown(
+  db: Database,
+  clientId: string,
+  from: Date,
+  to: Date,
+  noBlockText: string,
+): Promise<{ shown: number; searches: number }> {
+  const [row] = await db
+    .select({
+      searches: sql<number>`count(*)::int`,
+      shown: sql<number>`count(*) filter (where ${responses.rawText} <> ${noBlockText})::int`,
+    })
+    .from(responses)
+    .innerJoin(runs, eq(responses.runId, runs.id))
+    .innerJoin(prompts, eq(responses.promptId, prompts.id))
+    .where(
+      and(
+        eq(runs.clientId, clientId),
+        eq(runs.adaptersMode, await effectiveAdaptersMode(db, clientId)),
+        eq(prompts.isControl, false),
+        eq(responses.platform, "ai-overviews"),
+        gte(responses.createdAt, from),
+        lte(responses.createdAt, to),
+      ),
+    );
+  return { shown: row?.shown ?? 0, searches: row?.searches ?? 0 };
+}
+
 export async function createExperiment(
   db: Database,
   values: NewExperiment,

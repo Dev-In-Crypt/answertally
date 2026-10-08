@@ -1,5 +1,15 @@
 import { ASSISTANTS, formatDay, formatPeriod, leadText, MEASUREMENT_COPY, type ReportPayload } from "@repo/core";
-import { AssistantBars, assistantColor, CompetitorBars, DeltaBar, ShareRing, TrendLine } from "./report-charts";
+import {
+  AssistantBars,
+  assistantColor,
+  BarList,
+  CompetitorBars,
+  CountBars,
+  DeltaBar,
+  GoogleOverviewsShown,
+  ShareRing,
+  TrendLine,
+} from "./report-charts";
 
 /** Имена ассистентов из каталога: в отчёте клиента идентификаторов быть не должно. */
 const ASSISTANT_LABELS: Record<string, string> = Object.fromEntries(
@@ -193,6 +203,20 @@ export function ReportView({
         </section>
       )}
 
+      {payload.googleOverviews && (
+        /* Насколько Google вообще отвечает сам: без блока покупатель читает
+           обычную выдачу, и доля в AI-ответе значит меньше. */
+        <section className="flex flex-col gap-3">
+          <h2 className="text-lg font-medium">How often Google answers first</h2>
+          <GoogleOverviewsShown shown={payload.googleOverviews.shown} searches={payload.googleOverviews.searches} />
+          <p className="text-sm text-muted-foreground">
+            Google showed an AI Overview above its results in {payload.googleOverviews.shown} of{" "}
+            {payload.googleOverviews.searches} searches for the tracked questions. That box is what a
+            buyer reads before any link.
+          </p>
+        </section>
+      )}
+
       {payload.trend && payload.trend.length > 1 && (
         <section className="flex flex-col gap-3">
           <h2 className="text-lg font-medium">Week by week</h2>
@@ -210,14 +234,7 @@ export function ReportView({
             No delivery work was recorded in this period.
           </p>
         ) : (
-          <ul data-testid="report-work" className="flex flex-col gap-1 text-sm">
-            {payload.workCompleted.map((item) => (
-              <li key={item.label} className="flex justify-between border-b py-2 last:border-0">
-                <span>{item.label}</span>
-                <span className="metric font-medium">{item.count}</span>
-              </li>
-            ))}
-          </ul>
+          <CountBars testId="report-work" rows={payload.workCompleted} />
         )}
       </section>
 
@@ -336,6 +353,25 @@ export function ReportView({
               hint={`${formatPp(payload.opportunity.gapPp)} versus the average`}
             />
           </div>
+
+          <BarList
+            testId="chart-opportunity"
+            bars={[
+              {
+                key: "client",
+                label: payload.client.name,
+                value: payload.opportunity.currentVisibilityPct,
+                color: "var(--primary)",
+                strong: true,
+              },
+              {
+                key: "competitors",
+                label: "Competitors, average",
+                value: payload.opportunity.competitorAverageVisibilityPct,
+                color: "var(--competitor)",
+              },
+            ]}
+          />
 
           <div className="flex flex-col gap-2">
             <h3 className="text-sm font-medium">

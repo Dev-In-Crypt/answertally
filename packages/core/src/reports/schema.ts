@@ -202,6 +202,14 @@ export const reportPayloadSchema = z.object({
     .array(z.object({ weekStart: z.string(), sharePct: z.number().min(0).max(100) }))
     .max(60)
     .optional(),
+  /**
+   * Сколько поисков Google показали AI Overview. Есть только у клиентов,
+   * которых мерили на AI Overviews: без блока покупатель читает обычную
+   * выдачу, и доля клиента в нём значит меньше.
+   */
+  googleOverviews: z
+    .object({ shown: z.number().int().min(0), searches: z.number().int().min(1) })
+    .optional(),
   /** Оговорки, которые обязаны дойти до клиента вместе с цифрами. */
   caveats: z.array(z.string().min(1)),
 });

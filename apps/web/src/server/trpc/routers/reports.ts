@@ -18,12 +18,14 @@ import {
   REPORT_COPY,
   reportReadyEmail,
   summariseTraffic,
+  NO_AI_OVERVIEW_TEXT,
 } from "@repo/core";
 import type { CitationFact, SourceType, VisibilitySnapshot } from "@repo/core";
 import {
   listAgencyReportsWithApproval,
   listCitationFacts,
   countClientAnswersBetween,
+  countGoogleOverviewsShown,
   countNewCitedDomains,
   createReport,
   createReportShare,
@@ -404,6 +406,7 @@ export const reportsRouter = router({
         newCitedUrls,
         newBrandMentions: clientAnswers.naming,
         sampledAnswers: clientAnswers.sampled,
+        googleOverviews: await countGoogleOverviewsShown(ctx.db, input.clientId, periodStart, periodEnd, NO_AI_OVERVIEW_TEXT),
         /**
          * Самое влиятельное действие — из экспериментов, у которых после
          * работы набралось достаточно ответов. Раздел был пуст всегда, пока
@@ -578,6 +581,7 @@ export const reportsRouter = router({
         caveats,
         opportunity,
         ...(auditCells.length > 0 ? { assistantCells: { first: auditCells, last: auditCells } } : {}),
+        googleOverviews: await countGoogleOverviewsShown(ctx.db, input.clientId, periodStart, periodEnd, NO_AI_OVERVIEW_TEXT),
       });
 
       const report = await createReport(ctx.db, {

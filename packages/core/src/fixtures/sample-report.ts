@@ -131,6 +131,7 @@ export const SAMPLE_AUDIT_REPORT: ReportPayload = buildReportPayload({
   // 5, 6 и 4 из 43–44 ответов: в сумме те же 15 из 130.
   assistantCells: { first: cells(11.4, 14, 9.3, 43), last: cells(11.4, 14, 9.3, 43) },
   measuredPlatforms: ["chatgpt", "perplexity", "ai-overviews"],
+  googleOverviews: { shown: 41, searches: 43 },
   opportunity: buildAuditProposal({
     currentVisibilityPct: 11.5,
     competitorVisibility: COMPETITORS_AT_AUDIT,
@@ -202,6 +203,7 @@ export const SAMPLE_DELIVERY_REPORT: ReportPayload = buildReportPayload({
   ],
   caveats: [],
   assistantCells: { first: cells(22.2, 16.7, 19.4, 24), last: cells(33.3, 25, 27.5, 24) },
+  googleOverviews: { shown: 22, searches: 24 },
   measuredPlatforms: ["chatgpt", "perplexity", "ai-overviews"],
 });
 
