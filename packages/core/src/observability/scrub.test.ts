@@ -82,6 +82,21 @@ describe("scrubString", () => {
       expected: `open https://app.example/invite/${REDACTED}`,
     },
     {
+      name: "голый путь отчёта в тексте, без схемы и хоста",
+      input: "render failed at /r/9f2b7c1d4e6a8b3f/icon",
+      expected: `render failed at /r/${REDACTED}/icon`,
+    },
+    {
+      name: "голый путь приглашения в начале строки и в кавычках",
+      input: `/invite/abc123 then "/r/Xy7Kp2Qr9T"`,
+      expected: `/invite/${REDACTED} then "/r/${REDACTED}"`,
+    },
+    {
+      name: "похожий сегмент внутри другого пути не трогается",
+      input: "GET /api/r/list and /clients/invite/new",
+      expected: "GET /api/r/list and /clients/invite/new",
+    },
+    {
       name: "случайная строка в пути чужого маршрута тоже снимается",
       input: "GET https://app.example/share/Xy7Kp2Qr9Tv4Bn6Lm3 failed",
       expected: `GET https://app.example/share/${REDACTED} failed`,
@@ -134,6 +149,9 @@ describe("scrubString", () => {
   it("чистка идемпотентна — повторный проход ничего не портит", () => {
     const once = scrubString("mail me at a@b.co with token=abc123def");
     expect(scrubString(once)).toBe(once);
+    // Уже снятый токен в голом пути не превращается в `[redacted]]`.
+    const path = scrubString("at /r/9f2b7c1d4e6a8b3f and /invite/abc123");
+    expect(scrubString(path)).toBe(path);
   });
 });
 

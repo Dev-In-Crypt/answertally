@@ -47,6 +47,9 @@ importers:
       '@sentry/browser':
         specifier: ^10.70.0
         version: 10.70.0
+      '@sentry/core':
+        specifier: 10.70.0
+        version: 10.70.0
       '@tanstack/react-query':
         specifier: ^5.101.4
         version: 5.101.4(react@19.2.8)

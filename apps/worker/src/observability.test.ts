@@ -161,6 +161,20 @@ describe("с DSN", () => {
     expect(output.stderr).toHaveLength(1);
   });
 
+  it("очередь и имя задачи уходят тегами", async () => {
+    const { errorReporter } = await import("./observability");
+    const output = captureOutput();
+    errorReporter.captureError(new Error("x"), {
+      scope: "worker.job",
+      queue: "runs-chatgpt",
+      jobName: "sample",
+    });
+    output.restore();
+
+    const [, options] = sentry.captureException.mock.calls[0] as [Error, { tags: unknown }];
+    expect(options.tags).toEqual({ scope: "worker.job", queue: "runs-chatgpt", jobName: "sample" });
+  });
+
   it("контекст задачи вычищается до отправки", async () => {
     const { errorReporter } = await import("./observability");
     const output = captureOutput();

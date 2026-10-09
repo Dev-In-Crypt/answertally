@@ -125,6 +125,13 @@ const PREFIXED_SECRET_RE =
  * сегментов чистится всё без разбора — других значений там не бывает.
  */
 const TOKEN_ROUTES = new Set(["r", "invite"]);
+/**
+ * Голый путь `/r/<токен>` внутри текста — сообщение ошибки, поле `path`.
+ * Под `URL_RE` он не подходит (нет схемы), а токен в нём тот же.
+ * Должен совпадать с TOKEN_ROUTES.
+ */
+// `[` исключена: иначе повторный проход съел бы уже стоящий `[redacted]`.
+const BARE_TOKEN_PATH_RE = /(^|[^\w/.:-])\/(r|invite)\/[^\s/?#"'<>()[\]]+/gi;
 
 /** `550e8400-e29b-41d4-a716-446655440000` — id ресурса, доступа не даёт. */
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -228,6 +235,10 @@ export function scrubString(value: string): string {
 
   return value
     .replace(URL_RE, (url) => scrubUrl(url))
+    .replace(
+      BARE_TOKEN_PATH_RE,
+      (_match, before: string, route: string) => `${before}/${route}/${REDACTED}`,
+    )
     .replace(HEADER_SECRET_RE, asValue)
     .replace(KEY_VALUE_RE, asValue)
     .replace(JWT_RE, REDACTED)
