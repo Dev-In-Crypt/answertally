@@ -204,7 +204,8 @@ services:
       STRIPE_PRICE_SCALE: ${STRIPE_PRICE_SCALE:-}
       SENTRY_DSN: ${SENTRY_DSN:-}
       SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
-      SENTRY_RELEASE: ${SENTRY_RELEASE:-}
+      # Версия в Sentry — хэш коммита образа, если не задана явно.
+      SENTRY_RELEASE: ${SENTRY_RELEASE:-${IMAGE_TAG:-}}
     depends_on:
       postgres:
         condition: service_healthy
@@ -284,7 +285,8 @@ services:
       NEXT_PUBLIC_REPORT_HOST: ${NEXT_PUBLIC_REPORT_HOST:-}
       SENTRY_DSN: ${SENTRY_DSN:-}
       SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
-      SENTRY_RELEASE: ${SENTRY_RELEASE:-}
+      # Версия в Sentry — хэш коммита образа, если не задана явно.
+      SENTRY_RELEASE: ${SENTRY_RELEASE:-${IMAGE_TAG:-}}
     depends_on:
       postgres:
         condition: service_healthy

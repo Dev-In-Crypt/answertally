@@ -20,7 +20,7 @@ import {
 import { tickSchedules } from "./scheduler";
 import { enqueueRun, FINALIZE_FAILED_NOTE, pickUpPendingRuns } from "./enqueue-run";
 import { executeRunJob, finalizeRun } from "@repo/pipeline";
-import { errorReporter, logger } from "./observability";
+import { errorReporter, flushErrorReports, logger } from "./observability";
 import { notifyMeasurementReady } from "./notify-ready";
 
 const TICK_QUEUE = "scheduler-tick";
@@ -192,9 +192,11 @@ async function main(): Promise<void> {
       errorReporter.captureError(error, {
         scope: "worker.job",
         queue: worker.name,
+        jobName: job?.name,
         jobId: job?.id,
         attemptsMade: job?.attemptsMade,
-        data: job?.data,
+        // Только идентификатор прогона, не данные задачи: они уходят наружу.
+        runId: (job?.data as { runId?: unknown } | undefined)?.runId,
       });
     });
   }
@@ -254,6 +256,8 @@ async function main(): Promise<void> {
     ]);
     await closeDb();
     connection.disconnect();
+    // Сбои последних задач ещё в очереди отправки — без этого они теряются.
+    await flushErrorReports();
     process.exit(0);
   }
 
@@ -261,7 +265,8 @@ async function main(): Promise<void> {
   process.on("SIGTERM", () => void shutdown("SIGTERM"));
 }
 
-main().catch((error: unknown) => {
+main().catch(async (error: unknown) => {
   errorReporter.captureError(error, { scope: "worker.startup" });
+  await flushErrorReports();
   process.exit(1);
 });

@@ -165,7 +165,7 @@ describe("error reporting wiring", () => {
   it("серверная часть не тянет SDK Sentry", async () => {
     // Node-SDK Sentry ронял dev-сервер целиком: сборщик Next пытается
     // забандлить инструментацию загрузки модулей и падает на резолве `path`.
-    // Тест держит границу: канал сервера — лог, браузерный SDK живёт отдельно.
+    // Тест держит границу: на сервере только `@sentry/core` без хуков загрузки.
     //
     // Проверяется импорт, а не вхождение строки: имя пакета есть в этом самом
     // комментарии, и проверка на подстроку падала бы на собственном объяснении.
@@ -194,5 +194,101 @@ describe("error reporting wiring", () => {
       error: "UnknownError",
       message: "string thrown from a library",
     });
+  });
+});
+
+describe("Sentry на сервере web", () => {
+  const FAKE_DSN = "https://public@o0.ingest.sentry.io/0";
+  type Options = Record<string, unknown> & {
+    beforeSend: (event: Record<string, unknown>) => Record<string, unknown> | null;
+  };
+
+  async function load(dsn: string) {
+    vi.resetModules();
+    vi.stubEnv("SENTRY_DSN", dsn);
+    const created: Options[] = [];
+    const captured: Array<{ error: unknown; scope: { tags: unknown; extras: unknown } }> = [];
+    vi.doMock("@sentry/core", () => ({
+      createStackParser: () => () => [],
+      nodeStackLineParser: () => [0, () => undefined],
+      createTransport: vi.fn(),
+      Scope: class {
+        tags: Record<string, unknown> = {};
+        extras: Record<string, unknown> = {};
+        setTag(key: string, value: unknown) {
+          this.tags[key] = value;
+        }
+        setExtras(extras: Record<string, unknown>) {
+          this.extras = extras;
+        }
+      },
+      ServerRuntimeClient: class {
+        constructor(options: Options) {
+          created.push(options);
+        }
+        init() {}
+        captureException(error: unknown, _hint: unknown, scope: never) {
+          captured.push({ error, scope });
+        }
+      },
+    }));
+    const observability = await import("./observability");
+    return { observability, created, captured };
+  }
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.doUnmock("@sentry/core");
+  });
+
+  it("без DSN клиент не создаётся", async () => {
+    const { observability, created } = await load("");
+    expect(created).toHaveLength(0);
+    expect(observability.errorReportingTarget).toBe("log");
+  });
+
+  it("с DSN: без PII, без трассировки и автоинтеграций", async () => {
+    const { observability, created } = await load(FAKE_DSN);
+    expect(observability.errorReportingTarget).toBe("sentry+log");
+    expect(created).toHaveLength(1);
+    expect(created[0]).toMatchObject({
+      dsn: FAKE_DSN,
+      sendDefaultPii: false,
+      tracesSampleRate: 0,
+      integrations: [],
+    });
+  });
+
+  it("beforeSend снимает заголовки, куки, тело, почту и токен отчёта", async () => {
+    const { created } = await load(FAKE_DSN);
+    const sent = created[0]!.beforeSend({
+      message: "invite to owner@agency.example failed",
+      request: {
+        url: "https://app.example/r/9f2b7c1d4e6a8b3f?token=abc",
+        headers: { authorization: "Bearer abcdefghijklmnop", cookie: "session=1" },
+        cookies: { session: "1" },
+        data: { password: "hunter2" },
+      },
+    });
+    const text = JSON.stringify(sent);
+    for (const leaked of ["owner@agency.example", "9f2b7c1d4e6a8b3f", "abcdefghijklmnop", "hunter2", "session=1"]) {
+      expect(text).not.toContain(leaked);
+    }
+    expect(sent).toMatchObject({ request: { url: "https://app.example/r/[redacted]?token=[redacted]" } });
+  });
+
+  it("контекст уходит тегом scope и вычищенным extra, ошибка — в лог тоже", async () => {
+    const { observability, captured } = await load(FAKE_DSN);
+    const { lines, restore } = captureStderr();
+    observability.errorReporter.captureError(new Error("boom"), {
+      scope: "trpc",
+      authorization: "Bearer abcdefghijklmnop",
+    });
+    restore();
+
+    expect(captured).toHaveLength(1);
+    expect(captured[0]!.scope.tags).toEqual({ scope: "trpc" });
+    expect(JSON.stringify(captured[0]!.scope.extras)).not.toContain("abcdefghijklmnop");
+    expect(lines).toHaveLength(1);
   });
 });

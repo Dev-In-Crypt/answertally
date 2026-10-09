@@ -15,6 +15,7 @@
     "@repo/db": "workspace:*",
     "@repo/pipeline": "workspace:*",
     "@sentry/browser": "^10.70.0",
+    "@sentry/core": "10.70.0",
     "@tanstack/react-query": "^5.101.4",
     "@trpc/client": "^11.18.0",
     "@trpc/react-query": "^11.18.0",

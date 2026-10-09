@@ -99,7 +99,12 @@ function createSentryReporter(dsn: string): ErrorReporter {
     captureError(error, context) {
       const described = describeError(error);
       Sentry.captureException(error instanceof Error ? error : new Error(described.message), {
-        tags: { scope: context.scope },
+        // Очередь и имя задачи — тегами: по ним в Sentry фильтруют поломки.
+        tags: {
+          scope: context.scope,
+          ...(typeof context["queue"] === "string" ? { queue: context["queue"] } : {}),
+          ...(typeof context["jobName"] === "string" ? { jobName: context["jobName"] } : {}),
+        },
         // Контекст задачи содержит её данные: чистится до отправки.
         extra: scrubFields({ ...context }),
       });
@@ -167,15 +172,19 @@ export function installProcessErrorHandlers(handlers: ProcessErrorHandlers): voi
   handlers.on("unhandledRejection", handle("worker.unhandledRejection"));
 }
 
-/** Даёт Sentry дописать событие и повторяет поведение node: выход с кодом 1. */
-async function flushAndExit(): Promise<void> {
-  if (sentryEnabled) {
-    try {
-      await Sentry.flush(2000);
-    } catch {
-      // Отчёт не уехал — это не повод задержать выход.
-    }
+/** Даёт Sentry дописать очередь событий перед выходом. Без DSN — сразу. */
+export async function flushErrorReports(): Promise<void> {
+  if (!sentryEnabled) return;
+  try {
+    await Sentry.flush(2000);
+  } catch {
+    // Отчёт не уехал — это не повод задержать выход.
   }
+}
+
+/** Повторяет поведение node после отчёта: выход с кодом 1. */
+async function flushAndExit(): Promise<void> {
+  await flushErrorReports();
   process.exit(1);
 }
 

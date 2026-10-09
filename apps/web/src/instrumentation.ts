@@ -3,9 +3,9 @@ import type { Instrumentation } from "next";
 /**
  * Точка входа наблюдаемости для web.
  *
- * Импорт динамический и только для nodejs-рантайма: @sentry/node не работает
- * в edge, а грузить его в каждый рантайм ради ветки, которая там не выполнится,
- * незачем.
+ * Импорт динамический и только для nodejs-рантайма: репортер пишет в
+ * process.stderr, которого в edge нет. Edge у нас — только middleware, и
+ * там нечему падать (чистая проверка пути).
  */
 
 export async function register(): Promise<void> {
