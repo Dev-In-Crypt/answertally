@@ -37,7 +37,7 @@
   "devDependencies": {
     "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4.0.0",
-    "@types/node": "^22.10.2",
+    "@types/node": "^26.6.3",
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",
     "pdf-parse": "^2.4.5",
