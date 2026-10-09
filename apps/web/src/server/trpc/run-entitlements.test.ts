@@ -1,6 +1,6 @@
 import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
 import { TRPCError } from "@trpc/server";
-import { billingPeriod, FREE_CHECK_ALLOWANCE } from "@repo/core";
+import { allowancePeriod, billingPeriod, FREE_CHECK_ALLOWANCE } from "@repo/core";
 import {
   createAgency,
   createClient,
@@ -206,8 +206,10 @@ describe("запуск измерения и подписка", () => {
 
   it("плательщику месячный лимит тарифа — потолок", async () => {
     // Раньше лимит только показывался, и тариф мог тратить без конца.
-    await incrementAiChecks(db, agencyId, billingPeriod(), FREE_CHECK_ALLOWANCE * 100);
-    await subscribe(agencyId, "active", new Date(Date.now() + 30 * DAY));
+    // Счётчик плательщика — по оплаченному месяцу, поэтому подписка раньше расхода.
+    const periodEnd = new Date(Date.now() + 30 * DAY);
+    await subscribe(agencyId, "active", periodEnd);
+    await incrementAiChecks(db, agencyId, allowancePeriod(periodEnd), FREE_CHECK_ALLOWANCE * 100);
 
     await expect(caller(agencyId).runs.triggerManual({ clientId })).rejects.toThrow(/used up/);
   });

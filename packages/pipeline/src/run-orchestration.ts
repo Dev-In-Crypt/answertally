@@ -1,5 +1,4 @@
 import {
-  billingPeriod,
   checkWeight,
   getAdapter,
   type AdaptersMode,
@@ -21,7 +20,7 @@ import {
   updateResponseStorageKey,
 } from "@repo/db";
 import type { Database } from "@repo/db";
-import { entitlementsForAgency } from "./entitlements";
+import { entitlementsForAgency, usagePeriodForAgency } from "./entitlements";
 import { rawResponseKey, storage } from "./storage";
 import { storeCitations } from "./parse-job";
 import { NO_ACTIVE_PROMPTS_NOTE, runOutcome } from "./finalize-run";
@@ -125,8 +124,8 @@ export async function executeRunJob(
    * согласен. Заодно бесплатный аудит не съедает сам себя в демо-режиме.
    */
   if (agencyId) {
-    // Дорогой ассистент списывает больше одной проверки (Grok 5, Claude 4).
-    await incrementAiChecks(db, agencyId, billingPeriod(), checkWeight(job.platform));
+    // Дорогой ассистент списывает больше одной проверки (Grok 5).
+    await incrementAiChecks(db, agencyId, await usagePeriodForAgency(db, agencyId), checkWeight(job.platform));
   }
 
   return response.id;

@@ -479,7 +479,7 @@ export const METHOD_COPY = {
   prominence:
     "Inside the workspace we also show how the client is named when it is named: in how many answers it comes first, or ahead of every tracked competitor. That is a count across samples too, not a position read off one answer.",
   questions:
-    "Questions are the buyer prompts you track for a client. You can generate a first draft from templates, import your own list, and edit either until it reads the way buyers actually ask.",
+    "Questions are the buyer prompts you track for a client. You can draft them from the brand's homepage, category and competitors, import your own list, and edit either until it reads the way buyers actually ask.",
   samples:
     "By default each question is asked three times on each assistant you switch on, every run, and you can ask more. A cell with fewer than three answers in its window shows a dash instead of a number.",
   api: "Each assistant is asked through its developer API with web search switched on, not through the consumer app; Google AI Overviews and AI Mode are read from Google search results through a data provider. What a person sees in the app can differ.",

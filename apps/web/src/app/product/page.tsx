@@ -174,8 +174,8 @@ export default function ProductPage() {
       <section className="sec" id="measure">
         <div className="wrap">
           <SecHead n={1} title="Measure: every question, on every assistant you switch on">
-            Write the questions your client’s buyers ask, import a list, or generate a draft from
-            templates and edit it. Each question is asked several times on every assistant you switch
+            Write the questions your client’s buyers ask, import a list, or draft them from the
+            client’s homepage, category and competitors and edit them. Each question is asked several times on every assistant you switch
             on, and each cell is an aggregate of those answers. {MARKETING_COPY.cadence}
           </SecHead>
           <div className="card">

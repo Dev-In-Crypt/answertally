@@ -32,8 +32,8 @@ const ROWS: { label: string; cells: Cell[] }[] = [
       { text: "Client account" },
       { text: "Prompt volume and projects", href: "https://peec.ai/pricing" },
       { text: "Prompt volume", href: "https://otterly.ai/pricing" },
-      { text: "Client workspace (agency plan, $399 each, 100 prompts)", href: "https://tryprofound.com/blog/agencies-launch-your-aeo-practice-with-profound" },
-      { text: "Prompts and responses ($250 Core: 125 prompts, 1 brand)", href: "https://scrunch.com/pricing" },
+      { text: "Client workspace on the agency plan; price not public", href: "https://www.tryprofound.com/pricing" },
+      { text: "Prompts (Starter $300 a month, or $250 billed annually: 350 prompts)", href: "https://scrunch.com/pricing" },
     ],
   },
   {
@@ -42,8 +42,8 @@ const ROWS: { label: string; cells: Cell[] }[] = [
       { text: "Unlimited" },
       { text: "Unlimited", href: "https://peec.ai/pricing" },
       { text: "Unlimited", href: "https://otterly.ai/pricing" },
-      { text: "5 on the agency plan", href: "https://tryprofound.com/blog/agencies-launch-your-aeo-practice-with-profound" },
-      { text: "5 on Core", href: "https://scrunch.com/pricing" },
+      { text: "Unlimited on Trial and Enterprise", href: "https://www.tryprofound.com/pricing" },
+      { text: "3 on Starter, 5 on Growth", href: "https://scrunch.com/pricing" },
     ],
   },
   {
@@ -83,7 +83,7 @@ const ROWS: { label: string; cells: Cell[] }[] = [
       { text: "Pick 3, incl. ChatGPT, Google AI Mode and AI Overviews, Copilot, Gemini", href: "https://peec.ai/pricing" },
       { text: "ChatGPT, Google AI Overviews, Perplexity, Copilot; more as add-ons", href: "https://otterly.ai/pricing" },
       { text: "Enterprise: ChatGPT, Perplexity, Google AI Mode, Gemini, Copilot, Claude and more", href: "https://www.tryprofound.com/pricing" },
-      { text: "Core: ChatGPT, Perplexity, Google AI Overviews, Copilot", href: "https://scrunch.com/pricing" },
+      { text: "ChatGPT, Claude, Gemini, Perplexity, Google AI Mode and AI Overviews, Meta AI", href: "https://scrunch.com/pricing" },
     ],
   },
   {

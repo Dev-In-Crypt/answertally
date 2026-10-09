@@ -1,5 +1,5 @@
 import {
-  billingPeriod,
+  allowancePeriod,
   canStartMeasurement,
   entitlementsFor,
   type Entitlements,
@@ -56,6 +56,20 @@ export async function entitlementsForAgency(
 }
 
 /**
+ * Ключ счётчика проверок агентства — его оплаченный месяц (`allowancePeriod`).
+ * Один на запись (воркер), проверку лимита и экран расхода: разъедутся — и
+ * счётчик пишется в один месяц, а лимит сверяется с другим.
+ */
+export async function usagePeriodForAgency(
+  db: Database,
+  agencyId: string,
+  now: Date = new Date(),
+): Promise<string> {
+  const subscription = await getSubscriptionByAgency(db, agencyId);
+  return allowancePeriod(subscription?.currentPeriodEnd ?? null, now);
+}
+
+/**
  * Можно ли начать измерение агентству — единственная такая проверка.
  *
  * Её зовут и веб (кнопка, аудит), и воркер (расписание) — через
@@ -85,7 +99,9 @@ export async function measurementAllowedForAgency(
   // потратить. Плательщику — за месяц, неплательщику — за всё время.
   const [counted, inFlightRemaining] = await Promise.all([
     entitlements.paying
-      ? getUsageCounter(db, agencyId, billingPeriod(now)).then((row) => row?.aiChecksUsed ?? 0)
+      ? usagePeriodForAgency(db, agencyId, now)
+          .then((period) => getUsageCounter(db, agencyId, period))
+          .then((row) => row?.aiChecksUsed ?? 0)
       : getLifetimeAiChecks(db, agencyId),
     inFlightRemainingChecks(db, agencyId),
   ]);

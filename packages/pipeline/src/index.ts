@@ -27,6 +27,7 @@ export { clientVisibility, clientSources, toCitationFacts, PRESENCE_CAVEAT } fro
 export {
   entitlementsForAgency,
   measurementAllowedForAgency,
+  usagePeriodForAgency,
   startRunIfAllowed,
   RUN_IN_FLIGHT_MESSAGE,
   type StartRunResult,

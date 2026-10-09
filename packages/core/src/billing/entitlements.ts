@@ -316,7 +316,7 @@ export function canStartMeasurement(
         allowed: false,
         message:
           left === 0
-            ? `This month's ${count(entitlements.aiCheckAllowance)} AI checks are used up. Measuring resumes on the 1st, or write to us to raise the allowance.`
+            ? `This month's ${count(entitlements.aiCheckAllowance)} AI checks are used up. Measuring resumes when your next billing month starts, or write to us to raise the allowance.`
             : `This run needs ${count(checksPlanned)} AI checks and ${count(left)} of this month's ${count(entitlements.aiCheckAllowance)} are left. Measure fewer questions or assistants, or write to us to raise the allowance.`,
       };
     }

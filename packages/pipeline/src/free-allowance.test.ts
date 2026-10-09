@@ -1,5 +1,5 @@
 import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
-import { billingPeriod, FREE_CHECK_ALLOWANCE, PLAN_LIMITS } from "@repo/core";
+import { FREE_CHECK_ALLOWANCE, PLAN_LIMITS } from "@repo/core";
 import {
   createAgency,
   createClient,
@@ -17,6 +17,7 @@ import {
   measurementAllowedForAgency,
   RUN_IN_FLIGHT_MESSAGE,
   startRunIfAllowed,
+  usagePeriodForAgency,
 } from "./entitlements";
 import { makePaying } from "./test-support";
 
@@ -157,7 +158,7 @@ describe("старт прогона под блокировкой", () => {
     // отказ здесь — только от арифметики потолка.
     await makePaying(db, agencyId, "starter");
     const allowance = PLAN_LIMITS.starter.aiCheckAllowance;
-    await incrementAiChecks(db, agencyId, billingPeriod(), allowance - 150);
+    await incrementAiChecks(db, agencyId, await usagePeriodForAgency(db, agencyId), allowance - 150);
     await startRunIfAllowed(db, agencyId, { ...live, clientId }, 100);
 
     const decision = await measurementAllowedForAgency(db, agencyId, {
@@ -187,7 +188,7 @@ describe("старт прогона под блокировкой", () => {
   it("плательщик упирается в месячный лимит тарифа", async () => {
     await makePaying(db, agencyId, "starter");
     const allowance = PLAN_LIMITS.starter.aiCheckAllowance;
-    await incrementAiChecks(db, agencyId, billingPeriod(), allowance - 100);
+    await incrementAiChecks(db, agencyId, await usagePeriodForAgency(db, agencyId), allowance - 100);
 
     const fits = await measurementAllowedForAgency(db, agencyId, {
       trigger: "manual",

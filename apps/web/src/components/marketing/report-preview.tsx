@@ -84,7 +84,7 @@ function DeliveryBody({ payload }: { payload: ReportPayload }) {
             </li>
           )}
           <li>
-            <span>Answers naming {payload.client.name}</span>
+            <span>Answers naming {payload.client.name}, whole period</span>
             <b>
               {payload.results.newBrandMentions}
               {payload.results.sampledAnswers !== undefined ? ` of ${payload.results.sampledAnswers}` : ""}

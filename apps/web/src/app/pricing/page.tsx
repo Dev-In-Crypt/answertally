@@ -9,7 +9,7 @@ import {
   PER_CLIENT_MAX,
   PER_CLIENT_MIN,
   PLANS,
-  TYPICAL_CHECKS_PER_CLIENT,
+  TYPICAL_CHECKS_BIWEEKLY,
   int,
   usd,
 } from "@/components/marketing/data";
@@ -303,7 +303,7 @@ export default function PricingPage() {
                   <i style={{ width: `${Math.round((plan.typicalUse / plan.aiCheckAllowance) * 100)}%` }} />
                 </span>
                 <span className="v">
-                  {plan.clientLimit} × {int(TYPICAL_CHECKS_PER_CLIENT)} ≈ {int(plan.typicalUse)} of{" "}
+                  {plan.clientLimit} × {int(TYPICAL_CHECKS_BIWEEKLY)} ≈ {int(plan.typicalUse)} of{" "}
                   {int(plan.aiCheckAllowance)}
                 </span>
               </div>
@@ -311,7 +311,7 @@ export default function PricingPage() {
             <div className="legend" style={{ fontSize: 12.5 }}>
               <span>
                 <i className="sw" style={{ height: 10, background: "#3C414B" }} />
-                every client full, measured weekly
+                every client full, measured every two weeks
               </span>
               <span>
                 <i className="sw" style={{ height: 10, background: "#EFEDE7" }} />

@@ -1,5 +1,5 @@
 import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
-import { billingPeriod, MockAdapter, registerLiveAdapter } from "@repo/core";
+import { MockAdapter, PLAN_LIMITS, registerLiveAdapter } from "@repo/core";
 import {
   createAgency,
   createClient,
@@ -8,8 +8,10 @@ import {
   deleteAgency,
   getUsageCounter,
   incrementAiChecks,
+  upsertSubscription,
 } from "@repo/db";
 import { promptClusters, prompts, runSchedules } from "@repo/db/schema/measurement";
+import { measurementAllowedForAgency, usagePeriodForAgency } from "./entitlements";
 import { orchestrateRun } from "./run-orchestration";
 import { makePaying } from "./test-support";
 
@@ -84,7 +86,7 @@ describe("usage counters", () => {
     // ровно ту ветку, по которой расход и считается.
     await orchestrateRun(db, runId, "live");
 
-    const counter = await getUsageCounter(db, agencyId, billingPeriod());
+    const counter = await getUsageCounter(db, agencyId, await usagePeriodForAgency(db, agencyId));
     // 2 вопроса × 3 сэмпла × (ChatGPT 1 + Perplexity 1 + Grok 5).
     expect(counter?.aiChecksUsed).toBe(42);
   });
@@ -95,11 +97,11 @@ describe("usage counters", () => {
     // не было. Экран расхода это и так утверждает отдельной строкой.
     await orchestrateRun(db, runId, "mock");
 
-    expect(await getUsageCounter(db, agencyId, billingPeriod())).toBeUndefined();
+    expect(await getUsageCounter(db, agencyId, await usagePeriodForAgency(db, agencyId))).toBeUndefined();
   });
 
   it("инкремент атомарен при параллельных вызовах", async () => {
-    const period = billingPeriod();
+    const period = await usagePeriodForAgency(db, agencyId);
     // Job'ы платформ выполняются параллельно и пишут в одну строку:
     // без атомарного инкремента часть расхода терялась бы.
     await Promise.all(Array.from({ length: 20 }, () => incrementAiChecks(db, agencyId, period)));
@@ -119,7 +121,27 @@ describe("usage counters", () => {
     const other = await createAgency(db, { name: "Other Agency" });
     await orchestrateRun(db, runId, "mock");
 
-    expect(await getUsageCounter(db, other.id, billingPeriod())).toBeUndefined();
+    expect(await getUsageCounter(db, other.id, await usagePeriodForAgency(db, other.id))).toBeUndefined();
     await deleteAgency(db, other.id);
+  });
+
+  it("лимит считается по оплаченному месяцу: 1-го числа новый не открывается", async () => {
+    // Оплачено 28 сентября: месяц до 28 октября. Раньше счётчик был
+    // календарным, и 1 октября агентство получало второй лимит за тот же платёж.
+    await upsertSubscription(db, {
+      agencyId,
+      customerId: `cus_${agencyId.slice(0, 8)}`,
+      subscriptionId: `sub_${agencyId.slice(0, 8)}`,
+      plan: "growth",
+      status: "active",
+      currentPeriodEnd: new Date("2026-10-28T00:00:00.000Z"),
+      cancelAtPeriodEnd: false,
+    });
+    const before = new Date("2026-09-30T12:00:00.000Z");
+    const after = new Date("2026-10-01T12:00:00.000Z");
+    await incrementAiChecks(db, agencyId, await usagePeriodForAgency(db, agencyId, before), PLAN_LIMITS.growth.aiCheckAllowance);
+
+    const decision = await measurementAllowedForAgency(db, agencyId, { trigger: "manual", checksPlanned: 1 }, after);
+    expect(decision.allowed).toBe(false);
   });
 });

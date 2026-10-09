@@ -79,7 +79,7 @@ export default function FreeAuditPage() {
           <div>
             <div className="kicker page-kicker">Free audit</div>
             <h1 className="display">
-              Audit one of your own clients, <em>for free.</em>
+              Audit a client, or a prospect you are pitching, <em>for free.</em>
             </h1>
             <p className="lead">
               See what {FREE_TRIO} say about a brand and its competitors, which

@@ -1,8 +1,10 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import {
+  allowancePeriod,
   billingPeriod,
   billingPeriodBounds,
+  paidPeriodStart,
   canSwitchToPlan,
   checkWeight,
   FREE_CHECK_ALLOWANCE,
@@ -75,7 +77,7 @@ export const billingRouter = router({
         ctx.db,
         ctx.user.agencyId,
         entitlements,
-        billingPeriod(),
+        allowancePeriod(subscription?.currentPeriodEnd ?? null),
         entitlements.aiCheckAllowance,
       ),
       // Платёжные кнопки — только у владельца: остальным сервер всё равно
@@ -261,7 +263,9 @@ export const billingRouter = router({
   usage: protectedProcedure
     .input(z.object({ period: z.string().regex(/^\d{4}-\d{2}$/).optional() }).optional())
     .query(async ({ ctx, input }) => {
-      const period = input?.period ?? billingPeriod();
+      const period =
+        input?.period ??
+        allowancePeriod((await getSubscriptionByAgency(ctx.db, ctx.user.agencyId))?.currentPeriodEnd ?? null);
 
       const [agency, entitlements, clientsUsed] = await Promise.all([
         getAgencyById(ctx.db, ctx.user.agencyId),
@@ -374,8 +378,7 @@ async function checksFor(
  * Сколько провайдер спишет сразу при повышении: разница цен × доля периода,
  * которая ещё впереди. Оценка — точную сумму (с налогом) считает провайдер.
  *
- * Период месячный: начало — тот же день месяцем раньше, а если такого дня
- * нет (31-е), последний день прошлого месяца.
+ * Период месячный, начало — `paidPeriodStart`.
  */
 export function estimateUpgradeChargeUsd(
   fromPriceUsd: number,
@@ -385,9 +388,7 @@ export function estimateUpgradeChargeUsd(
 ): number | null {
   if (!periodEnd || toPriceUsd <= fromPriceUsd) return null;
 
-  const start = new Date(periodEnd);
-  start.setUTCMonth(start.getUTCMonth() - 1);
-  if (start.getUTCDate() !== periodEnd.getUTCDate()) start.setUTCDate(0);
+  const start = paidPeriodStart(periodEnd);
 
   const total = periodEnd.getTime() - start.getTime();
   const left = Math.min(1, Math.max(0, (periodEnd.getTime() - now.getTime()) / total));

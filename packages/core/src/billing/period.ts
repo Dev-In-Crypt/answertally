@@ -12,6 +12,28 @@ export function billingPeriod(date: Date = new Date()): string {
   return `${year}-${month}`;
 }
 
+/**
+ * Начало оплаченного месяца по его концу: тот же день месяцем раньше, а если
+ * такого дня нет (31-е), последний день прошлого месяца.
+ */
+export function paidPeriodStart(periodEnd: Date): Date {
+  const start = new Date(periodEnd);
+  start.setUTCMonth(start.getUTCMonth() - 1);
+  if (start.getUTCDate() !== periodEnd.getUTCDate()) start.setUTCDate(0);
+  return start;
+}
+
+/**
+ * Ключ счётчика проверок платящего агентства — оплаченный месяц, а не
+ * календарный. Иначе оплата 28-го давала два лимита за один платёж: свой до
+ * 1-го и новый с 1-го. Ключ — дата начала оплаченного месяца (YYYY-MM-DD);
+ * конец периода неизвестен — календарный месяц, как раньше.
+ */
+export function allowancePeriod(currentPeriodEnd: Date | null, now: Date = new Date()): string {
+  if (!currentPeriodEnd) return billingPeriod(now);
+  return paidPeriodStart(currentPeriodEnd).toISOString().slice(0, 10);
+}
+
 /** Границы периода: [начало, конец) в UTC. */
 export function billingPeriodBounds(period: string): { start: Date; end: Date } {
   const match = /^(\d{4})-(\d{2})$/.exec(period);

@@ -23,7 +23,7 @@ const PAGES = [
   { path: "/product", h1: /From the answers assistants give/, title: /AI Visibility Platform for Agencies · Answertally/ },
   { path: "/method", h1: /How we measure/, title: /How We Measure AI Visibility · Answertally/ },
   { path: "/pricing", h1: /Priced per client/, title: /Pricing: AI Visibility Tracking per Client · Answertally/ },
-  { path: "/free-audit", h1: /Audit one of your own clients/, title: /Free AI Visibility Audit for Your Client · Answertally/ },
+  { path: "/free-audit", h1: /Audit a client, or a prospect you are pitching/, title: /Free AI Visibility Audit for Your Client · Answertally/ },
 ] as const;
 
 const usd = (value: number) => `$${value.toLocaleString("en-US")}`;

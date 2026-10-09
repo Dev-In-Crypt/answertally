@@ -7,7 +7,6 @@ import { JsonLd } from "@/components/marketing/json-ld";
 import { SITE_URL, SUPPORT_EMAIL } from "@/config/site";
 import {
   AUDIENCE,
-  BUYER_NOTE,
   checkoutCopy,
   MARKET_NOTE,
   OBJECTIONS,
@@ -133,8 +132,8 @@ export default async function HomePage() {
             </h1>
             {/* Одна фраза: что делаем и что агентство отдаёт клиенту. Подробности — ниже по странице. */}
             <p className="lead">
-              We ask ChatGPT, Perplexity and Google the questions your client’s buyers ask, and turn
-              the answers into a report in your brand.
+              We ask ChatGPT, Perplexity, Claude and Google the questions your client’s buyers ask,
+              and turn the answers into a report in your brand.
             </p>
             <div className="ctas">
               <Link className="btn primary" href="/signup" data-testid="landing-cta-audit">
@@ -198,7 +197,7 @@ export default async function HomePage() {
           {totals && (
             <dl className="measured-stats" data-testid="measured-totals">
               <div>
-                <dt>AI answers measured</dt>
+                <dt>AI answers measured since launch</dt>
                 <dd>{int(totals.answers + RESEARCH_ANSWERS)}</dd>
               </div>
               {/* Источники ответов исследования в базу не писались — пока их меньше ответов, строка не показывается. */}
@@ -233,7 +232,7 @@ export default async function HomePage() {
             new hire.
           </SecHead>
           <div className="notes2">
-            {[MARKET_NOTE, BUYER_NOTE].map((note) => (
+            {[MARKET_NOTE].map((note) => (
               <figure className="market-note" key={note.source}>
                 <blockquote>{note.text}</blockquote>
                 <figcaption>

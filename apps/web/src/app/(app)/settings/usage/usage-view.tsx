@@ -39,10 +39,12 @@ function recentPeriods(count = 12): string[] {
 export function UsageView() {
   const [period, setPeriod] = useState(() => billingPeriod());
   const costs = api.billing.costs.useQuery({ period });
-  const usage = api.billing.usage.useQuery({ period });
+  // Лимит считается по оплаченному месяцу, а не по календарному, поэтому его
+  // доля показывается только у текущего месяца: у прошлых она не сопоставима.
+  const usage = api.billing.usage.useQuery();
 
   const data = costs.data;
-  const allowance = usage.data?.aiChecks;
+  const allowance = period === billingPeriod() ? usage.data?.aiChecks : undefined;
 
   // Разбор по клиентам — финансы всего агентства, member их не видит. Без
   // этой ветки он получал прочерки и пустые таблицы, похожие на «ничего не потрачено».

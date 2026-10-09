@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  allowancePeriod,
   billingPeriod,
   billingPeriodBounds,
   CHECKS_PER_CLIENT_MONTH,
@@ -103,5 +104,24 @@ describe("PLAN_LIMITS", () => {
     const starterPerClient = PLAN_LIMITS.starter.priceUsd / PLAN_LIMITS.starter.clientLimit;
     const scalePerClient = PLAN_LIMITS.scale.priceUsd / PLAN_LIMITS.scale.clientLimit;
     expect(scalePerClient).toBeLessThan(starterPerClient);
+  });
+});
+
+describe("allowancePeriod", () => {
+  it.each([
+    ["оплачено 28-го: месяц с 28-го прошлого", new Date("2026-10-28T10:00:00Z"), "2026-09-28"],
+    ["конец 31 марта: начало — последний день февраля", new Date("2026-03-31T00:00:00Z"), "2026-02-28"],
+    ["конец 1-го: начало 1-го прошлого", new Date("2026-11-01T00:00:00Z"), "2026-10-01"],
+  ])("%s", (_, end, key) => {
+    expect(allowancePeriod(end, new Date("2026-10-15T00:00:00Z"))).toBe(key);
+  });
+
+  it("конец периода неизвестен — календарный месяц", () => {
+    expect(allowancePeriod(null, new Date("2026-10-15T00:00:00Z"))).toBe("2026-10");
+  });
+
+  it("продление сдвигает ключ: 1-е число внутри оплаченного месяца ключ не меняет", () => {
+    const end = new Date("2026-10-28T00:00:00Z");
+    expect(allowancePeriod(end, new Date("2026-09-30T00:00:00Z"))).toBe(allowancePeriod(end, new Date("2026-10-01T00:00:00Z")));
   });
 });

@@ -78,7 +78,7 @@ export const PRICING_NOTES = {
    * «ничего не отключаем» сняли вместе с поведением, иначе текст лгал бы.
    */
   overage:
-    "The allowance is a ceiling: a check that would go past it does not start, and one already running always finishes. The usage bar on your dashboard shows where you stand; measuring resumes on the 1st, or write to us to raise the allowance.",
+    "The allowance is a ceiling: a check that would go past it does not start, and one already running always finishes. The usage bar on your dashboard shows where you stand; measuring resumes when your next billing month starts, or write to us to raise the allowance.",
   /**
    * Что происходит на потолке — включая потолок старшего тарифа, за которым
    * следующего плана уже нет. Пока здесь об этом молчали, ответ на самый
@@ -172,13 +172,6 @@ export const MARKET_NOTE = {
   href: "https://agencyanalytics.com/agency-benchmarks-2026",
 };
 
-/** Вторая внешняя цифра: сдвиг покупателя к ответам ИИ. Проверено 07.10.2026. */
-export const BUYER_NOTE = {
-  text: "About 80% of search users rely on AI summaries at least 40% of the time, and 42% of people using AI chatbots ask them for shopping recommendations.",
-  source: "Bain & Company, February 2025",
-  href: "https://www.bain.com/about/media-center/press-releases/20252/consumer-reliance-on-ai-search-results-signals-new-era-of-marketing--bain--company-about-80-of-search-users-rely-on-ai-summaries-at-least-40-of-the-time-on-traditional-search-engines-about-60-of-searches-now-end-without-the-user-progressing-to-a/",
-};
-
 /** Исследование непостоянства ответов, на которое опирается отказ от «позиции». */
 export const SPARKTORO_STUDY = {
   label: "SparkToro: AIs are highly inconsistent when recommending brands",
@@ -267,6 +260,10 @@ export const OBJECTIONS = [
   {
     q: "“Does it cover Google?”",
     a: `Yes, Google’s AI answers, not its blue links. ${GOOGLE_SURFACES_PLAIN} The free audit includes AI Overviews; on a paid plan both can be switched on for any client.`,
+  },
+  {
+    q: "“What about Gemini and Copilot?”",
+    a: "Not measured. Google’s AI answers in Search are, through AI Overviews and AI Mode; the Gemini app is not. Microsoft Copilot has no API for its answers, so no report estimates it. Every figure we report comes from the assistants named on this page.",
   },
   {
     q: "“Where does our clients’ data live?”",

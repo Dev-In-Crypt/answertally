@@ -1,6 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { FREE_CHECK_ALLOWANCE } from "@repo/core";
+import {
+  CHECK_WEIGHTS,
+  FREE_CHECK_ALLOWANCE,
+  partnerTerms,
+  REFERRAL_MONTHS,
+  REFERRAL_RATE,
+  VOLUME_ACCOUNT_PRICE_USD,
+  VOLUME_DISCOUNT,
+  VOLUME_THRESHOLD,
+} from "@repo/core";
 import { LEGAL_ENTITY } from "@/config/legal";
 import { SUPPORT_EMAIL } from "@/config/site";
 
@@ -26,6 +35,15 @@ export const metadata: Metadata = {
   title: "Terms of service · Answertally",
   description: "The agreement between your agency and Answertally, in plain language.",
 };
+
+/** Те же условия, что на /partners: договор и витрина не должны обещать разное. */
+const PARTNER = partnerTerms({
+  threshold: VOLUME_THRESHOLD,
+  accountPriceUsd: VOLUME_ACCOUNT_PRICE_USD,
+  discountPct: Math.round(VOLUME_DISCOUNT * 100),
+  referralPct: Math.round(REFERRAL_RATE * 100),
+  referralMonths: REFERRAL_MONTHS,
+});
 
 export default function TermsPage() {
   const us = LEGAL_ENTITY?.name ?? "the Answertally team";
@@ -77,9 +95,9 @@ export default function TermsPage() {
 
       <h2>3. Your workspace and your clients</h2>
       <p>
-        You may add the brands you work on, whether they are your clients&rsquo; or your own. By
-        adding a brand you confirm that you are entitled to measure it and to share the resulting
-        reports with the people you send them to.
+        You may add the brands you work on, whether they are your clients&rsquo;, your own, or a
+        brand you are pitching as a prospective client. By adding a brand you confirm that you are
+        entitled to measure it and to share the resulting reports with the people you send them to.
       </p>
       <p>
         You are responsible for who you invite into your workspace and what they do in it. Tell us
@@ -141,8 +159,8 @@ export default function TermsPage() {
       <p>
         Plans are billed monthly in advance. Each plan sets how many client accounts a workspace
         holds and how many AI checks it includes in a month. An answer to one question from ChatGPT,
-        Perplexity, Google AI Overviews or AI Mode counts as one AI check, a Claude answer as four
-        and a Grok answer as five.
+        Perplexity, Claude, Google AI Overviews or AI Mode counts as one AI check, and a Grok answer
+        as {CHECK_WEIGHTS.grok}. The month runs from the day your plan was paid, not from the 1st.
       </p>
       <p>
         Measurement runs within the AI-check limit of the plan you chose. When the checks included
@@ -154,6 +172,11 @@ export default function TermsPage() {
       <p>
         Cancellation, refunds and what happens to a downgrade are in{" "}
         <Link href="/legal/refunds">billing and refunds</Link>.
+      </p>
+
+      <h3>Partner terms</h3>
+      <p>
+        {PARTNER.volume} {PARTNER.referral}
       </p>
 
       <h2>7. Availability and change</h2>

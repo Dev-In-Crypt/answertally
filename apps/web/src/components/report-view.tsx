@@ -302,7 +302,7 @@ export function ReportView({
           <li className="flex justify-between border-b py-2">
             {payload.results.sampledAnswers !== undefined ? (
               <>
-                <span>Answers naming {payload.client.name}</span>
+                <span>Answers naming {payload.client.name}, whole period</span>
                 <span className="metric font-medium">
                   {payload.results.newBrandMentions} of {payload.results.sampledAnswers}
                 </span>

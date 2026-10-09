@@ -59,6 +59,12 @@ function cells(chatgpt: number, perplexity: number, claude: number, sampleCount:
   ];
 }
 
+const AUDIT_CELLS = [
+  { assistantId: "perplexity", sampleCount: 43, clientVisibilityPct: 14 },
+  { assistantId: "ai-overviews", sampleCount: 43, clientVisibilityPct: 11.6 },
+  { assistantId: "claude", sampleCount: 44, clientVisibilityPct: 9.1 },
+];
+
 /**
  * Ранжированные работы. Формулировки причин повторяют стиль настоящих правил
  * диагностики: сначала факт из измерений, потом что из него следует.
@@ -138,9 +144,10 @@ export const SAMPLE_AUDIT_REPORT: ReportPayload = buildReportPayload({
   highestImpact: null,
   nextSprint: RANKED_ACTIONS.slice(0, 3).map((action) => action.title),
   caveats: [REPORT_COPY.opportunityBasis, REPORT_COPY.scopeEstimate],
-  // 5, 6 и 4 из 43–44 ответов: в сумме те же 15 из 130.
-  assistantCells: { first: cells(11.4, 14, 9.3, 43), last: cells(11.4, 14, 9.3, 43) },
-  measuredPlatforms: ["chatgpt", "perplexity", "claude"],
+  // Ассистенты — те же, что в настоящем бесплатном аудите. 6, 5 и 4 из 43, 43
+  // и 44 ответов: в сумме те же 15 из 130.
+  assistantCells: { first: AUDIT_CELLS, last: AUDIT_CELLS },
+  measuredPlatforms: ["perplexity", "ai-overviews", "claude"],
   opportunity: buildAuditProposal({
     currentVisibilityPct: 11.5,
     competitorVisibility: COMPETITORS_AT_AUDIT,
