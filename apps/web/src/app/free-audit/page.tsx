@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { MARKETING_COPY, REPORT_COPY, SAMPLE_AUDIT_REPORT } from "@repo/core";
 import { freeAuditAssistantSentence } from "@repo/core/adapters/capacity";
-import { CtaNote, Faq, MethodLink, SecHead, TalkOrAudit } from "@/components/marketing/bits";
+import { CtaNote, Faq, MethodLink, SecHead, TalkLink } from "@/components/marketing/bits";
 import { MarketingShell } from "@/components/marketing/chrome";
-import { AUDIT_STEPS, checkoutCopy, SALES_CONTACT } from "@/components/marketing/content";
+import { AUDIT_STEPS, checkoutCopy } from "@/components/marketing/content";
 import { getPaymentProvider } from "@/server/payments";
 import { ReportPreview } from "@/components/marketing/report-preview";
 import { QuestionPreview } from "@/components/marketing/question-preview";
@@ -93,6 +93,7 @@ export default function FreeAuditPage() {
               <a className="link" href="#questions">
                 Preview the questions first, no account ↓
               </a>
+              <TalkLink />
             </div>
             <CtaNote />
             <ul className="fa-facts">
@@ -291,7 +292,7 @@ export default function FreeAuditPage() {
               <Link className="btn primary" href="/signup">
                 Run a free audit
               </Link>
-              {SALES_CONTACT && <TalkOrAudit />}
+              <TalkLink />
             </div>
           </div>
         </div>

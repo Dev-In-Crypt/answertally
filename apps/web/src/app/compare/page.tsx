@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CtaNote, SecHead } from "@/components/marketing/bits";
+import { CtaNote, SecHead, TalkLink } from "@/components/marketing/bits";
 import { MarketingShell } from "@/components/marketing/chrome";
 
 /**
@@ -121,6 +121,7 @@ export default function ComparePage() {
               <Link className="link" href="/sample-report">
                 See an example report →
               </Link>
+              <TalkLink />
             </div>
             <CtaNote />
           </div>
