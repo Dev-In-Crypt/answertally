@@ -26,6 +26,10 @@ const composeVars = new Set(
   [...compose.matchAll(/\$\{([A-Z0-9_]+)[:?}-]/g)].map((m) => m[1]!),
 );
 
+/** Имена, которые копия вне машины читает из .env.production: `conf VAR`. */
+const offsiteEnv = readFileSync(join(REPO_ROOT, "scripts/offsite-env.sh"), "utf8");
+const scriptVars = new Set([...offsiteEnv.matchAll(/\bconf ([A-Z0-9_]+)/g)].map((m) => m[1]!));
+
 /** Имена, которым шаблон присваивает значение: строки вида `VAR=`. */
 const templateVars = new Set(
   [...template.matchAll(/^([A-Z0-9_]+)=/gm)].map((m) => m[1]!),
@@ -48,14 +52,17 @@ describe("боевой шаблон окружения", () => {
     expect(keysInCompose.length).toBeGreaterThanOrEqual(4);
   });
 
-  it("не предлагает заполнять то, чего compose не читает", () => {
+  it("не предлагает заполнять то, чего не читают ни compose, ни скрипты копий", () => {
     /**
      * Ровно та строка, на которой это поймано: GEMINI_API_KEY остался в
      * шаблоне после того, как ассистента убрали. Заполнивший его получил бы
      * ключ, не подключённый никуда, и решил бы, что измерение настроено.
      */
-    const dead = [...templateVars].filter((name) => !composeVars.has(name)).sort();
+    const dead = [...templateVars]
+      .filter((name) => !composeVars.has(name) && !scriptVars.has(name))
+      .sort();
 
     expect(dead).toEqual([]);
+    expect(scriptVars.size).toBeGreaterThanOrEqual(4);
   });
 });
