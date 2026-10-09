@@ -12,7 +12,7 @@ import {
   confidenceFor,
   wilsonInterval,
 } from "@repo/core";
-import { Conf, SecHead } from "@/components/marketing/bits";
+import { Conf, SecHead, TalkLink } from "@/components/marketing/bits";
 import { MarketingShell } from "@/components/marketing/chrome";
 import { LIMITS, SPARKTORO_STUDY } from "@/components/marketing/content";
 
@@ -366,6 +366,7 @@ export default function MethodPage() {
               <Link className="link" href="/sample-report">
                 See an example report →
               </Link>
+              <TalkLink />
             </div>
           </div>
         </div>

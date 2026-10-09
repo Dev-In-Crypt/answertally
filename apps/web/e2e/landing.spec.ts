@@ -19,6 +19,8 @@ test("landing gives an anonymous visitor the offer, the plans and a way in", asy
     "href",
     "/sample-report",
   );
+  // Без NEXT_PUBLIC_SALES_* второй кнопки «поговорить с нами» нет совсем.
+  await expect(page.getByTestId("sales-contact")).toHaveCount(0);
 
   // Строка метода под hero: каденс по умолчанию и ссылка на методологию.
   const method = page.getByTestId("hero-method");

@@ -10,17 +10,24 @@ import { SALES_CONTACT } from "./content";
  * аудит. Звонок не обещается, пока звонить некуда.
  */
 export function TalkOrAudit({ fallback = "Start with the free audit →" }: { fallback?: string }) {
-  if (SALES_CONTACT) {
-    return (
-      <a className="link" href={SALES_CONTACT.href} data-testid="sales-contact">
-        {SALES_CONTACT.label} →
-      </a>
-    );
-  }
+  if (SALES_CONTACT) return <TalkLink />;
   return (
     <Link className="link" href="/free-audit">
       {fallback}
     </Link>
+  );
+}
+
+/**
+ * Вторая кнопка «поговорить с нами» рядом с главной. Без контакта — ничего:
+ * страница выглядит так же, как без этой кнопки.
+ */
+export function TalkLink() {
+  if (!SALES_CONTACT) return null;
+  return (
+    <a className="link" href={SALES_CONTACT.href} data-testid="sales-contact">
+      {SALES_CONTACT.label} →
+    </a>
   );
 }
 

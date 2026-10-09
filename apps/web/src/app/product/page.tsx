@@ -12,7 +12,7 @@ import {
   formatContributionRange,
   wilsonInterval,
 } from "@repo/core";
-import { Conf, LegendLine, MethodLink, SecHead, SrcChip } from "@/components/marketing/bits";
+import { Conf, LegendLine, MethodLink, SecHead, SrcChip, TalkLink } from "@/components/marketing/bits";
 import { MarketingShell } from "@/components/marketing/chrome";
 import { ExperimentChart, PromptMatrix } from "@/components/marketing/charts";
 import {
@@ -685,6 +685,7 @@ export default function ProductPage() {
               <Link className="link" href="/pricing">
                 See pricing →
               </Link>
+              <TalkLink />
             </div>
           </div>
         </div>

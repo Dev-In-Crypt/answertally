@@ -16,18 +16,31 @@ export interface SalesContact {
   href: string;
 }
 
-function readContact(): SalesContact | null {
-  const email = process.env.NEXT_PUBLIC_SALES_EMAIL?.trim();
-  const url = process.env.NEXT_PUBLIC_SALES_URL?.trim();
-  const label = process.env.NEXT_PUBLIC_SALES_LABEL?.trim() || "Talk to our team";
+/**
+ * Контакт из сырых значений окружения. Отдельно от чтения process.env, чтобы
+ * тест мог проверить все случаи; сами переменные читаются ниже буквально —
+ * иначе Next не подставит их в бандл.
+ */
+export function salesContactFrom(env: {
+  url?: string;
+  email?: string;
+  label?: string;
+}): SalesContact | null {
+  const url = env.url?.trim();
+  const email = env.email?.trim();
+  const label = env.label?.trim();
 
-  if (url) return { label, href: url };
-  if (email) return { label, href: `mailto:${email}` };
+  if (url) return { label: label || "Book a 20-min walkthrough", href: url };
+  if (email) return { label: label || "Talk to us", href: `mailto:${email}` };
   return null;
 }
 
 /** null — контакта нет, и обещать звонок нельзя. */
-export const SALES_CONTACT: SalesContact | null = readContact();
+export const SALES_CONTACT: SalesContact | null = salesContactFrom({
+  url: process.env.NEXT_PUBLIC_SALES_URL,
+  email: process.env.NEXT_PUBLIC_SALES_EMAIL,
+  label: process.env.NEXT_PUBLIC_SALES_LABEL,
+});
 
 /**
  * Домен, на котором отдаются клиентские отчёты.

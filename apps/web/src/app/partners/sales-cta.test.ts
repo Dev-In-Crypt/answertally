@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SALES_CONTACT } from "@/config/site";
+import { SALES_CONTACT, salesContactFrom } from "@/config/site";
 import { AUDIT_FALLBACK, salesCtaTarget } from "./sales-cta";
 
 /**
@@ -36,5 +36,32 @@ describe("кнопка разговора с человеком", () => {
     // без них кнопки разговора не появится.
     expect(SALES_CONTACT).toBeNull();
     expect(salesCtaTarget(SALES_CONTACT).kind).toBe("audit");
+  });
+});
+
+describe("контакт продаж из окружения", () => {
+  it("ссылка без подписи — запись на разбор", () => {
+    expect(salesContactFrom({ url: " https://cal.example/x " })).toEqual({
+      label: "Book a 20-min walkthrough",
+      href: "https://cal.example/x",
+    });
+  });
+
+  it("только почта — mailto и «Talk to us»", () => {
+    expect(salesContactFrom({ email: "hi@b.example" })).toEqual({
+      label: "Talk to us",
+      href: "mailto:hi@b.example",
+    });
+  });
+
+  it("ссылка важнее почты, своя подпись важнее умолчания", () => {
+    expect(
+      salesContactFrom({ url: "https://cal.example/x", email: "hi@b.example", label: "Book a call" }),
+    ).toEqual({ label: "Book a call", href: "https://cal.example/x" });
+  });
+
+  it("ни ссылки, ни почты — контакта нет, даже с подписью", () => {
+    expect(salesContactFrom({})).toBeNull();
+    expect(salesContactFrom({ url: " ", email: "", label: "Talk" })).toBeNull();
   });
 });
