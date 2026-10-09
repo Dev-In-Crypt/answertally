@@ -1,0 +1,75 @@
+# Монитор доступности answertally.com.
+#
+# Каждые 5 минут: /api/health отвечает 200 и {"status":"ok"} (это пинг базы,
+# Redis он не проверяет), главная отвечает 200 и содержит «Answertally»,
+# сертификат живёт ещё больше 14 дней. Каждая проверка — до трёх попыток с
+# паузой 20 с, чтобы один сбой сети не будил фаундера.
+#
+# Тревога = упавший запуск: GitHub шлёт письмо владельцу репозитория, если в
+# Settings → Notifications → System → Actions включены уведомления о падениях.
+#
+# Ограничения GitHub: cron может опаздывать на минуты (в часы пик — дольше),
+# а в репозитории без активности 60 дней расписание отключается само —
+# включить обратно на вкладке Actions.
+#
+# Переезд на UptimeRobot (или аналог): монитор типа Keyword,
+# URL https://answertally.com/api/health, ключевое слово "ok"; второй — для
+# https://answertally.com/ со словом "Answertally". После этого файл удалить.
+
+name: Uptime
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: uptime
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      SITE: answertally.com
+    steps:
+      - name: Health, homepage, certificate
+        run: |
+          # Повтор до трёх раз с паузой 20 с; падает, если все попытки неудачны.
+          retry() {
+            for attempt in 1 2 3; do
+              if "$@"; then return 0; fi
+              echo "::warning::$1 failed (attempt $attempt)"
+              [ "$attempt" -lt 3 ] && sleep 20
+            done
+            echo "::error::$1 failed 3 times"
+            return 1
+          }
+
+          health() {
+            body=$(curl -fsS --max-time 15 "https://$SITE/api/health") || return 1
+            echo "health: $body"
+            echo "$body" | grep -q '"status":"ok"'
+          }
+
+          homepage() {
+            # Через переменную, а не "| grep -q": grep закрывает трубу раньше и
+            # curl пишет в лог ложную ошибку 23.
+            page=$(curl -fsS --max-time 20 "https://$SITE/") || return 1
+            [[ $page == *Answertally* ]]
+          }
+
+          cert() {
+            # -checkend: код 0, если сертификат не истечёт в ближайшие 14 дней.
+            echo | openssl s_client -connect "$SITE:443" -servername "$SITE" 2>/dev/null \
+              | openssl x509 -noout -enddate -checkend $((14 * 86400))
+          }
+
+          status=0
+          retry health || status=1
+          retry homepage || status=1
+          retry cert || status=1
+          exit $status
