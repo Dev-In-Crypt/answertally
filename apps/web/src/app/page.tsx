@@ -9,6 +9,7 @@ import {
   AUDIENCE,
   checkoutCopy,
   MARKET_NOTE,
+  STUDY_NOTE,
   OBJECTIONS,
   PRICING_NOTES,
 } from "@/components/marketing/content";
@@ -233,7 +234,7 @@ export default async function HomePage() {
             new hire.
           </SecHead>
           <div className="notes2">
-            {[MARKET_NOTE].map((note) => (
+            {[MARKET_NOTE, STUDY_NOTE].map((note) => (
               <figure className="market-note" key={note.source}>
                 <blockquote>{note.text}</blockquote>
                 <figcaption>

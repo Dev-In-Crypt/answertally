@@ -63,7 +63,7 @@ const ALL_ASSISTANTS_OVER = PLANS.filter(
  * аудита в лимит клиентов: это не решено, и витрина не должна решать за него.
  */
 export const PRICING_NOTES = {
-  unit: "Billed per client account. Not per seat, not per source, not per prompt.",
+  unit: "Billed per client account. Not per seat, not per source, not per prompt, so you know what each client costs before you quote them.",
   included:
     "Every plan includes measurement, diagnosis, the actions board, experiments, white-label reports and PDF export.",
   frame: "Priced against the retainer revenue it supports, not against the price of a rank tracker.",
@@ -172,6 +172,16 @@ export const MARKET_NOTE = {
   href: "https://agencyanalytics.com/agency-benchmarks-2026",
 };
 
+/**
+ * Вторая внешняя цифра: почему одна позиция ничего не значит, а доля ответов —
+ * значит. Сверено с первоисточником 10.10.2026 (январь 2026, 2 961 прогон).
+ */
+export const STUDY_NOTE = {
+  text: "Asked the same question 100 times, ChatGPT and Google’s AI gave the same list of brands less than once. The researchers found a brand’s share of answers a reasonable measure, and its position in the list not.",
+  source: "SparkToro and Gumshoe, January 2026",
+  href: "https://sparktoro.com/blog/new-research-ais-are-highly-inconsistent-when-recommending-brands-or-products-marketers-should-take-care-when-tracking-ai-visibility/",
+};
+
 /** Исследование непостоянства ответов, на которое опирается отказ от «позиции». */
 export const SPARKTORO_STUDY = {
   label: "SparkToro: AIs are highly inconsistent when recommending brands",
@@ -236,6 +246,10 @@ export const OBJECTIONS = [
   {
     q: "“AI answers change every time. The numbers are noise.”",
     a: "One answer is noise, which is why we never report one. No figure rests on fewer than three answers per question per assistant, shares come with their range and a confidence level, and a change the sample cannot tell apart is labeled that way instead of being sold as a win.",
+  },
+  {
+    q: "“The client asked ChatGPT and saw our competitors, not us.”",
+    a: "One answer is a sample of one: ask again and the list changes. The report shows the share of answers that name the client, its range, and the answers themselves, so you can open the question your client asked and show where that answer sits in the spread, instead of arguing with a screenshot.",
   },
   {
     q: "“We don’t need another dashboard.”",

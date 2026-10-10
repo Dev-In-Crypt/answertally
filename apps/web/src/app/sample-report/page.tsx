@@ -11,9 +11,9 @@ import { SampleFrame } from "./sample-frame";
  */
 export const metadata: Metadata = {
   alternates: { canonical: "/sample-report" },
-  title: "Example client report · Answertally",
+  title: "AI Visibility Report Example for Clients · Answertally",
   description:
-    "A sample of the report an agency hands its client: visibility over the period, the work behind it and what the numbers do not mean.",
+    "How to report AI visibility to a client: a sample white-label report with share of answers, ranges, cited sources and the next sprint the client approves.",
 };
 
 export default function SampleReportPage() {
