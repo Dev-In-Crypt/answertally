@@ -1,13 +1,29 @@
 # Обновления зависимостей. Действия CI — главное: у задачи сборки образов
 # есть права на запись пакетов, и устаревшее действие — путь на прод.
+#
+# Мелкие и патч-обновления приходят одним PR на экосистему, а не пачкой.
+# Мажорные — по одному, их смотрят отдельно.
 version: 2
 updates:
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
   - package-ecosystem: npm
     directory: /
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        update-types: ["minor", "patch"]
+    ignore:
+      # Типы Node следуют за рантаймом (Node 22) — поднимаются вместе с ним.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+      # tailwind-merge 3 — для Tailwind 4; у нас Tailwind 3.
+      - dependency-name: "tailwind-merge"
+        update-types: ["version-update:semver-major"]
