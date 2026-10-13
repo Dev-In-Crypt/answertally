@@ -116,3 +116,11 @@ describe("classifyDomain — неизвестное", () => {
     expect(classifyDomain("   ")).toBeNull();
   });
 });
+
+describe("normalizeDomain на враждебной строке", () => {
+  it("строка из одних «#» не тормозит (было квадратично)", () => {
+    const started = Date.now();
+    expect(normalizeDomain("#".repeat(200_000))).toBe("");
+    expect(Date.now() - started).toBeLessThan(500);
+  });
+});

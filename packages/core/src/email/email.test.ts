@@ -619,3 +619,14 @@ describe("createEmailSender", () => {
     expect(() => parseEmailMode("maybe")).toThrow(/EMAIL_MODE/);
   });
 });
+
+describe("withDisplayName на враждебной строке", () => {
+  it("много «<=» не тормозит (было квадратично)", () => {
+    const started = Date.now();
+    withDisplayName("<=".repeat(100_000), "Agency");
+    expect(Date.now() - started).toBeLessThan(500);
+  });
+  it("адрес из угловых скобок берётся как раньше", () => {
+    expect(withDisplayName("Old <noreply@answertally.com>", "Agency")).toBe('"Agency" <noreply@answertally.com>');
+  });
+});

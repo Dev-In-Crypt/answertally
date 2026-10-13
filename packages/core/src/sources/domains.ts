@@ -108,7 +108,8 @@ export function normalizeDomain(domain: string): string {
     // из адресной строки, и «https://acme.com/» никогда не совпало бы с «acme.com»
     // из цитаты — свои страницы клиента перестали бы опознаваться как свои.
     .replace(/^[a-z][a-z0-9+.-]*:\/\//, "")
-    .replace(/[/?#].*$/, "")
+    // split, а не replace(/[/?#].*$/): та регулярка квадратична на строке из одних «#».
+    .split(/[/?#]/, 1)[0]!
     .replace(/:\d+$/, "")
     .replace(/^www\./, "")
     .replace(/\.$/, "");

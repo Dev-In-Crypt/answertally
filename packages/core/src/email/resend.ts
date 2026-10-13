@@ -183,7 +183,10 @@ export function composeFrom(from: string): string {
  * может сломать заголовок: кавычки, угловые скобки и переводы строк.
  */
 export function withDisplayName(from: string, name: string): string {
-  const address = /<([^>]+)>/.exec(from)?.[1] ?? from.trim();
+  // indexOf, а не /<([^>]+)>/: регулярка квадратична на строке из многих «<».
+  const open = from.indexOf("<");
+  const close = open >= 0 ? from.indexOf(">", open + 1) : -1;
+  const address = close > open + 1 ? from.slice(open + 1, close) : from.trim();
   const safe = name.replace(/["<>\r\n\\]/g, "").trim();
   return safe ? `"${safe}" <${address}>` : from;
 }

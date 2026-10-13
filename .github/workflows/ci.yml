@@ -5,6 +5,10 @@ on:
   push:
     branches: [main]
 
+# Только чтение по умолчанию; задача images сама просит запись пакетов.
+permissions:
+  contents: read
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
