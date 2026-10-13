@@ -110,7 +110,10 @@ actual model in its version string rather than passing it off as Perplexity's.
 One machine with Docker is enough for the first dozens of agencies. CI builds the `web`, `worker`
 and `migrate` images for every commit that passes its checks; `scripts/deploy.sh`, run on the
 server, pulls the images for the current commit and restarts. Nothing is built on the server, and a
-commit without CI images cannot be deployed.
+commit without CI images cannot be deployed. After the restart it polls `/api/health` for a minute
+and, if the site is not healthy, exits with the exact `scripts/rollback.sh` command, which brings
+back the previous deployed commit's images without a `git pull`. Migrations are additive only, so a
+rollback never needs to undo them; CI fails on a destructive migration unless it is marked.
 
 Four services: Postgres, Redis, web, worker. Migrations run as a one-shot service before the app
 starts; the application never changes the schema itself, or two instances would do it at once.
