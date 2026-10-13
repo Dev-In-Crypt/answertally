@@ -23,7 +23,7 @@
     "@types/node": "^22.10.2",
     "dotenv": "^16.6.1",
     "tsx": "^4.23.15",
-    "typescript": "^5.7.2",
+    "typescript": "^6.0.3",
     "vitest": "^4.1.11"
   }
 }
