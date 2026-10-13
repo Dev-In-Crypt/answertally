@@ -78,7 +78,7 @@ const UI_HEADING = /^(search|cart|bag|shopping bag|menu|footer|site footer|sign 
 /** Описания из JSON-LD: Organization, WebSite, Product. Читаются до вырезания скриптов. */
 function jsonLdDescriptions(html: string): string[] {
   const found: string[] = [];
-  for (const match of html.matchAll(/<script[^>]+application\/ld\+json[^>]*>([\s\S]*?)<\/script\s*>/gi)) {
+  for (const match of html.matchAll(/<script[^>]+application\/ld\+json[^>]*>([\s\S]*?)<\/script[^>]*>/gi)) {
     try {
       const walk = (node: unknown): void => {
         if (Array.isArray(node)) node.forEach(walk);
@@ -99,7 +99,7 @@ function jsonLdDescriptions(html: string): string[] {
 /** Заголовок, описание и заголовки разделов — то, что сайт говорит о себе. */
 export function summarizeHtml(html: string): string {
   const structured = jsonLdDescriptions(html);
-  const body = html.replace(/<script[\s\S]*?<\/script\s*>|<style[\s\S]*?<\/style\s*>/gi, " ");
+  const body = html.replace(/<script[\s\S]*?<\/script[^>]*>|<style[\s\S]*?<\/style[^>]*>/gi, " ");
   const pick = (re: RegExp) => [...body.matchAll(re)].map((m) => decode((m[1] ?? "").replace(/<[^>]+>/g, " ")));
   // До той же кавычки, что открыла значение: «HubSpot's platform…» не обрывается на апострофе.
   const meta = (name: string) =>
