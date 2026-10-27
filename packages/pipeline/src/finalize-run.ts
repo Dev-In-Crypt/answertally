@@ -1,6 +1,6 @@
-import { countResponsesByRun, finishRunWithNote, getAgencyIdForRun, logActivity } from "@repo/db";
+import { countResponsesByRun, finishRunWithNote, getAgencyIdForRun, getRunById, logActivity } from "@repo/db";
 import type { Database } from "@repo/db";
-import { platformLabel } from "@repo/core";
+import { excludedReadsNote, platformLabel } from "@repo/core";
 import { parseRun } from "./parse-job";
 import { classifyRunSources } from "./classify-sources";
 import { aggregateClient } from "./aggregate-job";
@@ -42,13 +42,18 @@ export const NO_ACTIVE_PROMPTS_NOTE =
  *
  * `unavailable` — ассистенты, которых не спрашивали вовсе (нет ключа на
  * сервере): об этом говорится всегда, даже у полного прогона.
+ *
+ * `excluded` — чтения Google, отброшенные как вероятно отравленные: они
+ * входят в недобор и называются отдельно.
  */
 export function runOutcome(
   written: number,
   expected: number,
   unavailable: readonly string[] = [],
+  excluded = 0,
 ): { status: "done" | "failed"; note: string | null } {
   const notes: string[] = [];
+  if (excluded > 0) notes.push(excludedReadsNote(excluded));
   if (unavailable.length > 0) {
     notes.push(
       `${unavailable.map(platformLabel).join(", ")} ${unavailable.length === 1 ? "was" : "were"} not asked: not available right now.`,
@@ -86,7 +91,8 @@ export async function finalizeRun(
   },
 ): Promise<FinalizeRunOutcome> {
   const written = await countResponsesByRun(db, input.runId);
-  const { status, note } = runOutcome(written, input.expected, input.unavailable);
+  const excluded = (await getRunById(db, input.runId))?.excludedReads ?? 0;
+  const { status, note } = runOutcome(written, input.expected, input.unavailable, excluded);
 
   // Статус ставится последним. Раньше «done» писался первым, и падение
   // разбора или свёртки оставляло прогон готовым без цифр: аудит вёл на

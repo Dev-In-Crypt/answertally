@@ -40,6 +40,11 @@ export interface AdapterResult {
   modelVersion: string;
   costUsd: number;
   latencyMs: number;
+  /**
+   * Только у выдачи Google: домены органической десятки той же страницы.
+   * По ним отсеиваются «отравленные» чтения (adapters/dataforseo).
+   */
+  serpDomains?: string[];
 }
 
 export interface AdapterOptions {
@@ -71,4 +76,5 @@ export const adapterResultSchema = z.object({
   modelVersion: z.string().min(1),
   costUsd: z.number().nonnegative(),
   latencyMs: z.number().nonnegative(),
+  serpDomains: z.array(z.string().min(1)).optional(),
 });

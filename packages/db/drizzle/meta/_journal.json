@@ -218,6 +218,13 @@
       "when": 1791475562555,
       "tag": "0030_client_category",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1793123393344,
+      "tag": "0031_serp_fingerprint",
+      "breakpoints": true
     }
   ]
 }

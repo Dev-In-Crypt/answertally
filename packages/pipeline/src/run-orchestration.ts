@@ -1,6 +1,10 @@
 import {
   checkWeight,
   getAdapter,
+  isSuspectSerp,
+  SERP_SIMILARITY_THRESHOLD,
+  serpSimilarity,
+  type AdapterResult,
   type AdaptersMode,
   type Platform,
 } from "@repo/core";
@@ -11,6 +15,8 @@ import {
   findSampleResponseId,
   getAgencyIdForRun,
   incrementAiChecks,
+  incrementExcludedReads,
+  listRecentSerpDomains,
   finishRunWithNote,
   getRunById,
   getRunSchedule,
@@ -87,7 +93,16 @@ export async function executeRunJob(
   const adapter = getAdapter(job.platform, mode);
   // Номер сэмпла нужен фикстурам, чтобы повторы одного вопроса различались;
   // живые адаптеры его игнорируют.
-  const result = await adapter.execute(job.promptText, { sampleIndex: job.sampleIndex });
+  const result = await readWithPoisonCheck(db, job, () =>
+    adapter.execute(job.promptText, { sampleIndex: job.sampleIndex }),
+  );
+  if (!result) {
+    // Чтение отброшено: ответа нет, ячейка считается по остальным и при
+    // недоборе показывается недобором (C3), а не нулём. Агентству не
+    // списывается — как и любой несостоявшийся ответ.
+    await incrementExcludedReads(db, job.runId);
+    return null;
+  }
 
   const response = await createResponse(db, {
     runId: job.runId,
@@ -96,6 +111,7 @@ export async function executeRunJob(
     modelVersion: result.modelVersion,
     sampleIndex: job.sampleIndex,
     rawText: result.text,
+    serpDomains: result.serpDomains ?? null,
     latencyMs: Math.round(result.latencyMs),
     // numeric в Postgres принимает строку — иначе теряется точность на дробных центах.
     costUsd: result.costUsd.toFixed(6),
@@ -129,6 +145,42 @@ export async function executeRunJob(
   }
 
   return response.id;
+}
+
+/**
+ * Чтение выдачи Google с отсевом «отравленных» страниц (adapters/dataforseo).
+ *
+ * Подозрительное чтение перечитывается один раз — 80% отравленных эпизодов
+ * длятся одно чтение. Второе чтение берётся, если оно похоже на образцы или
+ * на первое: две одинаковые страницы подряд — скорее настоящая смена выдачи,
+ * и без этого правила образцы после неё никогда бы не обновились. Иначе
+ * null — чтение не считается. Деньги за оба вызова — в cost_usd ответа.
+ */
+async function readWithPoisonCheck(
+  db: Database,
+  job: RunJobSpec,
+  read: () => Promise<AdapterResult>,
+): Promise<AdapterResult | null> {
+  const first = await read();
+  if (!first.serpDomains) return first;
+
+  const references = await listRecentSerpDomains(db, job);
+  if (!isSuspectSerp(first.serpDomains, references)) return first;
+
+  const second = await read();
+  const totalCost = first.costUsd + second.costUsd;
+  const secondDomains = second.serpDomains ?? [];
+  if (
+    !isSuspectSerp(secondDomains, references) ||
+    serpSimilarity(secondDomains, first.serpDomains) >= SERP_SIMILARITY_THRESHOLD
+  ) {
+    return { ...second, costUsd: totalCost };
+  }
+
+  console.warn(
+    `[worker] Google read dropped as likely poisoned (run ${job.runId}, prompt ${job.promptId}, sample ${job.sampleIndex}), $${totalCost.toFixed(4)} spent`,
+  );
+  return null;
 }
 
 export interface RunOutcome {
@@ -207,7 +259,7 @@ export async function orchestrateRun(
   const { status, note } =
     jobs.length === 0
       ? { status: "failed" as const, note: NO_ACTIVE_PROMPTS_NOTE }
-      : runOutcome(written, jobs.length);
+      : runOutcome(written, jobs.length, [], (await getRunById(db, runId))?.excludedReads ?? 0);
   await finishRunWithNote(db, runId, status, note);
 
   if (agencyId) {

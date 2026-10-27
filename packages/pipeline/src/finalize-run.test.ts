@@ -20,6 +20,14 @@ describe("runOutcome", () => {
     else expect(outcome.note).toMatch(note);
   });
 
+  it("отброшенные чтения Google названы отдельно от недобора", () => {
+    const outcome = runOutcome(47, 48, [], 1);
+    expect(outcome.status).toBe("done");
+    expect(outcome.note).toBe(
+      "47 of 48 answers came back; visibility is worked out from those. 1 Google read was left out: the results page looked unlike recent reads of the same question even after a second try, so it was not counted as an answer.",
+    );
+  });
+
   it("о неспрошенном ассистенте говорится и у полного прогона", () => {
     const outcome = runOutcome(48, 48, ["grok"]);
     expect(outcome.status).toBe("done");

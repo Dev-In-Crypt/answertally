@@ -153,6 +153,12 @@ export const runs = pgTable(
      * не хватает («140 of 144 answers came back»). Пусто — прогон полный.
      */
     note: text("note"),
+    /**
+     * Сколько чтений выдачи Google отброшено как вероятно «отравленные»
+     * (adapters/dataforseo, isSuspectSerp): ответа по ним нет, и итог
+     * прогона говорит об этом отдельно, а не как о молчании ассистента.
+     */
+    excludedReads: integer("excluded_reads").notNull().default(0),
     startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
     finishedAt: timestamp("finished_at", { withTimezone: true }),
   },
@@ -178,6 +184,8 @@ export const responses = pgTable(
     rawStorageKey: text("raw_storage_key"),
     latencyMs: integer("latency_ms"),
     costUsd: numeric("cost_usd", { precision: 12, scale: 6 }).notNull().default("0"),
+    /** Домены органической десятки (только выдача Google): образец для отсева отравленных чтений. */
+    serpDomains: text("serp_domains").array(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [

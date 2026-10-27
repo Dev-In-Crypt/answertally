@@ -191,6 +191,15 @@ export function platformLabel(id: string): string {
 }
 
 /**
+ * Итог прогона: сколько чтений Google отброшено как вероятно отравленные
+ * (adapters/dataforseo, isSuspectSerp). Говорится отдельно, чтобы недобор
+ * не выглядел молчанием ассистента и не читался как «бренд не назван».
+ */
+export function excludedReadsNote(count: number): string {
+  return `${count} Google ${count === 1 ? "read was" : "reads were"} left out: the results page looked unlike recent reads of the same question even after a second try, so it was not counted as an answer.`;
+}
+
+/**
  * Оговорка о природе измерения, собранная по факту.
  *
  * Пустой список платформ — тоже случай «нескольких»: он означает, что срезов

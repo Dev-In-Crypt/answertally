@@ -1,6 +1,7 @@
 import type { AdapterOptions, AdapterResult, PlatformAdapter } from "./types";
 import { adapterResultSchema } from "./types";
 import { defaultSleep, postJson } from "./http";
+import { normalizeDomain } from "../sources/domains";
 
 /**
  * Google AI Overviews и AI Mode через поставщика выдачи DataForSEO.
@@ -35,6 +36,8 @@ const DEFAULT_LANGUAGE_CODE = "en";
 
 interface DataForSeoItem {
   type?: string;
+  domain?: string | null;
+  url?: string | null;
   markdown?: string | null;
   references?: { url?: string | null; title?: string | null }[] | null;
 }
@@ -80,6 +83,70 @@ export function extractAiAnswer(
     citations.push({ url: ref.url, ...(ref.title ? { title: ref.title } : {}) });
   }
   return { text, citations };
+}
+
+/**
+ * «Отпечаток» страницы: домены органической десятки, по порядку, без повторов.
+ *
+ * С конца сентября 2026 Google отдаёт автоматическим запросам «отравленную»
+ * выдачу: страница выглядит обычной, но органика в ней почти вся чужая, и
+ * AI Overview на ней показывается реже. Такой ответ записался бы как «блока
+ * не было» и занизил бы видимость. Отличить его можно только сравнением с
+ * другими чтениями того же вопроса (см. isSuspectSerp). Пусто — сравнивать
+ * не с чем: органики в ответе нет (AI Mode её не отдаёт).
+ */
+export function extractOrganicDomains(payload: DataForSeoPayload): string[] {
+  const items = payload.tasks?.[0]?.result?.[0]?.items ?? [];
+  const domains: string[] = [];
+  for (const item of items) {
+    if (item.type !== "organic" || domains.length >= 10) continue;
+    const raw = item.domain || item.url;
+    // ponytail: хост без www, а не регистрируемый домен (eTLD+1): blog.x.com и
+    // x.com считаются разными. Для сравнения двух десяток одного вопроса этого
+    // хватает; список публичных суффиксов — если начнёт давать ложные срабатывания.
+    const domain = raw ? normalizeDomain(raw) : "";
+    if (domain && !domains.includes(domain)) domains.push(domain);
+  }
+  return domains;
+}
+
+/**
+ * Порог сходства десяток (Jaccard), ниже которого чтения «про разное».
+ *
+ * По замерам Nozzle/cloro, обычная выдача между чтениями сохраняет ≈88%
+ * сайтов десятки (Jaccard ≈0.79), отравленная — ≈20% (≈0.11). 0.3 — между
+ * ними, ближе к отравленной: лучше пропустить отравленное чтение, чем
+ * выбросить настоящее.
+ * ponytail: один порог на все вопросы; у новостных запросов выдача живая и
+ * может проваливаться ниже — тогда порог по вопросу из истории его чтений.
+ */
+export const SERP_SIMILARITY_THRESHOLD = 0.3;
+
+/** Jaccard двух наборов доменов: доля общих среди всех. */
+export function serpSimilarity(a: readonly string[], b: readonly string[]): number {
+  const setB = new Set(b);
+  const shared = new Set(a.filter((domain) => setB.has(domain))).size;
+  const union = new Set([...a, ...b]).size;
+  return union === 0 ? 1 : shared / union;
+}
+
+/**
+ * Похоже ли чтение на отравленную выдачу.
+ *
+ * Сравнивается с недавними чтениями того же вопроса. Судить можно, только
+ * если хотя бы два из них согласны между собой: иначе выдача по вопросу
+ * просто живая (или среди образцов сам отравленный), и «не похоже на
+ * образцы» ничего не значит. Подозрительно — не похоже ни на один из
+ * согласных образцов.
+ */
+export function isSuspectSerp(candidate: readonly string[], references: readonly (readonly string[])[]): boolean {
+  if (candidate.length === 0) return false;
+  const usable = references.filter((ref) => ref.length > 0);
+  const consensus = usable.filter((ref, i) =>
+    usable.some((other, j) => i !== j && serpSimilarity(ref, other) >= SERP_SIMILARITY_THRESHOLD),
+  );
+  if (consensus.length < 2) return false;
+  return consensus.every((ref) => serpSimilarity(candidate, ref) < SERP_SIMILARITY_THRESHOLD);
 }
 
 /** Сбой поставщика, который проходит при повторе (в отличие от «нет денег»). */
@@ -148,12 +215,14 @@ export class DataForSeoAdapter implements PlatformAdapter {
     }
 
     const answer = extractAiAnswer(payload);
+    const serpDomains = extractOrganicDomains(payload);
     return adapterResultSchema.parse({
       text: answer?.text ?? NO_AI_OVERVIEW_TEXT,
       citations: answer?.citations ?? [],
       modelVersion: `dataforseo-google-${this.platform}-${payload.version ?? "unknown"}`,
       costUsd: result.cost ?? 0,
       latencyMs: Date.now() - startedAt,
+      ...(serpDomains.length > 0 ? { serpDomains } : {}),
     });
   }
 }

@@ -324,6 +324,38 @@ export async function findSampleResponseId(
   return rows[0]?.id;
 }
 
+/**
+ * Отпечатки выдачи последних чтений того же вопроса на той же поверхности —
+ * и этого прогона, и прошлых. Образцы для отсева отравленных чтений.
+ */
+export async function listRecentSerpDomains(
+  db: Database,
+  sample: { promptId: string; platform: Response["platform"] },
+  limit = 3,
+): Promise<string[][]> {
+  const rows = await db
+    .select({ serpDomains: responses.serpDomains })
+    .from(responses)
+    .where(
+      and(
+        eq(responses.promptId, sample.promptId),
+        eq(responses.platform, sample.platform),
+        isNotNull(responses.serpDomains),
+      ),
+    )
+    .orderBy(desc(responses.createdAt))
+    .limit(limit);
+  return rows.map((row) => row.serpDomains ?? []);
+}
+
+/** Ещё одно отброшенное чтение прогона; атомарно — задачи идут параллельно. */
+export async function incrementExcludedReads(db: Database, runId: string): Promise<void> {
+  await db
+    .update(runs)
+    .set({ excludedReads: sql`${runs.excludedReads} + 1` })
+    .where(eq(runs.id, runId));
+}
+
 export async function createResponse(db: Database, values: NewResponse): Promise<Response> {
   const rows = await db.insert(responses).values(values).returning();
   const created = rows[0];
