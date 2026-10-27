@@ -11,6 +11,7 @@ import { ReportView } from "@/components/report-view";
 import { readPrintToken } from "../print-token";
 import { reportUrl } from "../report-url";
 import { ApproveForm } from "./approve-form";
+import { formatExpiry } from "@/lib/utils";
 import { db } from "@/server/db";
 
 /**
@@ -112,6 +113,16 @@ export default async function PublicReportPage({ params }: { params: Promise<{ t
         }}
         approved={approved}
       />
+      {/* Срок ссылки — для того, кто её открыл: после него страница скажет,
+          что ссылка недействительна. В PDF строки нет — у печати нет срока. */}
+      {share?.expiresAt && (
+        <p
+          data-testid="share-expiry"
+          className="mx-auto max-w-3xl px-6 pb-4 text-xs text-muted-foreground"
+        >
+          This link is available until {formatExpiry(share.expiresAt)}.
+        </p>
+      )}
       {share && !approved && <ApproveForm token={token} />}
     </main>
   );

@@ -32,6 +32,7 @@ import {
   countNewCitedDomains,
   createReport,
   createReportShare,
+  REPORT_SHARE_TTL_DAYS,
   getAgencyById,
   getClientById,
   getReportById,
@@ -642,9 +643,19 @@ export const reportsRouter = router({
       return { reportId: report.id };
     }),
 
-  /** Выдаёт ссылку для клиента агентства. Повторный вызов её не меняет. */
+  /**
+   * Выдаёт ссылку для клиента агентства. Повторный вызов её не меняет: другой
+   * срок — это отзыв и новая ссылка. Короткий срок нужен аудиту проспекта
+   * («available until» торопит открыть); дольше 90 дней нельзя — так обещано
+   * в политике и DPA.
+   */
   share: roleProcedure("member")
-    .input(z.object({ reportId: z.uuid() }))
+    .input(
+      z.object({
+        reportId: z.uuid(),
+        expiresInDays: z.number().int().min(1).max(REPORT_SHARE_TTL_DAYS).optional(),
+      }),
+    )
     .mutation(async ({ ctx, input }) => {
       const report = await getReportById(ctx.db, input.reportId);
       if (!report) {
@@ -660,15 +671,21 @@ export const reportsRouter = router({
 
       const existing = await getShareForReport(ctx.db, report.id);
       if (existing) {
-        return { token: existing.token, created: false };
+        return { token: existing.token, created: false, expiresAt: existing.expiresAt };
       }
 
       // 32 байта: ссылка — единственный способ доступа, и перебор должен быть
       // бессмысленным.
       const token = randomBytes(32).toString("base64url");
-      await createReportShare(ctx.db, { reportId: report.id, token });
+      const share = await createReportShare(ctx.db, {
+        reportId: report.id,
+        token,
+        ...(input.expiresInDays
+          ? { expiresAt: new Date(Date.now() + input.expiresInDays * 86_400_000) }
+          : {}),
+      });
 
-      return { token, created: true };
+      return { token, created: true, expiresAt: share.expiresAt };
     }),
 
   /**

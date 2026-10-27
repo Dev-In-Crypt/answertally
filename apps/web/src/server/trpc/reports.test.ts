@@ -238,6 +238,25 @@ describe("reports.generate", () => {
     expect((await row())[0]?.awaitingApproval).toBe(true);
   });
 
+  it("короткий срок ссылки по выбору агентства, но не дольше 90 дней", async () => {
+    const report = await generate();
+    const { token, expiresAt } = await caller(agencyId).reports.share({
+      reportId: report.id,
+      expiresInDays: 14,
+    });
+    expect(Math.round((new Date(expiresAt!).getTime() - Date.now()) / 86_400_000)).toBe(14);
+    const share = await getShareByToken(db, token);
+    expect(Math.round((share!.expiresAt!.getTime() - Date.now()) / 86_400_000)).toBe(14);
+
+    // Повторная выдача ссылку не меняет — даже с другим сроком.
+    const again = await caller(agencyId).reports.share({ reportId: report.id, expiresInDays: 90 });
+    expect(again.token).toBe(token);
+
+    await expect(
+      caller(agencyId).reports.share({ reportId: report.id, expiresInDays: 91 }),
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
+
   it("ссылка на отчёт живёт 90 дней и отзывается", async () => {
     // Так обещано в политике и DPA; раньше ссылка была вечной.
     const report = await generate();

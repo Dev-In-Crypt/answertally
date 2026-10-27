@@ -9,7 +9,7 @@ import { EmptyState } from "@/components/page-header";
 import { buttonClass } from "@/components/ui/button";
 import { SkeletonRows } from "@/components/ui/skeleton";
 import { controlClass, inputClass } from "@/components/ui/field";
-import { cn } from "@/lib/utils";
+import { cn, formatExpiry } from "@/lib/utils";
 import { FileText } from "lucide-react";
 
 const PDF_FAILED = "The PDF couldn't be generated right now. Try again in a few minutes.";
@@ -47,6 +47,10 @@ export function ReportsView({ clientId }: { clientId: string }) {
   const reports = api.reports.list.useQuery({ clientId });
   const agency = api.agency.get.useQuery();
   const [shareLinks, setShareLinks] = useState<Record<string, string>>({});
+  // Срок новой ссылки. Короткий торопит проспекта открыть аудит; у уже
+  // выданной ссылки срок не меняется — для другого её отзывают.
+  const [linkDays, setLinkDays] = useState(90);
+  const [linkExpiry, setLinkExpiry] = useState<Record<string, Date | null>>({});
   const [sending, setSending] = useState<string | null>(null);
   const [sentTo, setSentTo] = useState<Record<string, { to: string; delivered: boolean }>>({});
   const [pdfBusy, setPdfBusy] = useState<string | null>(null);
@@ -70,6 +74,7 @@ export function ReportsView({ clientId }: { clientId: string }) {
   const share = api.reports.share.useMutation({
     onSuccess: async (result, variables) => {
       setShareLinks((current) => ({ ...current, [variables.reportId]: result.token }));
+      setLinkExpiry((current) => ({ ...current, [variables.reportId]: result.expiresAt }));
       await utils.reports.list.invalidate({ clientId });
     },
   });
@@ -148,6 +153,19 @@ export function ReportsView({ clientId }: { clientId: string }) {
         <span className="text-sm text-muted-foreground">
           Covers the last 30 days. Numbers are frozen at generation time.
         </span>
+        <label className="ml-auto flex items-center gap-2 text-sm text-muted-foreground">
+          New client links last
+          <select
+            data-testid="link-days"
+            value={linkDays}
+            onChange={(event) => setLinkDays(Number(event.target.value))}
+            className="rounded-md border bg-background px-2 py-1 text-sm"
+          >
+            <option value={14}>14 days</option>
+            <option value={30}>30 days</option>
+            <option value={90}>90 days</option>
+          </select>
+        </label>
       </div>
 
       {generate.error && (
@@ -222,7 +240,9 @@ export function ReportsView({ clientId }: { clientId: string }) {
                       type="button"
                       data-testid={`share-${report.id}`}
                       disabled={share.isPending}
-                      onClick={() => share.mutate({ reportId: report.id })}
+                      onClick={() =>
+                        share.mutate({ reportId: report.id, expiresInDays: linkDays })
+                      }
                       className={buttonClass("outline", "md")}
                     >
                       Get client link
@@ -317,6 +337,13 @@ export function ReportsView({ clientId }: { clientId: string }) {
                     >
                       Revoke link
                     </button>
+                    {linkExpiry[report.id] && (
+                      <p data-testid="share-expiry" className="w-full text-xs text-muted-foreground">
+                        The client sees &ldquo;available until{" "}
+                        {formatExpiry(linkExpiry[report.id]!)}&rdquo; on the report. For a different
+                        length, revoke and get a new link.
+                      </p>
+                    )}
                   </div>
                 )}
               </li>
