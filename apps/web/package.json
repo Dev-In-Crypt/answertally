@@ -20,19 +20,19 @@
     "@trpc/client": "^11.18.0",
     "@trpc/react-query": "^11.18.0",
     "@trpc/server": "^11.18.0",
-    "better-auth": "^1.6.33",
+    "better-auth": "^1.7.7",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "ioredis": "^6.0.0",
     "lucide-react": "^0.469.0",
-    "next": "^15.5.27",
+    "next": "^15.5.28",
     "playwright": "^1.62.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "recharts": "^3.10.1",
     "superjson": "^2.2.6",
     "tailwind-merge": "^2.6.0",
-    "zod": "^4.4.3"
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",
@@ -44,6 +44,6 @@
     "tailwindcss": "^4.0.0",
     "tw-animate-css": "^1.2.5",
     "typescript": "^5.7.2",
-    "vitest": "^4.1.11"
+    "vitest": "^4.1.12"
   }
 }
