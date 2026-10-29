@@ -11,7 +11,15 @@ import { TRACKING } from "@/config/tracking";
  * Шаг воронки в Umami: визит → регистрация → аудит → выбор тарифа → оплата.
  * Нет счётчика — вызов ничего не делает.
  */
-export function trackStep(name: "signup" | "audit_started" | "plan_checkout" | "question_preview"): void {
+export function trackStep(
+  name:
+    | "signup"
+    | "audit_started"
+    | "plan_checkout"
+    | "question_preview"
+    | "engaged_30s"
+    | "read_half",
+): void {
   try {
     (window as unknown as { umami?: { track: (event: string) => void } }).umami?.track(name);
   } catch {

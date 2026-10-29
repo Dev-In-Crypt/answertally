@@ -146,6 +146,12 @@ export default async function HomePage() {
               <TalkLink />
             </div>
             <CtaNote />
+            {/* Из письма приходят с вопросом «а что будет с моим клиентом» — ответ без регистрации. */}
+            <p className="small">
+              <Link className="link" href="/free-audit#questions" data-testid="hero-questions-link">
+                See the questions we would track for your client, no signup →
+              </Link>
+            </p>
             <div className="hero-meta">
               <div className="chip-row" aria-label="Assistants measured">
                 <span className="a-chip">ChatGPT</span>
@@ -178,10 +184,7 @@ export default async function HomePage() {
             <MethodLink />
           </p>
           <p className="small">
-            {MARKETING_COPY.evidencePromise} Your client sees your brand, not ours.{" "}
-            <Link className="link" href="/free-audit#questions">
-              See which questions we would track, no account needed →
-            </Link>
+            {MARKETING_COPY.evidencePromise} Your client sees your brand, not ours.
           </p>
           <ul className="trust-strip" aria-label="How client data is handled" data-testid="trust-strip">
             {TRUST.map((item) => (

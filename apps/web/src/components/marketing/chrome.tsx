@@ -5,6 +5,7 @@ import { AccountLink } from "./account-link";
 import { ConsentManager, CookieSettingsLink } from "./consent";
 import { Wordmark } from "./logo";
 import { Analytics } from "@/components/analytics";
+import { EngagementEvents } from "./engagement";
 import "./marketing.css";
 
 /**
@@ -170,6 +171,7 @@ export function MarketingShell({
       <MarketingFooter />
       <ConsentManager />
       <Analytics />
+      <EngagementEvents />
     </>
   );
 }
